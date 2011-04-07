@@ -45,6 +45,16 @@
 #define MBOX_NR_REGS			2
 #define OMAP4_MBOX_NR_REGS		3
 
+/* SYSCONFIG: register bit definition */
+#define AUTOIDLE        (1 << 0)
+#define SOFTRESET       (1 << 1)
+#define SMARTIDLE       (2 << 3)
+#define OMAP4_SOFTRESET (1 << 0)
+#define OMAP4_NOIDLE    (1 << 2)
+#define OMAP4_SMARTIDLE (2 << 2)
+
+#define RESETDONE       (1 << 0)
+
 static void __iomem *mbox_base;
 static u32 *mbox_ctx;
 static int nr_mbox_users;
@@ -83,6 +93,7 @@ static inline void mbox_write_reg(u32 val, size_t ofs)
 static int omap2_mbox_startup(struct omap_mbox *mbox)
 {
 	u32 l;
+	unsigned long timeout;
 
 	pm_runtime_enable(mbox->dev->parent);
 	pm_runtime_get_sync(mbox->dev->parent);

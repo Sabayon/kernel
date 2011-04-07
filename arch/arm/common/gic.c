@@ -269,6 +269,15 @@ static void __init gic_dist_init(struct gic_chip_data *gic,
 	void __iomem *base = gic->dist_base;
 	u32 cpumask = 1 << smp_processor_id();
 
+	/*
+	 * HACK: Panda sound does not work with gic_set_type
+	 * enabled.  Kill it on Omap44xx until a proper fix is
+	 * available
+	 */
+
+	if (cpu_is_omap44xx())
+		gic_chip.irq_set_type = NULL;
+
 	cpumask |= cpumask << 8;
 	cpumask |= cpumask << 16;
 

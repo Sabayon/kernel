@@ -237,15 +237,6 @@ static int omap4_init_keypad(struct omap_hwmod *oh, void *user)
 	return 0;
 }
 
-int omap4_keypad_initialization(struct omap4_keypad_platform_data
-						*sdp4430_keypad_data)
-{
-	if (!cpu_is_omap44xx())
-		return -ENODEV;
-
-	return omap_hwmod_for_each_by_class("kbd", omap4_init_keypad,
-			sdp4430_keypad_data);
-}
 
 #endif /* KEYBOARD CONFIG_ARCH_OMAP4 */
 
@@ -264,7 +255,7 @@ static struct resource omap2_mbox_resources[] = {
 #endif
 
 
-int __init omap4_keyboard_init(struct omap4_keypad_platform_data
+int __init omap4_keypad_initialization(struct omap4_keypad_platform_data
 						*sdp4430_keypad_data)
 {
 	struct omap_device *od;

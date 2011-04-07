@@ -965,6 +965,10 @@ static void __init omap_4430sdp_init(void)
 
 	usb_musb_init(&musb_board_data);
 
+	status = omap4_keypad_initialization(&sdp4430_keypad_data);
+	if(status)
+		pr_err("Keypad initialization failed: %d\n", status);
+
 	status = omap_ethernet_init();
 	if (status) {
 		pr_err("Ethernet initialization failed: %d\n", status);
@@ -973,10 +977,6 @@ static void __init omap_4430sdp_init(void)
 		spi_register_board_info(sdp4430_spi_board_info,
 				ARRAY_SIZE(sdp4430_spi_board_info));
 	}
-
-	status = omap4_keyboard_init(&sdp4430_keypad_data);
-	if (status)
-		pr_err("Keypad initialization failed: %d\n", status);
 
 	omap_4430sdp_display_init();
 }

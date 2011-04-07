@@ -480,6 +480,14 @@ static struct omap_hwmod_ocp_if omap44xx_dsp__l4_abe = {
 	.user		= OCP_USER_MPU | OCP_USER_SDMA,
 };
 
+/* aess -> l4_abe */
+static struct omap_hwmod_ocp_if omap44xx_aess__l4_abe = {
+	.master		= &omap44xx_aess_hwmod,
+	.slave		= &omap44xx_l4_abe_hwmod,
+	.clk		= "ocp_abe_iclk",
+	.user		= OCP_USER_MPU | OCP_USER_SDMA,
+};
+
 /* l3_main_1 -> l4_abe */
 static struct omap_hwmod_ocp_if omap44xx_l3_main_1__l4_abe = {
 	.master		= &omap44xx_l3_main_1_hwmod,
@@ -500,6 +508,7 @@ static struct omap_hwmod_ocp_if omap44xx_mpu__l4_abe = {
 static struct omap_hwmod_ocp_if *omap44xx_l4_abe_slaves[] = {
 	&omap44xx_aess__l4_abe,
 	&omap44xx_dsp__l4_abe,
+	&omap44xx_aess__l4_abe,
 	&omap44xx_l3_main_1__l4_abe,
 	&omap44xx_mpu__l4_abe,
 };
@@ -616,6 +625,7 @@ static struct omap_hwmod omap44xx_mpu_private_hwmod = {
  * - They still need to be validated with the driver
  *   properly adapted to omap_hwmod / omap_device
  *
+ *  bandgap
  *  c2c
  *  c2c_target_fw
  *  cm_core
@@ -686,8 +696,8 @@ static struct omap_hwmod_class_sysconfig omap44xx_aess_sysc = {
 };
 
 static struct omap_hwmod_class omap44xx_aess_hwmod_class = {
-	.name	= "aess",
-	.sysc	= &omap44xx_aess_sysc,
+	.name = "omap-aess-audio",
+	.sysc = &omap44xx_aess_sysc,
 };
 
 /* aess */
@@ -713,8 +723,8 @@ static struct omap_hwmod_ocp_if *omap44xx_aess_masters[] = {
 
 static struct omap_hwmod_addr_space omap44xx_aess_addrs[] = {
 	{
-		.pa_start	= 0x401f1000,
-		.pa_end		= 0x401f13ff,
+		.pa_start	= 0x49000000,
+		.pa_end		= 0x491f11ff,
 		.flags		= ADDR_TYPE_RT
 	},
 };
@@ -732,7 +742,7 @@ static struct omap_hwmod_ocp_if omap44xx_l4_abe__aess = {
 static struct omap_hwmod_addr_space omap44xx_aess_dma_addrs[] = {
 	{
 		.pa_start	= 0x490f1000,
-		.pa_end		= 0x490f13ff,
+		.pa_end		= 0x490f11ff,
 		.flags		= ADDR_TYPE_RT
 	},
 };
@@ -754,14 +764,15 @@ static struct omap_hwmod_ocp_if *omap44xx_aess_slaves[] = {
 };
 
 static struct omap_hwmod omap44xx_aess_hwmod = {
-	.name		= "aess",
+	.name		= "omap-aess-audio",
 	.class		= &omap44xx_aess_hwmod_class,
 	.mpu_irqs	= omap44xx_aess_irqs,
 	.mpu_irqs_cnt	= ARRAY_SIZE(omap44xx_aess_irqs),
 	.sdma_reqs	= omap44xx_aess_sdma_reqs,
 	.sdma_reqs_cnt	= ARRAY_SIZE(omap44xx_aess_sdma_reqs),
 	.main_clk	= "aess_fck",
-	.prcm		= {
+	.vdd_name	= "iva",
+	.prcm = {
 		.omap4 = {
 			.clkctrl_reg = OMAP4430_CM1_ABE_AESS_CLKCTRL,
 		},
@@ -5160,7 +5171,7 @@ static __initdata struct omap_hwmod *omap44xx_hwmods[] = {
 	&omap44xx_mpu_private_hwmod,
 
 	/* aess class */
-/*	&omap44xx_aess_hwmod, */
+	&omap44xx_aess_hwmod,
 
 	/* bandgap class */
 	&omap44xx_bandgap_hwmod,

@@ -37,6 +37,7 @@
 #include <plat/mmc.h>
 #include <plat/omap4-keypad.h>
 #include <plat/display.h>
+#include <plat/nokia-dsi-panel.h>
 
 #include "mux.h"
 #include "hsmmc.h"
@@ -50,6 +51,10 @@
 #define OMAP4_SFH7741_ENABLE_GPIO		188
 #define HDMI_GPIO_HPD 60 /* Hot plug pin for HDMI */
 #define HDMI_GPIO_LS_OE 41 /* Level shifter for HDMI */
+#define LCD_BL_GPIO		27
+#define LED_PWM2ON		0x03
+#define LED_PWM2OFF		0x04
+#define TWL6030_TOGGLE3		0x92
 
 static const int sdp4430_keymap[] = {
 	KEY(0, 0, KEY_E),
@@ -307,13 +312,7 @@ error1:
 	return status;
 }
 
-static struct platform_device sdp4430_lcd_device = {
-	.name		= "sdp4430_lcd",
-	.id		= -1,
-};
-
 static struct platform_device *sdp4430_devices[] __initdata = {
-	&sdp4430_lcd_device,
 	&sdp4430_gpio_keys_device,
 	&sdp4430_leds_gpio,
 	&sdp4430_leds_pwm,
@@ -378,6 +377,10 @@ static struct regulator_consumer_supply sdp4430_vmmc_supply[] = {
 		.supply = "vmmc",
 		.dev_name = "omap_hsmmc.0",
 	},
+};
+static struct regulator_consumer_supply sdp4430_vcxio_supply[] = {
+	REGULATOR_SUPPLY("vdds_dsi", "omapdss_dss"),
+	REGULATOR_SUPPLY("vdds_dsi", "omapdss_dsi1"),
 };
 
 static int omap4_twl6030_hsmmc_late_init(struct device *dev)
@@ -525,7 +528,10 @@ static struct regulator_init_data sdp4430_vcxio = {
 					| REGULATOR_MODE_STANDBY,
 		.valid_ops_mask	 = REGULATOR_CHANGE_MODE
 					| REGULATOR_CHANGE_STATUS,
+		.always_on	= true,
 	},
+	.num_consumer_supplies	= ARRAY_SIZE(sdp4430_vcxio_supply),
+	.consumer_supplies	= sdp4430_vcxio_supply,
 };
 
 static struct regulator_init_data sdp4430_vdac = {
@@ -656,6 +662,54 @@ static void __init omap_sfh7741prox_init(void)
 	}
 }
 
+int dsi_set_backlight(struct omap_dss_device *dssdev, int level)
+{
+	twl_i2c_write_u8(TWL_MODULE_PWM, 0x7F, LED_PWM2OFF);
+
+	if (level > 1) {
+		if (level == 255)
+			level = 0x7F;
+		else
+			level = (~(level/2)) & 0x7F;
+
+		twl_i2c_write_u8(TWL6030_MODULE_ID1, 0x30, TWL6030_TOGGLE3);
+		twl_i2c_write_u8(TWL_MODULE_PWM, level, LED_PWM2ON);
+	} else if (level <= 1) {
+		twl_i2c_write_u8(TWL6030_MODULE_ID1, 0x08, TWL6030_TOGGLE3);
+		twl_i2c_write_u8(TWL6030_MODULE_ID1, 0x38, TWL6030_TOGGLE3);
+	}
+
+	return 0;
+}
+
+static struct nokia_dsi_panel_data dsi1_panel;
+
+static void sdp4430_lcd_init(void)
+{
+	u32 reg;
+	int status;
+
+	reg = omap4_ctrl_pad_readl(OMAP4_CTRL_MODULE_PAD_CORE_CONTROL_DSIPHY);
+	reg |= OMAP4_DSI1_PIPD_MASK | OMAP4_DSI1_LANEENABLE_MASK;
+	omap4_ctrl_pad_writel(reg, OMAP4_CTRL_MODULE_PAD_CORE_CONTROL_DSIPHY);
+
+	/* Panel Taal reset and backlight GPIO init */
+	status = gpio_request_one(dsi1_panel.reset_gpio, GPIOF_DIR_OUT,
+		"lcd_reset_gpio");
+	if (status)
+		pr_err("%s: Could not get lcd_reset_gpio\n", __func__);
+
+	if (dsi1_panel.use_ext_te)
+		omap_mux_init_signal("gpmc_ncs4.gpio_101",
+			OMAP_PIN_INPUT_PULLUP);
+
+	status = gpio_request_one(LCD_BL_GPIO, GPIOF_DIR_OUT, "lcd_bl_gpio");
+	if (status)
+		pr_err("%s: Could not get lcd_bl_gpio\n", __func__);
+
+	gpio_set_value(LCD_BL_GPIO, 0);
+}
+
 static void sdp4430_hdmi_mux_init(void)
 {
 	/* PAD0_HDMI_HPD_PAD1_HDMI_CEC */
@@ -701,6 +755,42 @@ static void sdp4430_panel_disable_hdmi(struct omap_dss_device *dssdev)
 	gpio_free(HDMI_GPIO_HPD);
 }
 
+static struct nokia_dsi_panel_data dsi1_panel = {
+		.name		= "taal",
+		.reset_gpio	= 102,
+		.use_ext_te	= false,
+		.ext_te_gpio	= 101,
+		.use_esd_check	= false,
+		.set_backlight	= dsi_set_backlight,
+};
+
+static struct omap_dss_device sdp4430_lcd_device = {
+	.name			= "lcd",
+	.driver_name		= "taal",
+	.type			= OMAP_DISPLAY_TYPE_DSI,
+	.data			= &dsi1_panel,
+	.phy.dsi		= {
+		.clk_lane	= 1,
+		.clk_pol	= 0,
+		.data1_lane	= 2,
+		.data1_pol	= 0,
+		.data2_lane	= 3,
+		.data2_pol	= 0,
+		.div		= {
+			.regn           = 20,   /* 1.92 MHz */
+			.regm           = 250,  /* 240 MHz */
+			.regm_dispc     = 6,    /* 160 MHz */
+			.regm_dsi       = 6,    /* 160 MHz */
+
+			.lp_clk_div     = 9,    /* 8.88 MHz */
+
+			.lck_div        = 1,    /* 160 MHz */
+			.pck_div        = 4,    /* 40 MHz */
+		},
+	},
+	.channel		= OMAP_DSS_CHANNEL_LCD,
+};
+
 static struct omap_dss_device sdp4430_hdmi_device = {
 	.name = "hdmi",
 	.driver_name = "hdmi_panel",
@@ -711,17 +801,19 @@ static struct omap_dss_device sdp4430_hdmi_device = {
 };
 
 static struct omap_dss_device *sdp4430_dss_devices[] = {
+	&sdp4430_lcd_device,
 	&sdp4430_hdmi_device,
 };
 
 static struct omap_dss_board_info sdp4430_dss_data = {
 	.num_devices	= ARRAY_SIZE(sdp4430_dss_devices),
 	.devices	= sdp4430_dss_devices,
-	.default_device	= &sdp4430_hdmi_device,
+	.default_device	= &sdp4430_lcd_device,
 };
 
 void omap_4430sdp_display_init(void)
 {
+	sdp4430_lcd_init();
 	sdp4430_hdmi_mux_init();
 	omap_display_init(&sdp4430_dss_data);
 }

@@ -1729,6 +1729,8 @@ musb_mode_store(struct device *dev, struct device_attribute *attr,
 	unsigned long	flags;
 	int		status;
 
+	pm_runtime_get_sync(musb->controller);
+
 	spin_lock_irqsave(&musb->lock, flags);
 	if (sysfs_streq(buf, "host"))
 		status = musb_platform_set_mode(musb, MUSB_HOST);
@@ -1739,6 +1741,8 @@ musb_mode_store(struct device *dev, struct device_attribute *attr,
 	else
 		status = -EINVAL;
 	spin_unlock_irqrestore(&musb->lock, flags);
+
+	pm_runtime_put_sync(musb->controller);
 
 	return (status == 0) ? n : status;
 }

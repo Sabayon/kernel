@@ -215,7 +215,7 @@ void gps_chrdrv_stub_init(void);
  * to download firmware onto chip more than once
  * since the self-test for chip takes a while
  */
-#define POR_RETRY_COUNT 5
+#define POR_RETRY_COUNT 10
 
 /**
  * struct chip_version - save the chip version

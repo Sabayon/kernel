@@ -30,6 +30,8 @@
 #include <linux/wl12xx.h>
 #include <linux/netdevice.h>
 #include <linux/if_ether.h>
+#include <linux/skbuff.h>
+#include <linux/ti_wilink_st.h>
 
 #include <mach/hardware.h>
 #include <mach/omap4-common.h>
@@ -49,6 +51,7 @@
 #include "hsmmc.h"
 #include "control.h"
 #include "mux.h"
+
 
 #define GPIO_HUB_POWER		1
 #define GPIO_HUB_NRESET		62
@@ -83,8 +86,26 @@ static struct platform_device leds_gpio = {
 	},
 };
 
+struct ti_st_plat_data wilink_pdata = {
+	.nshutdown_gpio = 46,
+	.dev_name = "/dev/ttyO1",
+	.flow_cntrl = 1,
+	.baud_rate = 3000000,
+};
+static struct platform_device wl128x_device = {
+	.name		= "kim",
+	.id		= -1,
+	.dev.platform_data = &wilink_pdata,
+};
+static struct platform_device btwilink_device = {
+	.name = "btwilink",
+	.id = -1,
+};
+
 static struct platform_device *panda_devices[] __initdata = {
 	&leds_gpio,
+	&wl128x_device,
+	&btwilink_device,
 };
 
 /* Display DVI */

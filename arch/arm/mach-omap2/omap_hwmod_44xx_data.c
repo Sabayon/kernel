@@ -51,6 +51,7 @@ static struct omap_hwmod omap44xx_dsp_hwmod;
 static struct omap_hwmod omap44xx_dss_hwmod;
 static struct omap_hwmod omap44xx_emif_fw_hwmod;
 static struct omap_hwmod omap44xx_hsi_hwmod;
+static struct omap_hwmod omap44xx_fdif_hwmod;
 static struct omap_hwmod omap44xx_ipu_hwmod;
 static struct omap_hwmod omap44xx_iss_hwmod;
 static struct omap_hwmod omap44xx_iva_hwmod;
@@ -65,6 +66,7 @@ static struct omap_hwmod omap44xx_l4_wkup_hwmod;
 static struct omap_hwmod omap44xx_mmc1_hwmod;
 static struct omap_hwmod omap44xx_mmc2_hwmod;
 static struct omap_hwmod omap44xx_mpu_hwmod;
+static struct omap_hwmod omap44xx_sl2if_hwmod;
 static struct omap_hwmod omap44xx_mpu_private_hwmod;
 static struct omap_hwmod omap44xx_usb_otg_hs_hwmod;
 
@@ -310,6 +312,23 @@ static struct omap_hwmod omap44xx_l3_main_1_hwmod = {
 	.omap_chip	= OMAP_CHIP_INIT(CHIP_IS_OMAP4430),
 };
 
+/* fdif -> l3_main_2 */
+static struct omap_hwmod_ocp_if omap44xx_fdif__l3_main_2 = {
+	.master		= &omap44xx_fdif_hwmod,
+	.slave		= &omap44xx_l3_main_2_hwmod,
+	.clk		= "l3_div_ck",
+	.user		= OCP_USER_MPU | OCP_USER_SDMA,
+};
+
+/* iss -> l3_main_2 */
+static struct omap_hwmod_ocp_if omap44xx_iss__l3_main_2 = {
+	.master		= &omap44xx_iss_hwmod,
+	.slave		= &omap44xx_l3_main_2_hwmod,
+	.clk		= "l3_div_ck",
+	.user		= OCP_USER_MPU | OCP_USER_SDMA,
+};
+
+
 /* l3_main_2 interface data */
 /* dma_system -> l3_main_2 */
 static struct omap_hwmod_ocp_if omap44xx_dma_system__l3_main_2 = {
@@ -330,14 +349,6 @@ static struct omap_hwmod_ocp_if omap44xx_hsi__l3_main_2 = {
 /* ipu -> l3_main_2 */
 static struct omap_hwmod_ocp_if omap44xx_ipu__l3_main_2 = {
 	.master		= &omap44xx_ipu_hwmod,
-	.slave		= &omap44xx_l3_main_2_hwmod,
-	.clk		= "l3_div_ck",
-	.user		= OCP_USER_MPU | OCP_USER_SDMA,
-};
-
-/* iss -> l3_main_2 */
-static struct omap_hwmod_ocp_if omap44xx_iss__l3_main_2 = {
-	.master		= &omap44xx_iss_hwmod,
 	.slave		= &omap44xx_l3_main_2_hwmod,
 	.clk		= "l3_div_ck",
 	.user		= OCP_USER_MPU | OCP_USER_SDMA,
@@ -393,6 +404,7 @@ static struct omap_hwmod_ocp_if *omap44xx_l3_main_2_slaves[] = {
 	&omap44xx_iss__l3_main_2,
 	&omap44xx_iva__l3_main_2,
 	&omap44xx_l3_main_1__l3_main_2,
+	&omap44xx_fdif__l3_main_2,
 	&omap44xx_l4_cfg__l3_main_2,
 	&omap44xx_usb_otg_hs__l3_main_2,
 };
@@ -1068,10 +1080,25 @@ static struct omap_hwmod_ocp_if omap44xx_dsp__iva = {
 };
 
 /* dsp master ports */
+/* dsp -> sl2if */
+static struct omap_hwmod_ocp_if omap44xx_dsp__sl2if = {
+	.master		= &omap44xx_dsp_hwmod,
+	.slave		= &omap44xx_sl2if_hwmod,
+	.clk		= "dpll_iva_m5x2_ck",
+};
+
 static struct omap_hwmod_ocp_if *omap44xx_dsp_masters[] = {
 	&omap44xx_dsp__l3_main_1,
 	&omap44xx_dsp__l4_abe,
 	&omap44xx_dsp__iva,
+	&omap44xx_dsp__sl2if,
+};
+
+/* iva -> sl2if */
+static struct omap_hwmod_ocp_if omap44xx_iva__sl2if = {
+	.master		= &omap44xx_iva_hwmod,
+	.slave		= &omap44xx_sl2if_hwmod,
+	.clk		= "dpll_iva_m5x2_ck",
 };
 
 /* l4_cfg -> dsp */
@@ -2167,6 +2194,81 @@ static struct omap_hwmod_dma_info omap44xx_i2c1_sdma_reqs[] = {
 	{ .name = "rx", .dma_req = 27 + OMAP44XX_DMA_REQ_START },
 };
 
+/*
+ * 'fdif' class
+ * face detection hw accelerator module
+ */
+
+/* static struct omap_hwmod_class_sysconfig omap44xx_fdif_sysc = {
+ *	.rev_offs	= 0x0000,
+ *	.sysc_offs	= 0x0010,
+ *	.sysc_flags	= (SYSC_HAS_MIDLEMODE | SYSC_HAS_RESET_STATUS |
+ *			   SYSC_HAS_SIDLEMODE | SYSC_HAS_SOFTRESET),
+ *	.idlemodes	= (SIDLE_FORCE | SIDLE_NO | SIDLE_SMART |
+ *			   MSTANDBY_FORCE | MSTANDBY_NO | MSTANDBY_SMART),
+ *	.sysc_fields	= &omap_hwmod_sysc_type2,
+ *};
+ */
+
+static struct omap_hwmod_class omap44xx_fdif_hwmod_class = {
+	.name = "fdif",
+	/* .sysc = &omap44xx_fdif_sysc, */
+};
+
+/* fdif */
+static struct omap_hwmod_irq_info omap44xx_fdif_irqs[] = {
+	{ .irq = 69 + OMAP44XX_IRQ_GIC_START },
+};
+
+/* fdif master ports */
+static struct omap_hwmod_ocp_if *omap44xx_fdif_masters[] = {
+	&omap44xx_fdif__l3_main_2,
+};
+
+static struct omap_hwmod_addr_space omap44xx_fdif_addrs[] = {
+	{
+		.pa_start	= 0x4a10a000,
+		.pa_end		= 0x4a10a1ff,
+		.flags		= ADDR_TYPE_RT
+	},
+};
+
+/* l4_cfg -> fdif */
+static struct omap_hwmod_ocp_if omap44xx_l4_cfg__fdif = {
+	.master		= &omap44xx_l4_cfg_hwmod,
+	.slave		= &omap44xx_fdif_hwmod,
+	.clk		= "l4_div_ck",
+	.addr		= omap44xx_fdif_addrs,
+	.addr_cnt	= ARRAY_SIZE(omap44xx_fdif_addrs),
+	.user		= OCP_USER_MPU | OCP_USER_SDMA,
+};
+
+/* fdif slave ports */
+static struct omap_hwmod_ocp_if *omap44xx_fdif_slaves[] = {
+	&omap44xx_l4_cfg__fdif,
+};
+
+static struct omap_hwmod omap44xx_fdif_hwmod = {
+	.name		= "fdif",
+	.class		= &omap44xx_fdif_hwmod_class,
+	.flags		= HWMOD_INIT_NO_RESET,
+	.mpu_irqs	= omap44xx_fdif_irqs,
+	.mpu_irqs_cnt	= ARRAY_SIZE(omap44xx_fdif_irqs),
+	.main_clk	= "fdif_fck",
+	.vdd_name       = "core",
+	.prcm = {
+		.omap4 = {
+			.clkctrl_reg = OMAP4430_CM_CAM_FDIF_CLKCTRL,
+		},
+	},
+	.slaves		= omap44xx_fdif_slaves,
+	.slaves_cnt	= ARRAY_SIZE(omap44xx_fdif_slaves),
+	.masters	= omap44xx_fdif_masters,
+	.masters_cnt	= ARRAY_SIZE(omap44xx_fdif_masters),
+	.omap_chip	= OMAP_CHIP_INIT(CHIP_IS_OMAP4430),
+};
+
+
 static struct omap_hwmod_addr_space omap44xx_i2c1_addrs[] = {
 	{
 		.pa_start	= 0x48070000,
@@ -2584,6 +2686,7 @@ static struct omap_hwmod_rst_info omap44xx_iva_seq1_resets[] = {
 
 /* iva master ports */
 static struct omap_hwmod_ocp_if *omap44xx_iva_masters[] = {
+	&omap44xx_iva__sl2if,
 	&omap44xx_iva__l3_main_2,
 	&omap44xx_iva__l3_instr,
 };
@@ -5111,6 +5214,9 @@ static __initdata struct omap_hwmod *omap44xx_hwmods[] = {
 	&omap44xx_dsp_hwmod,
 	&omap44xx_dsp_c0_hwmod,
 
+	/* fdif class */
+	&omap44xx_fdif_hwmod,
+
 	/* dss class */
 	&omap44xx_dss_hwmod,
 	&omap44xx_dss_dispc_hwmod,
@@ -5143,7 +5249,7 @@ static __initdata struct omap_hwmod *omap44xx_hwmods[] = {
 	&omap44xx_ipu_c1_hwmod,
 
 	/* iss class */
-/*	&omap44xx_iss_hwmod, */
+	// &omap44xx_iss_hwmod,
 
 	/* iva class */
 	&omap44xx_iva_hwmod,
@@ -5180,6 +5286,9 @@ static __initdata struct omap_hwmod *omap44xx_hwmods[] = {
 
 	/* mpu class */
 	&omap44xx_mpu_hwmod,
+
+	/* sl2if class */
+	&omap44xx_sl2if_hwmod,
 
 	/* smartreflex class */
 	&omap44xx_smartreflex_core_hwmod,

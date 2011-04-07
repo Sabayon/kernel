@@ -351,10 +351,16 @@ error1:
 	return status;
 }
 
+static struct platform_device sdp4430_hdmi_audio_device = {
+	.name		= "hdmi-audio-dai",
+	.id		= -1,
+};
+
 static struct platform_device *sdp4430_devices[] __initdata = {
 	&sdp4430_gpio_keys_device,
 	&sdp4430_leds_gpio,
 	&sdp4430_leds_pwm,
+	&sdp4430_hdmi_audio_device,
 };
 
 static struct omap_lcd_config sdp4430_lcd_config __initdata = {

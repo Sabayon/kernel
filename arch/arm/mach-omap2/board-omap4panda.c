@@ -437,6 +437,7 @@ static struct regulator_init_data omap4_panda_clk32kg = {
 		.valid_ops_mask		= REGULATOR_CHANGE_STATUS,
 	},
 };
+
 static struct twl4030_codec_audio_data twl6040_audio = {
 	/* single-step ramp for headset and handsfree */
 	.left_step_hs   = 0x0f,

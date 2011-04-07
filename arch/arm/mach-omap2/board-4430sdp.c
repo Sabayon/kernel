@@ -594,7 +594,7 @@ static struct twl4030_platform_data sdp4430_twldata = {
 	.vaux2		= &sdp4430_vaux2,
 	.vaux3		= &sdp4430_vaux3,
 	.clk32kg	= &sdp4430_clk32kg,
-	.usb		= &omap4_usbphy_data
+	.usb		= &omap4_usbphy_data,
 
 	/* children */
 	.codec		= &twl6040_codec,

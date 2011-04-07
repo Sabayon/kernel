@@ -437,6 +437,16 @@ static struct regulator_init_data omap4_panda_clk32kg = {
 		.valid_ops_mask		= REGULATOR_CHANGE_STATUS,
 	},
 };
+static struct twl4030_codec_audio_data twl6040_audio = {
+	/* Add audio only data */
+};
+
+static struct twl4030_codec_data twl6040_codec = {
+	.audio		= &twl6040_audio,
+	.audpwron_gpio	= 127,
+	.naudint_irq	= OMAP44XX_IRQ_SYS_2N,
+	.irq_base	= TWL6040_CODEC_IRQ_BASE,
+};
 
 static struct twl4030_platform_data omap4_panda_twldata = {
 	.irq_base	= TWL6030_IRQ_BASE,
@@ -453,6 +463,9 @@ static struct twl4030_platform_data omap4_panda_twldata = {
 	.vaux3		= &omap4_panda_vaux3,
 	.clk32kg	= &omap4_panda_clk32kg,
 	.usb		= &omap4_usbphy_data,
+
+	/* children */
+	.codec		= &twl6040_codec,
 };
 
 static struct i2c_board_info __initdata omap4_panda_i2c_boardinfo[] = {

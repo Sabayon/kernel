@@ -4267,6 +4267,26 @@ static struct omap_hwmod_irq_info omap44xx_timer7_irqs[] = {
 	{ .irq = 43 + OMAP44XX_IRQ_GIC_START },
 };
 
+static struct omap_hwmod_addr_space omap44xx_timer7_addrs[] = {
+        {
+                .pa_start       = 0x4013c000,
+                .pa_end         = 0x4013c07f,
+                .flags          = ADDR_TYPE_RT
+        },
+};
+
+
+/* l4_abe -> timer7 */
+static struct omap_hwmod_ocp_if omap44xx_l4_abe__timer7 = {
+        .master         = &omap44xx_l4_abe_hwmod,
+        .slave          = &omap44xx_timer7_hwmod,
+        .clk            = "ocp_abe_iclk",
+        .addr           = omap44xx_timer7_addrs,
+        .addr_cnt       = ARRAY_SIZE(omap44xx_timer7_addrs),
+        .user           = OCP_USER_MPU,
+};
+
+
 /*
  * 'mcpdm' class
  * multi channel pdm controller (proprietary interface with
@@ -4403,6 +4423,7 @@ static struct omap_hwmod omap44xx_timer7_hwmod = {
 	.slaves_cnt	= ARRAY_SIZE(omap44xx_timer7_slaves),
 	.omap_chip	= OMAP_CHIP_INIT(CHIP_IS_OMAP4430),
 };
+
 
 /* timer8 */
 static struct omap_hwmod omap44xx_timer8_hwmod;

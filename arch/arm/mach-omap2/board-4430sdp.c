@@ -38,6 +38,7 @@
 #include <plat/omap4-keypad.h>
 #include <plat/display.h>
 #include <plat/nokia-dsi-panel.h>
+#include <plat/syntm12xx.h>
 
 #include "mux.h"
 #include "hsmmc.h"
@@ -256,6 +257,44 @@ static struct spi_board_info sdp4430_spi_board_info[] __initdata = {
 		.irq                    = ETH_KS8851_IRQ,
 	},
 };
+
+/* Begin Synaptic Touchscreen TM-01217 */
+
+static char *tm12xx_idev_names[] = {
+	"Synaptic TM12XX TouchPoint 1",
+	"Synaptic TM12XX TouchPoint 2",
+	"Synaptic TM12XX TouchPoint 3",
+	"Synaptic TM12XX TouchPoint 4",
+	"Synaptic TM12XX TouchPoint 5",
+	"Synaptic TM12XX TouchPoint 6",
+	NULL,
+};
+
+static u8 tm12xx_button_map[] = {
+	KEY_F1,
+	KEY_F2,
+};
+
+static struct tm12xx_ts_platform_data tm12xx_platform_data[] = {
+	{ /* Primary Controller */
+		.gpio_intr = 35,
+		.idev_name = tm12xx_idev_names,
+		.button_map = tm12xx_button_map,
+		.num_buttons = ARRAY_SIZE(tm12xx_button_map),
+		.repeat = 0,
+		.swap_xy = 1,
+	},
+	{ /* Secondary Controller */
+		.gpio_intr = 36,
+		.idev_name = tm12xx_idev_names,
+		.button_map = tm12xx_button_map,
+		.num_buttons = ARRAY_SIZE(tm12xx_button_map),
+		.repeat = 0,
+		.swap_xy = 1,
+	},
+};
+
+/* End Synaptic Touchscreen TM-01217 */
 
 static int omap_ethernet_init(void)
 {
@@ -614,7 +653,17 @@ static struct i2c_board_info __initdata sdp4430_i2c_boardinfo[] = {
 		.platform_data = &sdp4430_twldata,
 	},
 };
+static struct i2c_board_info __initdata sdp4430_i2c_2_boardinfo[] = {
+	{
+		I2C_BOARD_INFO("tm12xx_ts_primary", 0x4b),
+		.platform_data = &tm12xx_platform_data[0],
+	},
+};
 static struct i2c_board_info __initdata sdp4430_i2c_3_boardinfo[] = {
+	{
+		I2C_BOARD_INFO("tm12xx_ts_secondary", 0x4b),
+		.platform_data = &tm12xx_platform_data[1],
+	},
 	{
 		I2C_BOARD_INFO("tmp105", 0x48),
 	},
@@ -627,6 +676,7 @@ static struct i2c_board_info __initdata sdp4430_i2c_4_boardinfo[] = {
 		I2C_BOARD_INFO("hmc5843", 0x1e),
 	},
 };
+
 static int __init omap4_i2c_init(void)
 {
 	/*
@@ -635,8 +685,9 @@ static int __init omap4_i2c_init(void)
 	 */
 	omap_register_i2c_bus(1, 400, sdp4430_i2c_boardinfo,
 			ARRAY_SIZE(sdp4430_i2c_boardinfo));
-	omap_register_i2c_bus(2, 400, NULL, 0);
-	omap_register_i2c_bus(3, 400, sdp4430_i2c_3_boardinfo,
+	omap_register_i2c_bus(2, 400, sdp4430_i2c_2_boardinfo,
+			ARRAY_SIZE(sdp4430_i2c_2_boardinfo));
+ 	omap_register_i2c_bus(3, 400, sdp4430_i2c_3_boardinfo,
 				ARRAY_SIZE(sdp4430_i2c_3_boardinfo));
 	omap_register_i2c_bus(4, 400, sdp4430_i2c_4_boardinfo,
 				ARRAY_SIZE(sdp4430_i2c_4_boardinfo));

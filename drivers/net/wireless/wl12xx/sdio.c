@@ -28,6 +28,7 @@
 #include <linux/mmc/sdio_func.h>
 #include <linux/mmc/sdio_ids.h>
 #include <linux/mmc/card.h>
+#include <linux/mmc/host.h>
 #include <linux/gpio.h>
 #include <linux/wl12xx.h>
 #include <linux/pm_runtime.h>
@@ -162,6 +163,11 @@ static int wl1271_sdio_power_on(struct wl1271 *wl)
 {
 	struct sdio_func *func = wl_to_func(wl);
 	int ret;
+
+	/*
+	 * defeat the runtime_idle OFF state
+	 */
+	mmc_power_restore_host(func->card->host);
 
 	/* Power up the card */
 	ret = pm_runtime_get_sync(&func->dev);
@@ -302,9 +308,23 @@ static int wl1271_resume(struct device *dev)
 	return 0;
 }
 
+/*
+ * SDIO bus runtime idle gets precedence over this, but that just calls
+ * the generic version.  The generic version will call our version if
+ * it exists, so we still get called.  We need to allow it to power us
+ * off.
+ */
+static int wl1271_runtime_idle(struct device *dev)
+{
+	struct sdio_func *func = dev_to_sdio_func(dev);
+
+	return mmc_power_save_host(func->card->host);
+}
+
 static const struct dev_pm_ops wl1271_sdio_pm_ops = {
 	.suspend	= wl1271_suspend,
 	.resume		= wl1271_resume,
+	.runtime_idle	= wl1271_runtime_idle,
 };
 
 static struct sdio_driver wl1271_sdio_driver = {

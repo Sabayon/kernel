@@ -2182,7 +2182,7 @@ static struct omap_hwmod_class mmc_class = {
 
 /* MMC/SD/SDIO1 */
 
-static struct mmc_dev_attr mmc_dev_attr = {
+static struct omap_mmc_dev_attr mmc_dev_attr = {
 	.flags = OMAP_HSMMC_SUPPORTS_DUAL_VOLT,
 };
 

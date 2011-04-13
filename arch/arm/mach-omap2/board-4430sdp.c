@@ -141,7 +141,6 @@ static struct omap4_keypad_platform_data sdp4430_keypad_data = {
 	.rows			= 8,
 	.cols			= 8,
 };
-
 static struct gpio_led sdp4430_gpio_leds[] = {
 	{
 		.name	= "omap4:green:debug0",
@@ -351,6 +350,44 @@ error1:
 	return status;
 }
 
+int dsi_set_backlight(struct omap_dss_device *dssdev, int level);
+
+static struct nokia_dsi_panel_data dsi1_panel = {
+		.name		= "taal",
+		.reset_gpio	= 102,
+		.use_ext_te	= false,
+		.ext_te_gpio	= 101,
+		.use_esd_check	= false,
+		.set_backlight	= dsi_set_backlight,
+};
+
+static struct omap_dss_device sdp4430_lcd_device = {
+	.name			= "lcd",
+	.driver_name		= "taal",
+	.type			= OMAP_DISPLAY_TYPE_DSI,
+	.data			= &dsi1_panel,
+	.phy.dsi		= {
+		.clk_lane	= 1,
+		.clk_pol	= 0,
+		.data1_lane	= 2,
+		.data1_pol	= 0,
+		.data2_lane	= 3,
+		.data2_pol	= 0,
+		.div		= {
+			.regn           = 20,   /* 1.92 MHz */
+			.regm           = 250,  /* 240 MHz */
+			.regm_dispc     = 6,    /* 160 MHz */
+			.regm_dsi       = 6,    /* 160 MHz */
+
+			.lp_clk_div     = 9,    /* 8.88 MHz */
+
+			.lck_div        = 1,    /* 160 MHz */
+			.pck_div        = 4,    /* 40 MHz */
+		},
+	},
+	.channel		= OMAP_DSS_CHANNEL_LCD,
+};
+
 static struct platform_device sdp4430_hdmi_audio_device = {
 	.name		= "hdmi-audio-dai",
 	.id		= -1,
@@ -360,6 +397,7 @@ static struct platform_device *sdp4430_devices[] __initdata = {
 	&sdp4430_gpio_keys_device,
 	&sdp4430_leds_gpio,
 	&sdp4430_leds_pwm,
+	&sdp4430_lcd_device,
 	&sdp4430_hdmi_audio_device,
 };
 
@@ -739,8 +777,6 @@ int dsi_set_backlight(struct omap_dss_device *dssdev, int level)
 	return 0;
 }
 
-static struct nokia_dsi_panel_data dsi1_panel;
-
 static void sdp4430_lcd_init(void)
 {
 	u32 reg;
@@ -811,42 +847,6 @@ static void sdp4430_panel_disable_hdmi(struct omap_dss_device *dssdev)
 	gpio_free(HDMI_GPIO_LS_OE);
 	gpio_free(HDMI_GPIO_HPD);
 }
-
-static struct nokia_dsi_panel_data dsi1_panel = {
-		.name		= "taal",
-		.reset_gpio	= 102,
-		.use_ext_te	= false,
-		.ext_te_gpio	= 101,
-		.use_esd_check	= false,
-		.set_backlight	= dsi_set_backlight,
-};
-
-static struct omap_dss_device sdp4430_lcd_device = {
-	.name			= "lcd",
-	.driver_name		= "taal",
-	.type			= OMAP_DISPLAY_TYPE_DSI,
-	.data			= &dsi1_panel,
-	.phy.dsi		= {
-		.clk_lane	= 1,
-		.clk_pol	= 0,
-		.data1_lane	= 2,
-		.data1_pol	= 0,
-		.data2_lane	= 3,
-		.data2_pol	= 0,
-		.div		= {
-			.regn           = 20,   /* 1.92 MHz */
-			.regm           = 250,  /* 240 MHz */
-			.regm_dispc     = 6,    /* 160 MHz */
-			.regm_dsi       = 6,    /* 160 MHz */
-
-			.lp_clk_div     = 9,    /* 8.88 MHz */
-
-			.lck_div        = 1,    /* 160 MHz */
-			.pck_div        = 4,    /* 40 MHz */
-		},
-	},
-	.channel		= OMAP_DSS_CHANNEL_LCD,
-};
 
 static struct omap_dss_device sdp4430_hdmi_device = {
 	.name = "hdmi",

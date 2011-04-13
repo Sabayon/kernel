@@ -321,14 +321,6 @@ static struct omap_hwmod_ocp_if omap44xx_fdif__l3_main_2 = {
 	.user		= OCP_USER_MPU | OCP_USER_SDMA,
 };
 
-/* iss -> l3_main_2 */
-static struct omap_hwmod_ocp_if omap44xx_iss__l3_main_2 = {
-	.master		= &omap44xx_iss_hwmod,
-	.slave		= &omap44xx_l3_main_2_hwmod,
-	.clk		= "l3_div_ck",
-	.user		= OCP_USER_MPU | OCP_USER_SDMA,
-};
-
 
 /* l3_main_2 interface data */
 /* dma_system -> l3_main_2 */
@@ -357,6 +349,14 @@ static struct omap_hwmod_ocp_if omap44xx_gpu__l3_main_2 = {
 /* iva -> l3_main_2 */
 static struct omap_hwmod_ocp_if omap44xx_iva__l3_main_2 = {
 	.master		= &omap44xx_iva_hwmod,
+	.slave		= &omap44xx_l3_main_2_hwmod,
+	.clk		= "l3_div_ck",
+	.user		= OCP_USER_MPU | OCP_USER_SDMA,
+};
+
+/* iss -> l3_main_2 */
+static struct omap_hwmod_ocp_if omap44xx_iss__l3_main_2 = {
+	.master		= &omap44xx_iss_hwmod,
 	.slave		= &omap44xx_l3_main_2_hwmod,
 	.clk		= "l3_div_ck",
 	.user		= OCP_USER_MPU | OCP_USER_SDMA,
@@ -412,8 +412,8 @@ static struct omap_hwmod_ocp_if *omap44xx_l3_main_2_slaves[] = {
 	&omap44xx_iss__l3_main_2,
 	&omap44xx_iva__l3_main_2,
 	&omap44xx_l3_main_1__l3_main_2,
-	&omap44xx_fdif__l3_main_2,
 	&omap44xx_gpu__l3_main_2,
+	&omap44xx_fdif__l3_main_2,
 	&omap44xx_l4_cfg__l3_main_2,
 	&omap44xx_usb_otg_hs__l3_main_2,
 };
@@ -653,7 +653,6 @@ static struct omap_hwmod omap44xx_mpu_private_hwmod = {
  *  elm
  *  emif1
  *  emif2
- *  fdif
  *  gpmc
  *  gpu
  *  hdq1w

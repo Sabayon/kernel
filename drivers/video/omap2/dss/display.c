@@ -313,6 +313,32 @@ void omapdss_default_get_resolution(struct omap_dss_device *dssdev,
 }
 EXPORT_SYMBOL(omapdss_default_get_resolution);
 
+void omapdss_default_get_timings(struct omap_dss_device *dssdev,
+			struct omap_video_timings *timings)
+{
+	*timings = dssdev->panel.timings;
+}
+EXPORT_SYMBOL(omapdss_default_get_timings);
+
+int omapdss_default_check_timings(struct omap_dss_device *dssdev,
+			struct omap_video_timings *timings)
+{
+	return memcmp(&dssdev->panel.timings, timings, sizeof(*timings));
+}
+EXPORT_SYMBOL(omapdss_default_check_timings);
+
+bool omapdss_default_is_detected(struct omap_dss_device *dssdev)
+{
+	if (dssdev->state == OMAP_DSS_DISPLAY_SUSPENDED) {
+		/* show resume info for suspended displays */
+		return dssdev->activate_after_resume;
+	} else {
+		return dssdev->state != OMAP_DSS_DISPLAY_DISABLED;
+	}
+}
+EXPORT_SYMBOL(omapdss_default_is_detected);
+
+
 void default_get_overlay_fifo_thresholds(enum omap_plane plane,
 		u32 fifo_size, enum omap_burst_size *burst_size,
 		u32 *fifo_low, u32 *fifo_high)
@@ -662,4 +688,3 @@ void omap_dss_remove_notify(struct omap_dss_device *dssdev,
 	blocking_notifier_chain_unregister(&dssdev->notifier, nb);
 }
 EXPORT_SYMBOL(omap_dss_remove_notify);
-

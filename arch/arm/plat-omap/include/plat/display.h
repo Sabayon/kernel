@@ -132,6 +132,10 @@ enum omap_dss_venc_type {
 enum omap_display_caps {
 	OMAP_DSS_DISPLAY_CAP_MANUAL_UPDATE	= 1 << 0,
 	OMAP_DSS_DISPLAY_CAP_TEAR_ELIM		= 1 << 1,
+	/* set if display supports hotplug detect, and will call
+	 * omap_dss_notify(CONNECT/DISCONNECT) at appropriate times
+	 */
+	OMAP_DSS_DISPLAY_CAP_HPD			= 1 << 2,
 };
 
 enum omap_dss_update_mode {
@@ -516,6 +520,17 @@ struct omap_dss_driver {
 
 	int (*set_wss)(struct omap_dss_device *dssdev, u32 wss);
 	u32 (*get_wss)(struct omap_dss_device *dssdev);
+
+	/* return raw EDID.. len indicates the max number of bytes of the
+	 * EDID to read */
+	int (*get_edid)(struct omap_dss_device *dssdev, u8 *edid, int len);
+
+	/* is this display physically present / plugged-in?  For hot-plug
+	 * type displays (DVI, HDMI), this means is the cable plugged in.
+	 * For displays like LCD panels, this means is the display present
+	 * on the board.
+	 */
+	bool (*is_detected)(struct omap_dss_device *dssdev);
 };
 
 int omap_dss_register_driver(struct omap_dss_driver *);
@@ -538,8 +553,13 @@ void omap_dss_stop_device(struct omap_dss_device *dssdev);
  * to the notifier function, and the dssdev is passed as the third.
  */
 enum omap_dss_event {
-	OMAP_DSS_SIZE_CHANGE
-	/* possibly add additional events, like hot-plug connect/disconnect */
+	OMAP_DSS_SIZE_CHANGE,
+	/* the CONNECT/DISCONNECT events will be sent if OMAP_DSS_DISPLAY_CAP_HPD
+	 * flag is set in the dssdev->caps.  Otherwise the user will have to poll
+	 * for detection when a monitor is plugged/unplugged.
+	 */
+	OMAP_DSS_HOTPLUG_CONNECT,
+	OMAP_DSS_HOTPLUG_DISCONNECT,
 };
 
 void omap_dss_notify(struct omap_dss_device *dssdev, enum omap_dss_event evt);
@@ -552,6 +572,11 @@ struct omap_overlay_manager *omap_dss_get_overlay_manager(int num);
 int omap_dss_get_num_overlays(void);
 struct omap_overlay *omap_dss_get_overlay(int num);
 
+void omapdss_default_get_timings(struct omap_dss_device *dssdev,
+		struct omap_video_timings *timings);
+int omapdss_default_check_timings(struct omap_dss_device *dssdev,
+		struct omap_video_timings *timings);
+bool omapdss_default_is_detected(struct omap_dss_device *dssdev);
 void omapdss_default_get_resolution(struct omap_dss_device *dssdev,
 		u16 *xres, u16 *yres);
 int omapdss_default_get_recommended_bpp(struct omap_dss_device *dssdev);

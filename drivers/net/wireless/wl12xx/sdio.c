@@ -160,11 +160,6 @@ static int wl1271_sdio_power_on(struct wl1271 *wl)
 	struct sdio_func *func = wl_to_func(wl);
 	int ret;
 
-	/*
-	 * defeat the runtime_idle OFF state
-	 */
-	mmc_power_restore_host(func->card->host);
-
 	/* Power up the card */
 	ret = pm_runtime_get_sync(&func->dev);
 	if (ret < 0)

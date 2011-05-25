@@ -701,11 +701,13 @@ static void __init beagle_opp_init(void)
 		/* Enable MPU 1GHz and lower opps */
 		dev = &mh->od->pdev.dev;
 		r = opp_enable(dev, 800000000);
+		r |= opp_enable(dev, 1000000000);
 		/* TODO: MPU 1GHz needs SR and ABB */
 
 		/* Enable IVA 800MHz and lower opps */
 		dev = &dh->od->pdev.dev;
 		r |= opp_enable(dev, 660000000);
+		r |= opp_enable(dev, 800000000);
 		/* TODO: DSP 800MHz needs SR and ABB */
 		if (r) {
 			pr_err("%s: failed to enable higher opp %d\n",

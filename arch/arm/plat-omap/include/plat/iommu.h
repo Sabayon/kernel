@@ -49,7 +49,7 @@ struct iommu {
 	struct mutex		mmap_lock; /* protect mmap */
 	int (*isr)(struct iommu *obj, u32 da, u32 iommu_errs, void *priv);
 
-	struct blocking_notifier_head	notifier;
+	struct raw_notifier_head	notifier;
 
 	u32 da_start;
 	u32 da_end;

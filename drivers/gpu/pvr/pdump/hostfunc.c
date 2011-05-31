@@ -218,7 +218,7 @@ IMG_VOID * HostCreateMutex(IMG_VOID)
 	psSem = kmalloc(sizeof(*psSem), GFP_KERNEL);
 	if (psSem)
 	{
-		init_MUTEX(psSem);
+		sema_init(psSem, 1);
 	}
 
 	return psSem;

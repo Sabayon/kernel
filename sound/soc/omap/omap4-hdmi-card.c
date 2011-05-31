@@ -39,7 +39,7 @@ static struct snd_soc_dai_link omap4_hdmi_dai = {
 /* Audio machine driver */
 static struct snd_soc_card snd_soc_omap4_hdmi = {
 	.name = "SDP4430HDMI",
-	/* .long_name = "TI OMAP4 HDMI Board", */
+	.long_name = "TI OMAP4 HDMI Board",
 	.dai_link = &omap4_hdmi_dai,
 	.num_links = 1,
 };

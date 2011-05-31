@@ -779,7 +779,8 @@ static PVRSRV_ERROR CreateDCSwapChain(IMG_HANDLE hDevice,
 	 */
 	INIT_WORK(&psDevInfo->sync_display_work, OMAPLFBSyncIHandler);
 	psDevInfo->sync_display_wq =
-		__create_workqueue("pvr_display_sync_wq", 1, 1, 1);
+		alloc_ordered_workqueue("pvr_display_sync_wq",
+			WQ_NON_REENTRANT | WQ_FREEZABLE | WQ_HIGHPRI);
 
 	DEBUG_PRINTK("Swap chain will have %u buffers for display %u",
 		(unsigned int)ui32BufferCount, psDevInfo->uDeviceID);

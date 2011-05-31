@@ -2979,12 +2979,22 @@ static void pvr_dmac_clean_range(const void *pvStart, const void *pvEnd)
 #endif
 }
 
+static void outer_flush_range_ulong_args(unsigned long a, unsigned long b)
+{
+	outer_flush_range((phys_addr_t)a, (phys_addr_t)b);
+}
+
 IMG_BOOL OSFlushCPUCacheRangeKM(IMG_HANDLE hOSMemHandle,
 								IMG_VOID *pvRangeAddrStart,
 								IMG_UINT32 ui32Length)
 {
 	return CheckExecuteCacheOp(hOSMemHandle, pvRangeAddrStart, ui32Length,
-							   dmac_flush_range, outer_flush_range);
+							   dmac_flush_range, outer_flush_range_ulong_args);
+}
+
+static void outer_clean_range_ulong_args(unsigned long a, unsigned long b)
+{
+        outer_clean_range((phys_addr_t)a, (phys_addr_t)b);
 }
 
 IMG_BOOL OSCleanCPUCacheRangeKM(IMG_HANDLE hOSMemHandle,
@@ -2992,15 +3002,21 @@ IMG_BOOL OSCleanCPUCacheRangeKM(IMG_HANDLE hOSMemHandle,
 								IMG_UINT32 ui32Length)
 {
 	return CheckExecuteCacheOp(hOSMemHandle, pvRangeAddrStart, ui32Length,
-							   pvr_dmac_clean_range, outer_clean_range);
+							   pvr_dmac_clean_range, outer_clean_range_ulong_args);
 }
+
+static void outer_inv_range_ulong_args(unsigned long a, unsigned long b)
+{
+        outer_inv_range((phys_addr_t)a, (phys_addr_t)b);
+}
+
 
 IMG_BOOL OSInvalidateCPUCacheRangeKM(IMG_HANDLE hOSMemHandle,
 									 IMG_VOID *pvRangeAddrStart,
 									 IMG_UINT32 ui32Length)
 {
 	return CheckExecuteCacheOp(hOSMemHandle, pvRangeAddrStart, ui32Length,
-							   pvr_dmac_inv_range, outer_inv_range);
+							   pvr_dmac_inv_range, outer_inv_range_ulong_args);
 }
 
 #else 

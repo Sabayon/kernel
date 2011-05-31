@@ -203,7 +203,7 @@ static void OMAPLFBFlipNoLock(OMAPLFB_SWAPCHAIN *psSwapChain,
 			driver = display->driver;
 			manager->apply(manager);
 		}
-
+#if 0
 		if (dss_ovl_manually_updated(overlay)) {
 			if (driver->sched_update)
 				driver->sched_update(display, 0, 0,
@@ -215,7 +215,7 @@ static void OMAPLFBFlipNoLock(OMAPLFB_SWAPCHAIN *psSwapChain,
 							overlay_info.height);
 
 		}
-
+#endif
 	}
 }
 

@@ -120,4 +120,6 @@ source "drivers/clk/Kconfig"
 
 source "drivers/hwspinlock/Kconfig"
 
+source "drivers/dsp/syslink/Kconfig"
+
 endmenu

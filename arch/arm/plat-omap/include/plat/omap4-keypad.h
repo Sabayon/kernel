@@ -10,5 +10,6 @@ struct omap4_keypad_platform_data {
 	u8 cols;
 };
 
-extern int omap4_keyboard_init(struct omap4_keypad_platform_data *);
+extern int omap4_keypad_initialization(struct omap4_keypad_platform_data *);
+
 #endif

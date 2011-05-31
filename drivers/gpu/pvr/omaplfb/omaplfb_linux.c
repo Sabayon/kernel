@@ -54,7 +54,7 @@
 
 #if defined(LDM_PLATFORM)
 #include <linux/platform_device.h>
-#if defined(SGX_EARLYSUSPEND)
+#if defined(SGX_EARLYSUSPEND) && defined(CONFIG_HAS_EARLYSUSPEND)
 #include <linux/earlysuspend.h>
 #endif
 #endif

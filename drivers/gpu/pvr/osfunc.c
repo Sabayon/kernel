@@ -47,6 +47,7 @@
 #include <linux/capability.h>
 #include <asm/uaccess.h>
 #include <linux/spinlock.h>
+#include <asm/outercache.h>
 #if defined(PVR_LINUX_MISR_USING_WORKQUEUE) || \
 	defined(PVR_LINUX_MISR_USING_PRIVATE_WORKQUEUE) || \
 	defined(PVR_LINUX_TIMERS_USING_WORKQUEUES) || \

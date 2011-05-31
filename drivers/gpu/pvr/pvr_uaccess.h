@@ -27,10 +27,6 @@
 #ifndef __PVR_UACCESS_H__
 #define __PVR_UACCESS_H__
 
-#ifndef AUTOCONF_INCLUDED
- #include <linux/config.h>
-#endif
-
 #include <linux/version.h>
 #include <asm/uaccess.h>
 

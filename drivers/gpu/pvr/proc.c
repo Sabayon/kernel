@@ -24,10 +24,6 @@
  *
  ******************************************************************************/
 
-#ifndef AUTOCONF_INCLUDED
- #include <linux/config.h>
-#endif
-
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/version.h>

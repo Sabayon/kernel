@@ -28,9 +28,6 @@
 #include "resman.h"
 
 #ifdef __linux__
-#ifndef AUTOCONF_INCLUDED
- #include <linux/config.h>
-#endif
 
 #include <linux/version.h>
 #include <linux/sched.h>

@@ -27,10 +27,6 @@
 #ifndef __IMG_LINUX_MM_H__
 #define __IMG_LINUX_MM_H__
 
-#ifndef AUTOCONF_INCLUDED
- #include <linux/config.h>
-#endif
-
 #include <linux/version.h>
 #include <linux/slab.h>
 #include <linux/mm.h>

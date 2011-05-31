@@ -730,6 +730,7 @@ static struct snd_soc_dai_link sdp4430_dai[] = {
 		.num_be = ARRAY_SIZE(mm1_be),
 		.fe_playback_channels = 2,
 		.fe_capture_channels = 8,
+		.no_host_mode = SND_SOC_DAI_LINK_OPT_HOST,
 	},
 	{
 		.name = "SDP4430 Media Capture",
@@ -757,6 +758,7 @@ static struct snd_soc_dai_link sdp4430_dai[] = {
 		.num_be = ARRAY_SIZE(mm1_be),
 		.fe_playback_channels = 2,
 		.fe_capture_channels = 2,
+		.no_host_mode = SND_SOC_DAI_LINK_OPT_HOST,
 	},
 	{
 		.name = "SDP4430 Tones Playback",
@@ -796,6 +798,7 @@ static struct snd_soc_dai_link sdp4430_dai[] = {
 		.num_be = ARRAY_SIZE(modem_be),
 		.fe_playback_channels = 2,
 		.fe_capture_channels = 2,
+		.no_host_mode = SND_SOC_DAI_LINK_NO_HOST,
 	},
 	{
 		.name = "SDP4430 Media LP",
@@ -809,6 +812,7 @@ static struct snd_soc_dai_link sdp4430_dai[] = {
 		.supported_be = mm_lp_be,
 		.num_be = ARRAY_SIZE(mm_lp_be),
 		.fe_playback_channels = 2,
+		.no_host_mode = SND_SOC_DAI_LINK_OPT_HOST,
 	},
 #ifdef CONFIG_SND_OMAP_SOC_HDMI
 	{

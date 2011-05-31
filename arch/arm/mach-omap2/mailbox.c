@@ -48,6 +48,7 @@
 static void __iomem *mbox_base;
 static u32 *mbox_ctx;
 static int nr_mbox_users;
+static struct clk *mbox_ick_handle;
 
 struct omap_mbox2_fifo {
 	unsigned long msg;

@@ -78,6 +78,44 @@ static int omap2_mbox_startup(struct omap_mbox *mbox)
 
 	pm_runtime_enable(mbox->dev->parent);
 	pm_runtime_get_sync(mbox->dev->parent);
+	
+	if (!cpu_is_omap44xx()) {
+		mbox_ick_handle = clk_get(NULL, "mailboxes_ick");
+		if (IS_ERR(mbox_ick_handle)) {
+			printk(KERN_ERR "Could not get mailboxes_ick: %ld\n",
+				PTR_ERR(mbox_ick_handle));
+			return PTR_ERR(mbox_ick_handle);
+		}
+		clk_enable(mbox_ick_handle);
+	}
+
+	if (cpu_is_omap44xx()) {
+		mbox_write_reg(OMAP4_SOFTRESET, MAILBOX_SYSCONFIG);
+		timeout = jiffies + msecs_to_jiffies(20);
+		do {
+			l = mbox_read_reg(MAILBOX_SYSCONFIG);
+			if (!(l & OMAP4_SOFTRESET))
+				break;
+		} while (!time_after(jiffies, timeout));
+
+		if (l & OMAP4_SOFTRESET) {
+			pr_err("Can't take mailbox out of reset\n");
+			return -ENODEV;
+		}
+	} else {
+		mbox_write_reg(SOFTRESET, MAILBOX_SYSCONFIG);
+		timeout = jiffies + msecs_to_jiffies(20);
+		do {
+			l = mbox_read_reg(MAILBOX_SYSSTATUS);
+			if (l & RESETDONE)
+				break;
+		} while (!time_after(jiffies, timeout));
+
+		if (!(l & RESETDONE)) {
+			pr_err("Can't take mailbox out of reset\n");
+			return -ENODEV;
+		}
+	}
 
 	l = mbox_read_reg(MAILBOX_REVISION);
 	pr_debug("omap mailbox rev %d.%d\n", (l & 0xf0) >> 4, (l & 0x0f));
@@ -91,6 +129,12 @@ static void omap2_mbox_shutdown(struct omap_mbox *mbox)
 {
 	pm_runtime_put_sync(mbox->dev->parent);
 	pm_runtime_disable(mbox->dev->parent);
+
+	if (!cpu_is_omap44xx()) {
+		clk_disable(mbox_ick_handle);
+		clk_put(mbox_ick_handle);
+		mbox_ick_handle = NULL;
+	}
 }
 
 /* Mailbox FIFO handle functions */

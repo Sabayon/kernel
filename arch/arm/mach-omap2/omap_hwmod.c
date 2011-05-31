@@ -1612,6 +1612,8 @@ struct omap_hwmod *omap_hwmod_lookup(const char *name)
 	return oh;
 }
 
+EXPORT_SYMBOL_GPL(omap_hwmod_lookup);
+
 /**
  * omap_hwmod_for_each - call function for each registered omap_hwmod
  * @fn: pointer to a callback function
@@ -2052,6 +2054,8 @@ void __iomem *omap_hwmod_get_mpu_rt_va(struct omap_hwmod *oh)
 
 	return oh->_mpu_rt_va;
 }
+
+EXPORT_SYMBOL_GPL(omap_hwmod_get_mpu_rt_va);
 
 /**
  * omap_hwmod_add_initiator_dep - add sleepdep from @init_oh to @oh

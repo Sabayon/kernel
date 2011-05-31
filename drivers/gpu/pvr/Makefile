@@ -1,7 +1,15 @@
 #
-ccflags-y = -DLINUX -D__linux__ -Idrivers/gpu/pvr \
-	-DANDROID \
-	-DPVR_BUILD_DIR="\"omap_sgx_android\"" \
+ifeq ($(CONFIG_ANDROID),)
+ccflags-y = -DLINUX -D__linux__ \
+		-DPVR_BUILD_DIR="\"omap_sgx_linux\"" \
+		-DPVRSRV_MODNAME="\"pvrsrvkm"\"
+else
+ccflags-y = -DLINUX -D__linux__ \
+                -DPVR_BUILD_DIR="\"omap_sgx_android\"" \
+                -DPVRSRV_MODNAME="\"pvrsrvkm"\" \
+		-DANDROID
+endif
+ccflags-y += -Idrivers/gpu/pvr \
 	-DSGX_DYNAMIC_TIMING_INFO \
 	-DSYS_CUSTOM_POWERLOCK_WRAP \
 	-DSERVICES4 \
@@ -28,8 +36,7 @@ ccflags-y = -DLINUX -D__linux__ -Idrivers/gpu/pvr \
 	-DSUPPORT_SGX_NEW_STATUS_VALS \
 	-DSGX_EARLYSUSPEND \
 	-DPVR_NO_OMAP_TIMER \
-	-DSUPPORT_SGX_LOW_LATENCY_SCHEDULING \
-	-DPVRSRV_MODNAME="\"pvrsrvkm"\"
+	-DSUPPORT_SGX_LOW_LATENCY_SCHEDULING
 
 ccflags-$(CONFIG_SGX540) +=  -Idrivers/gpu/pvr/omap4  -Idrivers/gpu/pvr/sgx \
 	-DSGX_CLK_CORE_DIV5 \

@@ -68,6 +68,7 @@ struct omap_mmc_platform_data {
 
 	/* Integrating attributes from the omap_hwmod layer */
 	u8 controller_flags;
+	struct omap_mmc_dev_attr *dev_attr;
 
 	/* Register offset deviation */
 	u16 reg_offset;

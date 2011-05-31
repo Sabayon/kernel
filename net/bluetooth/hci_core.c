@@ -1756,6 +1756,7 @@ static void hci_cmd_task(unsigned long arg)
 	if (!atomic_read(&hdev->cmd_cnt) && time_after(jiffies, hdev->cmd_last_tx + HZ)) {
 		BT_ERR("%s command tx timeout", hdev->name);
 		atomic_set(&hdev->cmd_cnt, 1);
+		clear_bit(HCI_RESET, &hdev->flags);
 	}
 
 	/* Send queued commands */

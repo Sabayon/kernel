@@ -813,6 +813,7 @@ static int __init omap2_init_devices(void)
 	 * please keep these calls, and their implementations above,
 	 * in alphabetical order so they're easier to sort through.
 	 */
+	omap_init_abe();
 	omap_init_audio();
 	omap_init_camera();
 	omap_init_mbox();

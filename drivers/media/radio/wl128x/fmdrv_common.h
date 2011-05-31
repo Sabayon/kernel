@@ -22,7 +22,7 @@
 #ifndef _FMDRV_COMMON_H
 #define _FMDRV_COMMON_H
 
-#define FM_ST_REG_TIMEOUT   msecs_to_jiffies(6000)	/* 6 sec */
+#define FM_ST_REG_TIMEOUT   msecs_to_jiffies(16000)	/* 16 sec */
 #define FM_PKT_LOGICAL_CHAN_NUMBER  0x08   /* Logical channel 8 */
 
 #define REG_RD       0x1

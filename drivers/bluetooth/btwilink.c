@@ -37,7 +37,7 @@
 /* Number of seconds to wait for registration completion
  * when ST returns PENDING status.
  */
-#define BT_REGISTER_TIMEOUT   6000	/* 6 sec */
+#define BT_REGISTER_TIMEOUT   16000	/* 16 sec */
 
 /**
  * struct ti_st - driver operation structure

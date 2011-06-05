@@ -4,7 +4,7 @@ How to cook a Sabayon kernel, in 4 steps:
    hrt/allstable.git or Greg KH stable repos are good. Example:
 
    $ git remote add stable <git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-3.x.y.git>
-   $ git merge origin/master && git push && git push --tags
+   $ git merge stable/<sometag> && git push && git push --tags
 
 
 2. Update Sabayon patches.

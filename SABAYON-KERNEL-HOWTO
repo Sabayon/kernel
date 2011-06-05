@@ -26,6 +26,9 @@ How to cook a Sabayon kernel, in 4 steps:
    # it is _VERY_ important to prefix all our branches with "sabayon-", followed
    # by the release we're going to match.
    $ git branch sabayon-3.0
+   $ git checkout sabayon-3.0
+   # create the remote branch
+   $ git push origin sabayon-3.0
 
    # now apply patches you have in sabayon/patches/<release>
    $ for p in $(cat sabayon/patches/<release>/series); do patch -p1 < "${p}" || exit 1; done

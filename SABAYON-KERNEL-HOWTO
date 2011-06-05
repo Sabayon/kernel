@@ -31,7 +31,8 @@ How to cook a Sabayon kernel, in 4 steps:
    $ git push origin sabayon-3.0
 
    # now apply patches you have in sabayon/patches/<release>
-   $ for p in $(cat sabayon/patches/<release>/series); do patch -p1 < "${p}" || exit 1; done
+   $ for p in $(cat sabayon/patches/<release>/series); \
+       do patch -p1 < "sabayon/patches/<release>/${p}" || exit 1; done
 
    # then create new config files in sabayon/config,
    # either using make oldconfig or menuconfig and selectively
@@ -49,7 +50,7 @@ How to cook a Sabayon kernel, in 4 steps:
    $ cp .config sabayon/config/sabayon-3.0-amd64.config
    # repeat for every kernel profile we have (sabayon-x86, server-{amd64,x86})
    # and cleanup the generated cruft
-   $ make cleanup
+   $ make distclean
 
    # now commit all!
    $ git add sabayon/config/* && git commit -a -m "Sabayon Kernel 3.0"

@@ -61,7 +61,7 @@ How to cook a Sabayon kernel, in 4 steps:
 
    # using sabayon-3.0 tag as example (same used below).
    # don't use the original tarball name to avoid collisions in /usr/portage/distfiles
-   $ git archive --prefix=linux-3.0/ --format=tar sabayon-3.0 | bzip2 > linux-3.0+sabayon.tar.bz2
+   $ git archive --prefix=linux-3.0+sabayon/ --format=tar sabayon-3.0 | bzip2 > linux-3.0+sabayon.tar.bz2
    # now take the tarball and push it to distfiles.sabayon.org
    $ scp linux-3.0+sabayon.tar.bz2 <user>@distfiles.sabayon.org:/sabayon/rsync/rsync.sabayon.org/distfiles/sys-kernel/
    # win!

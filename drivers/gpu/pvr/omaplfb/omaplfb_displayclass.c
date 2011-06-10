@@ -45,20 +45,28 @@
 #include <../drivers/video/omap2/omapfb/omapfb.h>
 #endif
 
+#if defined(SUPPORT_DRI_DRM)
+#include <drm/drmP.h>
+#else
 #include <linux/module.h>
+#endif
+
 #include <linux/string.h>
 #include <linux/notifier.h>
-
-#ifdef CONFIG_TILER_OMAP
-#include <mach/tiler.h>
-#define TILER_MIN_PADDR		0x60000000
-#define TILER_MAX_PADDR		0x7fffffff
-#endif
 
 #include "img_defs.h"
 #include "servicesext.h"
 #include "kerneldisplay.h"
 #include "omaplfb.h"
+
+#if defined(SUPPORT_DRI_DRM)
+#include "pvr_drm.h"
+#include "3rdparty_dc_drm_shared.h"
+#endif
+
+#if !defined(PVR_LINUX_USING_WORKQUEUES)
+#error "PVR_LINUX_USING_WORKQUEUES must be defined"
+#endif
 
 #define OMAPLFB_COMMAND_COUNT		1
 #define MAX_BUFFERS_FLIPPING		4
@@ -144,6 +152,12 @@ static PVRSRV_ERROR SetDCSrcColourKey(IMG_HANDLE hDevice,
  */
 static PVRSRV_ERROR CloseDCDevice(IMG_HANDLE hDevice)
 {
+#if defined(SUPPORT_DRI_DRM)
+	OMAPLFB_DEVINFO *psDevInfo = (OMAPLFB_DEVINFO *)hDevice;
+
+	psDevInfo->bLeaveVT = OMAP_FALSE;
+	UnBlankDisplay(psDevInfo);
+#endif
 	/* Nothing to do */
 	return PVRSRV_OK;
 }
@@ -289,7 +303,7 @@ static void SetFlushStateExternal(OMAPLFB_DEVINFO* psDevInfo,
  * Unblank the framebuffer display
  * in: psDevInfo
  */
-static OMAP_ERROR UnBlankDisplay(OMAPLFB_DEVINFO *psDevInfo)
+OMAP_ERROR UnBlankDisplay(OMAPLFB_DEVINFO *psDevInfo)
 {
 	DEBUG_PRINTK("Executing for display %u",
 		psDevInfo->uDeviceID);
@@ -298,13 +312,36 @@ static OMAP_ERROR UnBlankDisplay(OMAPLFB_DEVINFO *psDevInfo)
 	if (fb_blank(psDevInfo->psLINFBInfo, FB_BLANK_UNBLANK))
 	{
 		console_unlock();
-		WARNING_PRINTK("fb_blank failed");
+		WARNING_PRINTK("fb_blank FB_BLANK_UNBLANK failed");
 		return OMAP_ERROR_GENERIC;
 	}
 	console_unlock();
 
 	return OMAP_OK;
 }
+
+/*
+ * Blank the framebuffer display
+ * in: psDevInfo
+ */
+#if defined(SUPPORT_DRI_DRM) && defined(PVR_DISPLAY_CONTROLLER_DRM_IOCTL)
+static OMAP_ERROR BlankDisplay(OMAPLFB_DEVINFO *psDevInfo, int blank_cmd)
+{
+	DEBUG_PRINTK("Executing for display %u",
+		psDevInfo->uDeviceID);
+
+	acquire_console_sem();
+	if (fb_blank(psDevInfo->psLINFBInfo, blank_cmd))
+	{
+		release_console_sem();
+		WARNING_PRINTK("fb_blank %i failed", blank_cmd);
+		return OMAP_ERROR_GENERIC;
+	}
+	release_console_sem();
+
+	return OMAP_OK;
+}
+#endif
 
 /*
  * Framebuffer listener
@@ -837,6 +874,14 @@ static PVRSRV_ERROR CreateDCSwapChain(IMG_HANDLE hDevice,
 		goto ErrorUnRegisterDisplayClient;
 	}
 	
+	psDevInfo->uiSwapChainID++;
+	if (psDevInfo->uiSwapChainID == 0)
+	{
+		psDevInfo->uiSwapChainID++;
+	}
+	psSwapChain->uiSwapChainID = psDevInfo->uiSwapChainID;
+	*pui32SwapChainID = psDevInfo->uiSwapChainID;
+
 	*phSwapChain = (IMG_HANDLE)psSwapChain;
 
 	return PVRSRV_OK;
@@ -1037,7 +1082,11 @@ static void OMAPLFBSyncIHandler(struct work_struct *work)
 	mutex_lock(&psDevInfo->sSwapChainLockMutex);
 
 	psSwapChain = psDevInfo->psSwapChain;
-	if (!psSwapChain || psSwapChain->bFlushCommands)
+	if (!psSwapChain || psSwapChain->bFlushCommands
+#if defined(SUPPORT_DRI_DRM)
+		|| psDevInfo->bLeaveVT
+#endif
+	)
 		goto ExitUnlock;
 
 	psFlipItem = &psSwapChain->psFlipItems[psSwapChain->ulRemoveIndex];
@@ -1123,7 +1172,11 @@ static IMG_BOOL ProcessFlip(IMG_HANDLE  hCmdCookie,
 
 	mutex_lock(&psDevInfo->sSwapChainLockMutex);
 
-	if (psDevInfo->bDeviceSuspended)
+	if (psDevInfo->bDeviceSuspended
+#if defined(SUPPORT_DRI_DRM)
+		|| psDevInfo->bLeaveVT == OMAP_TRUE
+#endif
+	)
 	{
 		/* If is suspended then assume the commands are completed */
 		psSwapChain->psPVRJTable->pfnPVRSRVCmdComplete(
@@ -1134,7 +1187,7 @@ static IMG_BOOL ProcessFlip(IMG_HANDLE  hCmdCookie,
 #if defined(SYS_USING_INTERRUPTS)
 
 	if( psFlipCmd->ui32SwapInterval == 0 ||
-		psDevInfo->ignore_sync ||
+
 		psSwapChain->bFlushCommands == OMAP_TRUE)
 	{
 #endif
@@ -1248,6 +1301,150 @@ void OMAPLFBDriverResume(void)
 	}
 }
 #endif /* defined(LDM_PLATFORM) */
+
+#if defined(SUPPORT_DRI_DRM) && defined(PVR_DISPLAY_CONTROLLER_DRM_IOCTL)
+static OMAPLFB_DEVINFO *OMAPLFBPVRDevIDToDevInfo(unsigned uiPVRDevID)
+{
+	int i;
+
+	for(i = 0; i < FRAMEBUFFER_COUNT; i++)
+	{
+		if (uiPVRDevID == (&pDisplayDevices[i])->uDeviceID)
+		{
+			return &pDisplayDevices[i];
+		}
+	}
+
+	WARNING_PRINTK("Couldn't find device %u\n", uiPVRDevID);
+
+	return NULL;
+}
+
+int PVR_DRM_MAKENAME(DISPLAY_CONTROLLER, _Ioctl)(struct drm_device unref__ *dev, void *arg, struct drm_file unref__ *pFile)
+{
+	uint32_t *puiArgs;
+	uint32_t uiCmd;
+	unsigned uiPVRDevID;
+	int ret = 0;
+	OMAPLFB_DEVINFO *psDevInfo;
+
+	if (arg == NULL)
+	{
+		return -EFAULT;
+	}
+
+	puiArgs = (uint32_t *)arg;
+	uiCmd = puiArgs[PVR_DRM_DISP_ARG_CMD];
+	uiPVRDevID = puiArgs[PVR_DRM_DISP_ARG_DEV];
+
+	psDevInfo = OMAPLFBPVRDevIDToDevInfo(uiPVRDevID);
+	if (psDevInfo == NULL)
+	{
+		return -EINVAL;
+	}
+
+
+	switch (uiCmd)
+	{
+		case PVR_DRM_DISP_CMD_LEAVE_VT:
+		case PVR_DRM_DISP_CMD_ENTER_VT:
+		{
+			OMAP_BOOL bLeaveVT = (uiCmd == PVR_DRM_DISP_CMD_LEAVE_VT);
+			DEBUG_PRINTK("PVR Device %u: %s\n", uiPVRDevID,
+				bLeaveVT ? "Leave VT" : "Enter VT");
+
+			mutex_lock(&psDevInfo->sSwapChainLockMutex);
+			psDevInfo->bLeaveVT = bLeaveVT;
+
+			if (psDevInfo->psSwapChain != NULL)
+			{
+				FlushInternalSyncQueue(psDevInfo->psSwapChain);
+
+				if (bLeaveVT)
+				{
+					OMAPLFBPresentSyncAddr(psDevInfo,
+							   (unsigned long) psDevInfo->sSystemBuffer.sSysAddr.uiAddr);
+				}
+			}
+
+			mutex_unlock(&psDevInfo->sSwapChainLockMutex);
+			UnBlankDisplay(psDevInfo);
+			break;
+		}
+		case PVR_DRM_DISP_CMD_ON:
+		case PVR_DRM_DISP_CMD_STANDBY:
+		case PVR_DRM_DISP_CMD_SUSPEND:
+		case PVR_DRM_DISP_CMD_OFF:
+		{
+			int iFBMode;
+#if defined(DEBUG)
+			{
+				const char *pszMode;
+				switch(uiCmd)
+				{
+					case PVR_DRM_DISP_CMD_ON:
+						pszMode = "On";
+						break;
+					case PVR_DRM_DISP_CMD_STANDBY:
+						pszMode = "Standby";
+						break;
+					case PVR_DRM_DISP_CMD_SUSPEND:
+						pszMode = "Suspend";
+						break;
+					case PVR_DRM_DISP_CMD_OFF:
+						pszMode = "Off";
+						break;
+					default:
+						pszMode = "(Unknown Mode)";
+						break;
+				}
+				DEBUG_PRINTK("PVR Device %u: Display %s\n",
+					uiPVRDevID, pszMode);
+			}
+#endif
+			switch(uiCmd)
+			{
+				case PVR_DRM_DISP_CMD_ON:
+					iFBMode = FB_BLANK_UNBLANK;
+					break;
+				case PVR_DRM_DISP_CMD_STANDBY:
+					iFBMode = FB_BLANK_HSYNC_SUSPEND;
+					break;
+				case PVR_DRM_DISP_CMD_SUSPEND:
+					iFBMode = FB_BLANK_VSYNC_SUSPEND;
+					break;
+				case PVR_DRM_DISP_CMD_OFF:
+					iFBMode = FB_BLANK_POWERDOWN;
+					break;
+				default:
+					return -EINVAL;
+			}
+
+			mutex_lock(&psDevInfo->sSwapChainLockMutex);
+
+			if (psDevInfo->psSwapChain != NULL)
+			{
+				FlushInternalSyncQueue(psDevInfo->psSwapChain);
+			}
+
+			mutex_unlock(&psDevInfo->sSwapChainLockMutex);
+			/* XXX: Internally all the previous ioctl commands are
+			 * implemented the same in omapfb
+			 */
+			BlankDisplay(psDevInfo, iFBMode);
+
+			break;
+		}
+		default:
+		{
+			ret = -EINVAL;
+			break;
+		}
+	}
+
+	return ret;
+}
+#endif
 
 /*
  * Frees the kernel framebuffer
@@ -1465,6 +1662,7 @@ static OMAP_ERROR InitDev(OMAPLFB_DEVINFO *psDevInfo, int fb_idx)
 	DEBUG_PRINTK("*Stride (bytes): %u",
 		(unsigned int)psLINFBInfo->fix.line_length);
 
+#ifndef CONFIG_DRM
 #ifdef CONFIG_TILER_OMAP
 	/* If TILER is being used, use correct physical stride and FB size */
 	if ((psPVRFBInfo->sSysAddr.uiAddr >= TILER_MIN_PADDR) &&
@@ -1483,6 +1681,7 @@ static OMAP_ERROR InitDev(OMAPLFB_DEVINFO *psDevInfo, int fb_idx)
 		psPVRFBInfo->ulBufferSize =
 			psPVRFBInfo->ulHeight * psPVRFBInfo->ulByteStride;
 	}
+#endif
 #endif
 
 	/* Get physical display size for DPI calculation */
@@ -1552,7 +1751,7 @@ static OMAP_ERROR InitDev(OMAPLFB_DEVINFO *psDevInfo, int fb_idx)
 /*
  *  Initialization routine for the 3rd party display driver
  */
-OMAP_ERROR OMAPLFBInit(struct omaplfb_device *omaplfb_dev)
+OMAP_ERROR OMAPLFBInit(void)
 {
 	OMAPLFB_DEVINFO *psDevInfo;
 	PFN_CMD_PROC pfnCmdProcList[OMAPLFB_COMMAND_COUNT];
@@ -1592,13 +1791,12 @@ OMAP_ERROR OMAPLFBInit(struct omaplfb_device *omaplfb_dev)
 			sizeof(OMAPLFB_DEVINFO) * FRAMEBUFFER_COUNT);
 	if(!pDisplayDevices)
 	{
+		pDisplayDevices = NULL;
 		ERROR_PRINTK("Out of memory");
 		return OMAP_ERROR_OUT_OF_MEMORY;
 	}
 	memset(pDisplayDevices, 0, sizeof(OMAPLFB_DEVINFO) *
 		FRAMEBUFFER_COUNT);
-	omaplfb_dev->display_info_list = pDisplayDevices;
-	omaplfb_dev->display_count = FRAMEBUFFER_COUNT;
 
 	/*
 	 * Initialize each display device
@@ -1637,7 +1835,9 @@ OMAP_ERROR OMAPLFBInit(struct omaplfb_device *omaplfb_dev)
 		psDevInfo->psSwapChain = 0;
 		psDevInfo->bFlushCommands = OMAP_FALSE;
 		psDevInfo->bDeviceSuspended = OMAP_FALSE;
-		psDevInfo->ignore_sync = OMAP_FALSE;
+#if defined(SUPPORT_DRI_DRM)
+		psDevInfo->bLeaveVT = OMAP_FALSE;
+#endif
 
 		if(psDevInfo->sDisplayInfo.ui32MaxSwapChainBuffers > 1)
 		{

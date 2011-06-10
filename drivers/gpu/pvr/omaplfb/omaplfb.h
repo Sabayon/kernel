@@ -27,6 +27,9 @@
 #ifndef __OMAPLFB_H__
 #define __OMAPLFB_H__
 
+/* max number of overlays to which a framebuffer data can be direct */
+#define OMAPFB_MAX_OVL_PER_FB 3
+
 extern IMG_BOOL PVRGetDisplayClassJTable(PVRSRV_DC_DISP2SRV_KMJTABLE *psJTable);
 
 typedef void * OMAP_HANDLE;
@@ -60,6 +63,7 @@ typedef struct OMAPLFB_FLIP_ITEM_TAG
 
 typedef struct PVRPDP_SWAPCHAIN_TAG
 {
+	unsigned int                    uiSwapChainID;
 	unsigned long                   ulBufferCount;
 	OMAPLFB_BUFFER*                 psBuffer;
 	OMAPLFB_FLIP_ITEM*              psFlipItems;
@@ -90,6 +94,7 @@ typedef struct OMAPLFB_FBINFO_TAG
 
 typedef struct OMAPLFB_DEVINFO_TAG
 {
+	unsigned int                    uiSwapChainID;
 	IMG_UINT32                      uDeviceID;
 	OMAPLFB_BUFFER                  sSystemBuffer;
 	PVRSRV_DC_DISP2SRV_KMJTABLE	sPVRJTable;
@@ -107,9 +112,9 @@ typedef struct OMAPLFB_DEVINFO_TAG
 	DISPLAY_DIMS                    sDisplayDim;
 	struct workqueue_struct*        sync_display_wq;
 	struct work_struct	        sync_display_work;
-	struct kobject			kobj;
-	OMAP_BOOL			ignore_sync;
-
+#if defined(SUPPORT_DRI_DRM)
+	OMAP_BOOL			bLeaveVT;
+#endif
 }  OMAPLFB_DEVINFO;
 
 typedef enum _OMAP_ERROR_
@@ -125,12 +130,6 @@ typedef enum _OMAP_ERROR_
 	OMAP_ERROR_DEVICE_REGISTER_FAILED   =  8
 
 } OMAP_ERROR;
-
-struct omaplfb_device {
-	struct device *dev;
-	OMAPLFB_DEVINFO *display_info_list;
-	int display_count;
-};
 
 #define	OMAPLFB_PAGE_SIZE 4096
 #define	OMAPLFB_PAGE_MASK (OMAPLFB_PAGE_SIZE - 1)
@@ -157,17 +156,17 @@ struct omaplfb_device {
 #define	ERROR_PRINTK(format, ...) printk("ERROR " DRIVER_PREFIX \
 	" (%s %i): " format "\n", __func__, __LINE__, ## __VA_ARGS__)
 
-OMAP_ERROR OMAPLFBInit(struct omaplfb_device *omaplfb_dev);
+OMAP_ERROR OMAPLFBInit(void);
 OMAP_ERROR OMAPLFBDeinit(void);
+OMAP_ERROR UnBlankDisplay(OMAPLFB_DEVINFO *psDevInfo);
 void *OMAPLFBAllocKernelMem(unsigned long ulSize);
 void OMAPLFBFreeKernelMem(void *pvMem);
 void OMAPLFBPresentSync(OMAPLFB_DEVINFO *psDevInfo,
 	OMAPLFB_FLIP_ITEM *psFlipItem);
+void OMAPLFBPresentSyncAddr(OMAPLFB_DEVINFO *psDevInfo, unsigned long aPhyAddr);
 OMAP_ERROR OMAPLFBGetLibFuncAddr(char *szFunctionName,
 	PFN_DC_GET_PVRJTABLE *ppfnFuncTable);
 void OMAPLFBFlip(OMAPLFB_SWAPCHAIN *psSwapChain, unsigned long aPhyAddr);
-void omaplfb_create_sysfs(struct omaplfb_device *odev);
-void omaplfb_remove_sysfs(struct omaplfb_device *odev);
 #ifdef LDM_PLATFORM
 void OMAPLFBDriverSuspend(void);
 void OMAPLFBDriverResume(void);

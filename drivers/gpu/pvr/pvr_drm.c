@@ -459,7 +459,7 @@ static void __exit PVRSRVDrmExit(void)
 #endif
 }
 
-module_init(PVRSRVDrmInit);
+late_initcall(PVRSRVDrmInit);
 module_exit(PVRSRVDrmExit);
 #endif	
 #endif	

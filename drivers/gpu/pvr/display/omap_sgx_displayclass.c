@@ -304,7 +304,7 @@ static PVRSRV_ERROR OpenDCDevice(IMG_UINT32 ui32DeviceID,
 	psDevInfo->sSystemBuffer.psSyncData = psSystemBufferSyncData;
 	display = psDevInfo->display;
 
-	DEBUG_PRINTK("Opening display %lu '%s'",psDevInfo->ulDeviceID,
+	pr_err("Opening display %lu '%s'",psDevInfo->ulDeviceID,
 		display->name);
 
 	/* TODO: Explain here why ORIENTATION_VERTICAL is used*/

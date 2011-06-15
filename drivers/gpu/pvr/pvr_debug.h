@@ -69,9 +69,9 @@ extern "C" {
 #define PVRSRV_NEED_PVR_DPF
 #endif
 
-#if !defined(PVRSRV_NEED_PVR_TRACE) && (defined(DEBUG) || defined(TIMING))
+//#if !defined(PVRSRV_NEED_PVR_TRACE) && (defined(DEBUG) || defined(TIMING))
 #define PVRSRV_NEED_PVR_TRACE
-#endif
+//#endif
 
 
 #if defined(PVRSRV_NEED_PVR_ASSERT)

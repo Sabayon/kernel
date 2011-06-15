@@ -32,6 +32,7 @@
 #include <linux/module.h>
 #include <linux/string.h>
 #include <linux/notifier.h>
+#include <linux/workqueue.h>
 
 #if defined(LDM_PLATFORM)
 #include <linux/platform_device.h>
@@ -621,7 +622,7 @@ static PVRSRV_ERROR CreateDCSwapChain(IMG_HANDLE hDevice,
 	 */
 	INIT_WORK(&psDevInfo->sync_display_work, display_sync_handler);
 	psDevInfo->sync_display_wq =
-		__create_workqueue("pvr_display_sync_wq", 1, 1, 1);
+		create_workqueue("pvr_display_sync_wq");
 
 	DEBUG_PRINTK("Swap chain will have %u buffers for display %lu",
 		(unsigned int)ui32BufferCount, psDevInfo->ulDeviceID);
@@ -1615,6 +1616,7 @@ static IMG_VOID __exit omap_sgx_dc_deinit(IMG_VOID)
 		WARNING_PRINTK("Driver cleanup failed");
 }
 
+MODULE_LICENSE(GPL);
 MODULE_SUPPORTED_DEVICE(DEVNAME);
 late_initcall(omap_sgx_dc_init);
 module_exit(omap_sgx_dc_deinit);

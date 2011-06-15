@@ -824,7 +824,7 @@ index 0000000..18a5452
 +}
 +
 diff --git a/drivers/video/console/fbcon.c b/drivers/video/console/fbcon.c
-index 8745637..0ec2106 100644
+index 8745637..0c36600 100644
 --- a/drivers/video/console/fbcon.c
 +++ b/drivers/video/console/fbcon.c
 @@ -26,7 +26,7 @@
@@ -1137,7 +1137,7 @@ index 8745637..0ec2106 100644
  	if (fbcon_is_inactive(vc, info) ||
  	    ops->blank_state != FB_BLANK_UNBLANK)
  		fbcon_del_cursor_timer(info);
-@@ -2258,7 +2316,7 @@ static int fbcon_switch(struct vc_data *vc)
+@@ -2258,11 +2316,10 @@ static int fbcon_switch(struct vc_data *vc)
  	    ops->update_start(info);
  	}
  
@@ -1146,7 +1146,11 @@ index 8745637..0ec2106 100644
  	fbcon_clear_margins(vc, 0);
  
  	if (logo_shown == FBCON_LOGO_DRAW) {
-@@ -2318,15 +2376,20 @@ static int fbcon_blank(struct vc_data *vc, int blank, int mode_switch)
+-
+ 		logo_shown = fg_console;
+ 		/* This is protected above by initmem_freed */
+ 		fb_show_logo(info, ops->rotate);
+@@ -2318,15 +2375,20 @@ static int fbcon_blank(struct vc_data *vc, int blank, int mode_switch)
  		}
  	}
  
@@ -1171,7 +1175,7 @@ index 8745637..0ec2106 100644
  		}
  
  		if (!blank)
-@@ -2448,7 +2511,7 @@ static int fbcon_do_set_font(struct vc_data *vc, int w, int h,
+@@ -2448,7 +2510,7 @@ static int fbcon_do_set_font(struct vc_data *vc, int w, int h,
  			vc->vc_complement_mask >>= 1;
  			vc->vc_s_complement_mask >>= 1;
  		}
@@ -1180,7 +1184,7 @@ index 8745637..0ec2106 100644
  		/* ++Edmund: reorder the attribute bits */
  		if (vc->vc_can_do_color) {
  			unsigned short *cp =
-@@ -2471,7 +2534,7 @@ static int fbcon_do_set_font(struct vc_data *vc, int w, int h,
+@@ -2471,7 +2533,7 @@ static int fbcon_do_set_font(struct vc_data *vc, int w, int h,
  			vc->vc_complement_mask <<= 1;
  			vc->vc_s_complement_mask <<= 1;
  		}
@@ -1189,7 +1193,7 @@ index 8745637..0ec2106 100644
  		/* ++Edmund: reorder the attribute bits */
  		{
  			unsigned short *cp =
-@@ -2501,13 +2564,22 @@ static int fbcon_do_set_font(struct vc_data *vc, int w, int h,
+@@ -2501,13 +2563,22 @@ static int fbcon_do_set_font(struct vc_data *vc, int w, int h,
  	}
  
  	if (resize) {
@@ -1212,7 +1216,7 @@ index 8745637..0ec2106 100644
  		if (CON_IS_VISIBLE(vc) && softback_buf)
  			fbcon_update_softback(vc);
  	} else if (CON_IS_VISIBLE(vc)
-@@ -2591,7 +2663,7 @@ static int fbcon_set_font(struct vc_data *vc, struct console_font *font, unsigne
+@@ -2591,7 +2662,7 @@ static int fbcon_set_font(struct vc_data *vc, struct console_font *font, unsigne
  	/* Check if the same font is on some other console already */
  	for (i = first_fb_vc; i <= last_fb_vc; i++) {
  		struct vc_data *tmp = vc_cons[i].d;
@@ -1221,7 +1225,7 @@ index 8745637..0ec2106 100644
  		if (fb_display[i].userfont &&
  		    fb_display[i].fontdata &&
  		    FNTSUM(fb_display[i].fontdata) == csum &&
-@@ -2636,7 +2708,11 @@ static int fbcon_set_palette(struct vc_data *vc, unsigned char *table)
+@@ -2636,7 +2707,11 @@ static int fbcon_set_palette(struct vc_data *vc, unsigned char *table)
  	int i, j, k, depth;
  	u8 val;
  
@@ -1234,7 +1238,7 @@ index 8745637..0ec2106 100644
  		return -EINVAL;
  
  	if (!CON_IS_VISIBLE(vc))
-@@ -2662,14 +2738,56 @@ static int fbcon_set_palette(struct vc_data *vc, unsigned char *table)
+@@ -2662,14 +2737,56 @@ static int fbcon_set_palette(struct vc_data *vc, unsigned char *table)
  	} else
  		fb_copy_cmap(fb_default_cmap(1 << depth), &palette_cmap);
  
@@ -1293,7 +1297,7 @@ index 8745637..0ec2106 100644
  	if (vc->vc_num != fg_console || !softback_lines)
  		return (u16 *) (vc->vc_origin + offset);
  	line = offset / vc->vc_size_row;
-@@ -2888,7 +3006,14 @@ static void fbcon_modechanged(struct fb_info *info)
+@@ -2888,7 +3005,14 @@ static void fbcon_modechanged(struct fb_info *info)
  		rows = FBCON_SWAP(ops->rotate, info->var.yres, info->var.xres);
  		cols /= vc->vc_font.width;
  		rows /= vc->vc_font.height;
@@ -1309,7 +1313,18 @@ index 8745637..0ec2106 100644
  		updatescrollmode(p, info, vc);
  		scrollback_max = 0;
  		scrollback_current = 0;
-@@ -3543,6 +3668,7 @@ static void fbcon_exit(void)
+@@ -2933,7 +3057,9 @@ static void fbcon_set_all_vcs(struct fb_info *info)
+ 		rows = FBCON_SWAP(ops->rotate, info->var.yres, info->var.xres);
+ 		cols /= vc->vc_font.width;
+ 		rows /= vc->vc_font.height;
+-		vc_resize(vc, cols, rows);
++		if (!fbcon_decor_active_nores(info, vc)) {
++			vc_resize(vc, cols, rows);
++		}
+ 	}
+ 
+ 	if (fg != -1)
+@@ -3543,6 +3669,7 @@ static void fbcon_exit(void)
  		}
  	}
  
@@ -1317,7 +1332,7 @@ index 8745637..0ec2106 100644
  	fbcon_has_exited = 1;
  }
  
-@@ -3596,7 +3722,7 @@ static void __exit fb_console_exit(void)
+@@ -3596,7 +3723,7 @@ static void __exit fb_console_exit(void)
  	fbcon_exit();
  	console_unlock();
  	unregister_con_driver(&fb_con);
@@ -1328,7 +1343,7 @@ index 8745637..0ec2106 100644
  
 diff --git a/drivers/video/console/fbcondecor.c b/drivers/video/console/fbcondecor.c
 new file mode 100644
-index 0000000..53c4195
+index 0000000..b80639c
 --- /dev/null
 +++ b/drivers/video/console/fbcondecor.c
 @@ -0,0 +1,556 @@
@@ -1474,13 +1489,13 @@ index 0000000..53c4195
 +{
 +	int ret;
 +
-+	if (origin == FBCON_DECOR_IO_ORIG_USER)
++//	if (origin == FBCON_DECOR_IO_ORIG_USER)
 +		console_lock();
 +	if (!state)
 +		ret = fbcon_decor_disable(vc, 1);
 +	else
 +		ret = fbcon_decor_enable(vc);
-+	if (origin == FBCON_DECOR_IO_ORIG_USER)
++//	if (origin == FBCON_DECOR_IO_ORIG_USER)
 +		console_unlock();
 +
 +	return ret;
@@ -1519,18 +1534,18 @@ index 0000000..53c4195
 +	 * is already held; we also don't need to disable decor because either the
 +	 * new config and background picture will be successfully loaded, and the
 +	 * decor will stay on, or in case of a failure it'll be turned off in fbcon. */
-+	if (origin == FBCON_DECOR_IO_ORIG_USER) {
++//	if (origin == FBCON_DECOR_IO_ORIG_USER) {
 +		console_lock();
 +		if (vc->vc_decor.state)
 +			fbcon_decor_disable(vc, 1);
-+	}
++//	}
 +
 +	if (vc->vc_decor.theme)
 +		kfree(vc->vc_decor.theme);
 +
 +	vc->vc_decor = *cfg;
 +
-+	if (origin == FBCON_DECOR_IO_ORIG_USER)
++//	if (origin == FBCON_DECOR_IO_ORIG_USER)
 +		console_unlock();
 +
 +	printk(KERN_INFO "fbcondecor: console %d using theme '%s'\n",
@@ -1626,7 +1641,7 @@ index 0000000..53c4195
 +
 +	/* If this ioctl is a response to a request from kernel, the console sem
 +	 * is already held. */
-+	if (origin == FBCON_DECOR_IO_ORIG_USER)
++//	if (origin == FBCON_DECOR_IO_ORIG_USER)
 +		console_lock();
 +
 +	if (info->bgdecor.data)
@@ -1644,7 +1659,7 @@ index 0000000..53c4195
 +		fbcon_decor_clear_margins(vc, info, 0);
 +	}
 +
-+	if (origin == FBCON_DECOR_IO_ORIG_USER)
++//	if (origin == FBCON_DECOR_IO_ORIG_USER)
 +		console_unlock();
 +
 +	return 0;

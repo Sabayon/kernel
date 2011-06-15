@@ -929,7 +929,7 @@ static const char *omap4_panda_match[] __initdata = {
 	NULL,
 };
 
-MACHINE_START(OMAP4_PANDA, "OMAP4 Panda board")
+MACHINE_START(OMAP4_PANDA, "OMAP4430 Panda board")
 	/* Maintainer: David Anders - Texas Instruments Inc */
 	.boot_params	= 0x80000100,
 	.reserve	= omap_reserve,

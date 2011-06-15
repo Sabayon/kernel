@@ -437,6 +437,7 @@ void dss_init_device(struct platform_device *pdev,
 #endif
 #ifdef CONFIG_OMAP2_DSS_SDI
 	case OMAP_DISPLAY_TYPE_SDI:
+		pr_err("dss_init_device: OMAP_DISPLAY_TYPE_SDI:\n");
 		r = sdi_init_display(dssdev);
 		break;
 #endif
@@ -455,7 +456,7 @@ void dss_init_device(struct platform_device *pdev,
 	}
 
 	if (r) {
-		DSSERR("failed to init display %s\n", dssdev->name);
+		pr_err("failed to init display %s\n", dssdev->name);
 		return;
 	}
 

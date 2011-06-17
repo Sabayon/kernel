@@ -656,6 +656,9 @@ static void notify_worker(struct work_struct *work)
 	struct notify_work *nw =
 		container_of(work, struct notify_work, work);
 	struct omap_dss_device *dssdev = nw->dssdev;
+
+	pr_err("display.c: notify_worker: 0x%x\n", nw->evt);
+
 	blocking_notifier_call_chain(&dssdev->notifier, nw->evt, dssdev);
 	kfree(work);
 }

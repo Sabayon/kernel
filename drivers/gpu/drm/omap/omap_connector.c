@@ -93,13 +93,15 @@ enum drm_connector_status omap_connector_detect(
 	struct omap_dss_driver *dssdrv = dssdev->driver;
 	enum drm_connector_status ret;
 
+	pr_err("omap_connector_detect\n");
+
 	if (dssdrv->is_detected(dssdev, force)) {
 		ret = connector_status_connected;
 	} else {
 		ret = connector_status_disconnected;
 	}
 
-	DBG("%s: %d (force=%d)", omap_connector->dssdev->name, ret, force);
+	pr_err("%s: %d (force=%d)", omap_connector->dssdev->name, ret, force);
 
 	return ret;
 }

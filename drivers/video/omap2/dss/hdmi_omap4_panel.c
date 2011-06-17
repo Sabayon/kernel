@@ -32,6 +32,8 @@ static struct {
 	struct mutex hdmi_lock;
 } hdmi;
 
+#undef DSSDBG
+#define DSSDBG pr_err
 
 static int hdmi_panel_probe(struct omap_dss_device *dssdev)
 {
@@ -143,10 +145,13 @@ err:
 	return r;
 }
 
-static bool hdmi_panel_is_detected(struct omap_dss_device *dssdev, bool force)
+bool hdmi_panel_is_detected(struct omap_dss_device *dssdev, bool force)
 {
+	pr_err("hdmi_panel_is_detected, force=%d\n", force);
 	return omapdss_hdmi_is_detected(dssdev, force);
 }
+
+EXPORT_SYMBOL_GPL(hdmi_panel_is_detected);
 
 static int hdmi_get_edid(struct omap_dss_device *dssdev, u8 *buf, int len)
 {
@@ -163,7 +168,7 @@ static void hdmi_get_timings(struct omap_dss_device *dssdev,
 	mutex_unlock(&hdmi.hdmi_lock);
 }
 
-static void hdmi_set_timings(struct omap_dss_device *dssdev,
+void hdmi_set_timings(struct omap_dss_device *dssdev,
 			struct omap_video_timings *timings)
 {
 	DSSDBG("hdmi_set_timings\n");
@@ -180,6 +185,8 @@ static void hdmi_set_timings(struct omap_dss_device *dssdev,
 
 	mutex_unlock(&hdmi.hdmi_lock);
 }
+EXPORT_SYMBOL_GPL(hdmi_set_timings);
+
 
 static int hdmi_check_timings(struct omap_dss_device *dssdev,
 			struct omap_video_timings *timings)

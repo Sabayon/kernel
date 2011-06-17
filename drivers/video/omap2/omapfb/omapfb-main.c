@@ -1912,7 +1912,7 @@ static void size_notify(struct fb_info *fbi, int w, int h)
 	int orig_flags;
 	int new_size = (w * var.bits_per_pixel >> 3) * h;
 
-	DBG("size_notify: %dx%d\n", w, h);
+	pr_err("omapfb_main.c: size_notify: %dx%d\n", w, h);
 
 	var.activate |= FB_ACTIVATE_FORCE | FB_ACTIVATE_ALL | FB_ACTIVATE_NOW;
 	var.xres = w;
@@ -1963,6 +1963,8 @@ static int omapfb_notifier(struct notifier_block *nb,
 	int keep = false;
 	int i;
 
+	pr_err("**** omapfb_notifier evt 0x%lX\n", evt);
+
 	/* figure out if this event pertains to this omapfb device:
 	 */
 	for (i = 0; i < fbdev->num_managers; i++) {
@@ -1981,6 +1983,8 @@ static int omapfb_notifier(struct notifier_block *nb,
 		case OMAP_DSS_SIZE_CHANGE: {
 			u16 w, h;
 			dssdev->driver->get_resolution(dssdev, &w, &h);
+
+			pr_err("omapfb_notifier: OMAP_DSS_SIZE_CHANGE:%d %d\n", w, h);
 			for (i = 0; i < fbdev->num_fbs; i++)
 				size_notify(fbdev->fbs[i], w, h);
 			break;
@@ -2361,6 +2365,9 @@ static int omapfb_probe(struct platform_device *pdev)
 		notifier = kzalloc(sizeof(struct omapfb_notifier_block), GFP_KERNEL);
 		notifier->notifier.notifier_call = omapfb_notifier;
 		notifier->fbdev = fbdev;
+
+		pr_err("****** omapfb_probe: adding notifier\n");
+
 		omap_dss_add_notify(dssdev, &notifier->notifier);
  	}
 

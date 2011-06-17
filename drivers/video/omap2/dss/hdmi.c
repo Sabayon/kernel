@@ -52,7 +52,7 @@ static struct {
 	struct hdmi_config cfg;
 } hdmi = {
 		.code = 4, /*setting default value of 640 480 VGA*/
-		.mode = 0,
+		.mode = HDMI_HDMI,
 };
 
 /*
@@ -369,6 +369,8 @@ static int hdmi_core_ddc_edid(u8 *pedid, int ext)
 	char checksum = 0;
 	u32 offset = 0;
 
+	pr_err("**** hdmi_core_ddc_edid in\n");
+
 	/* Turn on CLK for DDC */
 	REG_FLD_MOD(HDMI_CORE_AV_DPD, 0x7, 2, 0);
 
@@ -386,7 +388,7 @@ static int hdmi_core_ddc_edid(u8 *pedid, int ext)
 		/* HDMI_CORE_DDC_STATUS_IN_PROG */
 		if (hdmi_wait_for_bit_change(HDMI_CORE_DDC_STATUS,
 						4, 4, 0) != 0) {
-			DSSERR("Failed to program DDC\n");
+			pr_err("Failed to program DDC\n");
 			return -ETIMEDOUT;
 		}
 
@@ -396,7 +398,7 @@ static int hdmi_core_ddc_edid(u8 *pedid, int ext)
 		/* HDMI_CORE_DDC_STATUS_IN_PROG */
 		if (hdmi_wait_for_bit_change(HDMI_CORE_DDC_STATUS,
 						4, 4, 0) != 0) {
-			DSSERR("Failed to program DDC\n");
+			pr_err("Failed to program DDC\n");
 			return -ETIMEDOUT;
 		}
 
@@ -426,12 +428,12 @@ static int hdmi_core_ddc_edid(u8 *pedid, int ext)
 
 	/* HDMI_CORE_DDC_STATUS_BUS_LOW */
 	if (REG_GET(HDMI_CORE_DDC_STATUS, 6, 6) == 1) {
-		DSSWARN("I2C Bus Low?\n");
+		pr_err("I2C Bus Low?\n");
 		return -EIO;
 	}
 	/* HDMI_CORE_DDC_STATUS_NO_ACK */
 	if (REG_GET(HDMI_CORE_DDC_STATUS, 5, 5) == 1) {
-		DSSWARN("I2C No Ack\n");
+		pr_err("I2C No Ack\n");
 		return -EIO;
 	}
 
@@ -448,13 +450,17 @@ static int hdmi_core_ddc_edid(u8 *pedid, int ext)
 		}
 	}
 
-	for (j = 0; j < 128; j++)
+	for (j = 0; j < 128; j++) {
 		checksum += pedid[j];
+		pr_err("%02X\n", pedid[j]);
+	}
 
 	if (checksum != 0) {
-		DSSERR("E-EDID checksum failed!!\n");
+		pr_err("E-EDID checksum failed!!\n");
 		return -EIO;
 	}
+
+	pr_err("return OK\n");
 
 	return 0;
 }
@@ -492,12 +498,17 @@ static int get_timings_index(void)
 {
 	int code;
 
+	pr_err("get_timings_index  hdmi.mode=%d hdmi.code=%d\n", hdmi.mode, hdmi.code);
+
 	if (hdmi.mode == 0)
 		code = code_vesa[hdmi.code];
 	else
 		code = code_cea[hdmi.code];
 
+                pr_err("get_timings_index: code = %d\n", code);
+
 	if (code == -1)	{
+
 		/* HDMI code 4 corresponds to 640 * 480 VGA */
 		hdmi.code = 4;
 		/* DVI mode 1 corresponds to HDMI 0 to DVI */
@@ -514,10 +525,11 @@ static struct hdmi_cm hdmi_get_code(struct omap_video_timings *timing)
 	int timing_vsync = 0, timing_hsync = 0;
 	struct omap_video_timings temp;
 	struct hdmi_cm cm = {-1};
-	DSSDBG("hdmi_get_code\n");
+	pr_err("hdmi_get_code\n");
 
 	for (i = 0; i < OMAP_HDMI_TIMINGS_NB; i++) {
 		temp = cea_vesa_timings[i].timings;
+
 		if ((temp.pixel_clock == timing->pixel_clock) &&
 			(temp.x_res == timing->x_res) &&
 			(temp.y_res == timing->y_res)) {
@@ -527,7 +539,7 @@ static struct hdmi_cm hdmi_get_code(struct omap_video_timings *timing)
 			temp_vsync = temp.vfp + temp.vsw + temp.vbp;
 			timing_vsync = timing->vfp + timing->vsw + timing->vbp;
 
-			DSSDBG("temp_hsync = %d , temp_vsync = %d"
+			pr_err("temp_hsync = %d , temp_vsync = %d"
 				"timing_hsync = %d, timing_vsync = %d\n",
 				temp_hsync, temp_hsync,
 				timing_hsync, timing_vsync);
@@ -540,7 +552,7 @@ static struct hdmi_cm hdmi_get_code(struct omap_video_timings *timing)
 					cm.mode = HDMI_HDMI;
 				else
 					cm.mode = HDMI_DVI;
-				DSSDBG("Hdmi_code = %d mode = %d\n",
+				pr_err("Hdmi_code = %d mode = %d\n",
 					 cm.code, cm.mode);
 				break;
 			 }
@@ -564,7 +576,7 @@ static void hdmi_read_edid()
 			hdmi.edid_set = true;
 		}
 	} else {
-		DSSWARN("failed to read E-EDID\n");
+		pr_err("failed to read E-EDID\n");
 	}
 }
 
@@ -1018,14 +1030,15 @@ static int hdmi_power_on(struct omap_dss_device *dssdev)
 
 	p = &dssdev->panel.timings;
 
-	DSSDBG("hdmi_power_on x_res= %d y_res = %d\n",
+	pr_err("hdmi_power_on x_res= %d y_res = %d\n",
 		dssdev->panel.timings.x_res,
 		dssdev->panel.timings.y_res);
 
 	if (!hdmi.edid_set) {
-		DSSDBG("Read EDID as no EDID is not set on poweron\n");
+		pr_err("Read EDID as no EDID is not set on poweron\n");
 		hdmi_read_edid();
-	}
+	} else 
+		pr_err("EDID set at poweron skip reading EDID\n");
 
 	code = get_timings_index();
 	dssdev->panel.timings = cea_vesa_timings[code].timings;
@@ -1040,8 +1053,14 @@ static int hdmi_power_on(struct omap_dss_device *dssdev)
 	hdmi_wp_video_start(0);
 
        if (dirty) {
-               omap_dss_notify(dssdev, OMAP_DSS_SIZE_CHANGE);
-       } 
+		bool hdmi_panel_is_detected(struct omap_dss_device *dssdev, bool force);
+
+		pr_err("hdmi_power_on calling omap_dss_notify(dssdev, OMAP_DSS_SIZE_CHANGE);\n");
+		hdmi_panel_is_detected(dssdev, 1);
+		hdmi.code = 31;
+		hdmi.mode = 1;		
+		omap_dss_notify(dssdev, OMAP_DSS_SIZE_CHANGE);
+	} 
 
 	/* config the PLL and PHY first */
 	r = hdmi_pll_program(&pll_data);
@@ -1105,8 +1124,10 @@ bool omapdss_hdmi_is_detected(struct omap_dss_device *dssdev, bool force)
 	u32 r;
 
 	/* If EDID has already been read, we have HDMI connected */
-	if (hdmi.edid_set)
+	if (hdmi.edid_set) {
+		pr_err("omapdss_hdmi_is_detected, already seen set\n");
 		return true;
+	}
 
 	r = hdmi_read_reg(HDMI_CORE_SYS_SYS_STAT);
 
@@ -1114,11 +1135,13 @@ bool omapdss_hdmi_is_detected(struct omap_dss_device *dssdev, bool force)
 	 * right after reporting it's connected, so try again if probe
 	 * failed and force is enabled */
 	if (!(r & 0x2) && (force)) {
-		DSSDBG("Fail to detect the connector and force is enabled, "
+		pr_err("Fail to detect the connector and force is enabled, "
 				"trying at least one more time\n");
 		msleep(2000);
 		r = hdmi_read_reg(HDMI_CORE_SYS_SYS_STAT);
 	}
+
+	pr_err("*** omapdss_hdmi_is_detected returns %d\n", !!(r & 2));
 
 	return !!(r & 0x2);
 }
@@ -1138,6 +1161,8 @@ int omapdss_hdmi_display_check_timing(struct omap_dss_device *dssdev,
 {
 	struct hdmi_cm cm;
 
+	pr_err("omapdss_hdmi_display_check_timing\n");
+
 	cm = hdmi_get_code(timings);
 	if (cm.code == -1) {
 		return -EINVAL;
@@ -1151,6 +1176,8 @@ void omapdss_hdmi_display_set_timing(struct omap_dss_device *dssdev)
 {
 	struct hdmi_cm cm;
 
+	pr_err("omapdss_hdmi_display_set_timing\n");
+
 	hdmi.custom_set = 1;
 	cm = hdmi_get_code(&dssdev->panel.timings);
 	hdmi.code = cm.code;
@@ -1163,7 +1190,7 @@ int omapdss_hdmi_display_enable(struct omap_dss_device *dssdev)
 {
 	int r = 0;
 
-	DSSDBG("ENTER hdmi_display_enable\n");
+	pr_err("ENTER hdmi_display_enable\n");
 
 	mutex_lock(&hdmi.lock);
 
@@ -1202,7 +1229,7 @@ err0:
 
 void omapdss_hdmi_display_disable(struct omap_dss_device *dssdev)
 {
-	DSSDBG("Enter hdmi_display_disable\n");
+	pr_err("Enter hdmi_display_disable\n");
 
 	mutex_lock(&hdmi.lock);
 

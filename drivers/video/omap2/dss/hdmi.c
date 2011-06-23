@@ -39,6 +39,9 @@
 #include "dss.h"
 #include "hdmi.h"
 
+static int def_force_hdmi_code = 4;
+module_param_named(code, def_force_hdmi_code, int, 0);
+
 static struct {
 	struct mutex lock;
 	struct omap_display_platform_data *pdata;
@@ -1629,6 +1632,7 @@ static int omapdss_hdmihw_probe(struct platform_device *pdev)
 	}
 #endif
 
+	hdmi.code = def_force_hdmi_code;
 	hdmi.pdata = pdev->dev.platform_data;
 	hdmi.pdev = pdev;
 

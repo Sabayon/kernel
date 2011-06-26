@@ -735,7 +735,7 @@ static int get_edid_timing_data(struct HDMI_EDID *edid)
 	return 1;
 }
 
-static void hdmi_read_edid()
+static void hdmi_read_edid(void)
 {
 	int ret = 0;
 

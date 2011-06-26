@@ -613,22 +613,6 @@ static struct hdmi_cm hdmi_get_code(struct omap_video_timings *timing)
 
 struct omap_video_timings edid_timings;
 
-static inline void print_omap_video_timings(struct omap_video_timings *timings)
-{
-	extern unsigned int dss_debug;
-	if (dss_debug) {
-		printk(KERN_INFO "Timing Info:\n");
-		printk(KERN_INFO "  pixel_clk = %d\n", timings->pixel_clock);
-		printk(KERN_INFO "  x_res     = %d\n", timings->x_res);
-		printk(KERN_INFO "  y_res     = %d\n", timings->y_res);
-		printk(KERN_INFO "  hfp       = %d\n", timings->hfp);
-		printk(KERN_INFO "  hsw       = %d\n", timings->hsw);
-		printk(KERN_INFO "  hbp       = %d\n", timings->hbp);
-		printk(KERN_INFO "  vfp       = %d\n", timings->vfp);
-		printk(KERN_INFO "  vsw       = %d\n", timings->vsw);
-		printk(KERN_INFO "  vbp       = %d\n", timings->vbp);
-	}
-}
 
 /*
  * Written mainly by 223a4fdb Ricard Neri
@@ -658,7 +642,6 @@ static int get_edid_timing_data(struct HDMI_EDID *edid)
 	for (i = 0; i < EDID_SIZE_BLOCK0_TIMING_DESCRIPTOR; i++) {
 		get_edid_timing_info(&edid->DTD[i], &edid_timings);
 		DSSDBG("Block0 [%d] timings:", i);
-		print_omap_video_timings(&edid_timings);
 		cm = hdmi_get_code(&edid_timings);
 		DSSDBG("Block0[%d] value matches code = %d , mode = %d",
 			i, cm.code, cm.mode);

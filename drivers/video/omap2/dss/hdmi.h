@@ -205,8 +205,6 @@ struct hdmi_reg { u16 idx; };
 #define EDID_SIZE_BLOCK0_TIMING_DESCRIPTOR	4
 #define EDID_SIZE_BLOCK1_TIMING_DESCRIPTOR	4
 
-#define OMAP_HDMI_TIMINGS_NB			34
-
 #define REG_FLD_MOD(idx, val, start, end) \
 	hdmi_write_reg(idx, FLD_MOD(hdmi_read_reg(idx), val, start, end))
 #define REG_GET(idx, start, end) \

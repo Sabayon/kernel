@@ -194,7 +194,11 @@ struct hdmi_reg { u16 idx; };
 #define HDMI_TXPHY_PAD_CFG_CTRL		HDMI_PHY_REG(0xC)
 
 /* HDMI EDID Length  */
-#define HDMI_EDID_MAX_LENGTH			256
+
+/* inherit the length from plat/edid.h, which is 512
+ *
+ * #define HDMI_EDID_MAX_LENGTH			256
+ */
 #define EDID_TIMING_DESCRIPTOR_SIZE		0x12
 #define EDID_DESCRIPTOR_BLOCK0_ADDRESS		0x36
 #define EDID_DESCRIPTOR_BLOCK1_ADDRESS		0x80

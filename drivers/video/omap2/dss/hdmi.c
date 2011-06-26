@@ -37,6 +37,7 @@
 #endif
 
 #include "dss.h"
+#include <plat/edid.h>
 #include "hdmi.h"
 
 static int def_force_hdmi_code = 4;
@@ -108,6 +109,50 @@ static const struct hdmi_timings cea_vesa_timings[OMAP_HDMI_TIMINGS_NB] = {
 	{ {1680, 1050, 119000, 32, 48, 80, 6, 3, 21}, 0, 1},
 	{ {1280, 800, 79500, 32, 48, 80, 6, 3, 14}, 0, 1},
 	{ {1280, 720, 74250, 40, 110, 220, 5, 5, 20}, 1, 1}
+};
+
+/* All supported timing values that OMAP4 supports */
+static const struct omap_video_timings all_timings_direct[] = {
+	{640, 480, 25200, 96, 16, 48, 2, 10, 33},
+	{1280, 720, 74250, 40, 440, 220, 5, 5, 20},
+	{1280, 720, 74250, 40, 110, 220, 5, 5, 20},
+	{720, 480, 27000, 62, 16, 60, 6, 9, 30},
+	{2880, 576, 108000, 256, 48, 272, 5, 5, 39},
+	{1440, 240, 27000, 124, 38, 114, 3, 4, 15},
+	{1440, 288, 27000, 126, 24, 138, 3, 2, 19},
+	{1920, 540, 74250, 44, 528, 148, 5, 2, 15},
+	{1920, 540, 74250, 44, 88, 148, 5, 2, 15},
+	{1920, 1080, 148500, 44, 88, 148, 5, 4, 36},
+	{720, 576, 27000, 64, 12, 68, 5, 5, 39},
+	{1440, 576, 54000, 128, 24, 136, 5, 5, 39},
+	{1920, 1080, 148500, 44, 528, 148, 5, 4, 36},
+	{2880, 480, 108000, 248, 64, 240, 6, 9, 30},
+	{1920, 1080, 74250, 44, 638, 148, 5, 4, 36},
+	/* Vesa frome here */
+	{640, 480, 25175, 96, 16, 48, 2, 10, 33},
+	{800, 600, 40000, 128, 40, 88, 4 , 1, 23},
+	{848, 480, 33750, 112, 16, 112, 8 , 6, 23},
+	{1280, 768, 79500, 128, 64, 192, 7 , 3, 20},
+	{1280, 800, 83500, 128, 72, 200, 6 , 3, 22},
+	{1360, 768, 85500, 112, 64, 256, 6 , 3, 18},
+	{1280, 960, 108000, 112, 96, 312, 3 , 1, 36},
+	{1280, 1024, 108000, 112, 48, 248, 3 , 1, 38},
+	{1024, 768, 65000, 136, 24, 160, 6, 3, 29},
+	{1400, 1050, 121750, 144, 88, 232, 4, 3, 32},
+	{1440, 900, 106500, 152, 80, 232, 6, 3, 25},
+	{1680, 1050, 146250, 176 , 104, 280, 6, 3, 30},
+	{1366, 768, 85500, 143, 70, 213, 3, 3, 24},
+	{1920, 1080, 148500, 44, 88, 148, 5, 4, 36},
+	{1280, 768, 68250, 32, 48, 80, 7, 3, 12},
+	{1400, 1050, 101000, 32, 48, 80, 4, 3, 23},
+	{1680, 1050, 119000, 32, 48, 80, 6, 3, 21},
+	{1280, 800, 79500, 32, 48, 80, 6, 3, 14},
+	{1280, 720, 74250, 40, 110, 220, 5, 5, 20},
+	{1920, 1200, 154000, 32, 48, 80, 6, 3, 26},
+	/* supported 3d timings UNDEROVER full frame */
+	{1280, 1470, 148350, 40, 110, 220, 5, 5, 20},
+	{1280, 1470, 148500, 40, 110, 220, 5, 5, 20},
+	{1280, 1470, 148500, 40, 440, 220, 5, 5, 20}
 };
 
 /*
@@ -565,6 +610,148 @@ static struct hdmi_cm hdmi_get_code(struct omap_video_timings *timing)
 	return cm;
 }
 
+
+struct omap_video_timings edid_timings;
+
+static inline void print_omap_video_timings(struct omap_video_timings *timings)
+{
+	extern unsigned int dss_debug;
+	if (dss_debug) {
+		printk(KERN_INFO "Timing Info:\n");
+		printk(KERN_INFO "  pixel_clk = %d\n", timings->pixel_clock);
+		printk(KERN_INFO "  x_res     = %d\n", timings->x_res);
+		printk(KERN_INFO "  y_res     = %d\n", timings->y_res);
+		printk(KERN_INFO "  hfp       = %d\n", timings->hfp);
+		printk(KERN_INFO "  hsw       = %d\n", timings->hsw);
+		printk(KERN_INFO "  hbp       = %d\n", timings->hbp);
+		printk(KERN_INFO "  vfp       = %d\n", timings->vfp);
+		printk(KERN_INFO "  vsw       = %d\n", timings->vsw);
+		printk(KERN_INFO "  vbp       = %d\n", timings->vbp);
+	}
+}
+
+/*
+ * Written mainly by 223a4fdb Ricard Neri
+ * git://git.linaro.org/people/asac/android/kernel/pandroid
+ */
+static int get_edid_timing_data(struct HDMI_EDID *edid)
+{
+	u8 i, j, code, offset = 0, addr = 0;
+	struct hdmi_cm cm;
+	bool audio_support = false;
+	int svd_base, svd_length, svd_code, svd_native;
+
+	/*
+	 *  Verify if the sink supports audio
+	 */
+	/* check if EDID has CEA extension block */
+	if ((edid->extension_edid != 0x00))
+		/* check if CEA extension block is version 3 */
+		if (edid->extention_rev == 3)
+			/* check if extension block has the IEEE HDMI ID*/
+			if (hdmi_has_ieee_id((u8 *)edid))
+				/* check if sink supports basic audio */
+				if (edid->num_dtd & HDMI_AUDIO_BASIC_MASK)
+					audio_support = true;
+
+	/* Seach block 0, there are 4 DTDs arranged in priority order */
+	for (i = 0; i < EDID_SIZE_BLOCK0_TIMING_DESCRIPTOR; i++) {
+		get_edid_timing_info(&edid->DTD[i], &edid_timings);
+		DSSDBG("Block0 [%d] timings:", i);
+		print_omap_video_timings(&edid_timings);
+		cm = hdmi_get_code(&edid_timings);
+		DSSDBG("Block0[%d] value matches code = %d , mode = %d",
+			i, cm.code, cm.mode);
+		if (cm.code == -1)
+			continue;
+/*
+		if (hdmi.s3d_enabled && s3d_code_cea[cm.code] == -1)
+			continue;
+*/
+		/* if sink supports audio, use CEA video timing */
+		if (audio_support && !cm.mode)
+			continue;
+		hdmi.code = cm.code;
+		hdmi.mode = cm.mode;
+		DSSDBG("code = %d , mode = %d", hdmi.code, hdmi.mode);
+		return 1;
+	}
+	/* Search SVDs in block 1 twice: first natives and then all */
+	if (edid->extension_edid != 0x00) {
+		hdmi_get_video_svds((u8 *)edid, &svd_base, &svd_length);
+		for (j = 1; j >= 0; j--) {
+			for (i = 0; i < svd_length; i++) {
+				svd_native = ((u8 *)edid)[svd_base+i]
+					& HDMI_EDID_EX_VIDEO_NATIVE;
+				svd_code = ((u8 *)edid)[svd_base+i]
+					& HDMI_EDID_EX_VIDEO_MASK;
+				if (svd_code >= ARRAY_SIZE(code_cea))
+					continue;
+				/* Check if this SVD is native*/
+				if (!svd_native && j)
+					continue;
+				/* Check if this 3D CEA timing is supported*/
+/*
+				if (hdmi.s3d_enabled &&
+					s3d_code_cea[svd_code] == -1)
+					continue;
+*/
+				/* Check if this CEA timing is supported*/
+				if (code_cea[svd_code] == -1)
+					continue;
+				hdmi.code = svd_code;
+				hdmi.mode = 1;
+				return 1;
+			}
+		}
+	}
+	/* Search DTDs in block1 */
+	if (edid->extension_edid != 0x00) {
+		offset = edid->offset_dtd;
+		if (offset != 0)
+			addr = EDID_DESCRIPTOR_BLOCK1_ADDRESS + offset;
+		for (i = 0; i < EDID_SIZE_BLOCK1_TIMING_DESCRIPTOR; i++) {
+			get_eedid_timing_info(addr, (u8 *)edid, &edid_timings);
+			addr += EDID_TIMING_DESCRIPTOR_SIZE;
+			cm = hdmi_get_code(&edid_timings);
+			DSSDBG("Block1[%d] value matches code = %d , mode = %d",
+				i, cm.code, cm.mode);
+			if (cm.code == -1)
+				continue;
+/*
+			if (hdmi.s3d_enabled && s3d_code_cea[cm.code] == -1)
+				continue;
+*/
+			/* if sink supports audio, use CEA video timing */
+			if (audio_support && !cm.mode)
+				continue;
+			hdmi.code = cm.code;
+			hdmi.mode = cm.mode;
+			DSSDBG("code = %d , mode = %d", hdmi.code, hdmi.mode);
+			return 1;
+		}
+	}
+	/*As last resort, check for best standard timing supported:*/
+	if (edid->timing_1 & 0x01) {
+		DSSDBG("800x600@60Hz\n");
+		hdmi.mode = 0;
+		hdmi.code = 9;
+		return 1;
+	}
+	if (edid->timing_2 & 0x08) {
+		DSSDBG("1024x768@60Hz\n");
+		hdmi.mode = 0;
+		hdmi.code = 16;
+		return 1;
+	}
+
+	hdmi.code = 4; /*setting default value of 640 480 VGA*/
+	hdmi.mode = 0;
+	code = code_vesa[hdmi.code];
+	edid_timings = all_timings_direct[code];
+	return 1;
+}
+
 static void hdmi_read_edid()
 {
 	int ret = 0;
@@ -576,7 +763,8 @@ static void hdmi_read_edid()
 
 	if (!ret) {
 		if (!memcmp(hdmi.edid, edid_header, sizeof(edid_header))) {
-			hdmi.edid_set = true;
+			if (get_edid_timing_data((struct HDMI_EDID *) hdmi.edid))
+				hdmi.edid_set = true;
 		}
 	} else {
 		pr_err("failed to read E-EDID\n");
@@ -1632,7 +1820,8 @@ static int omapdss_hdmihw_probe(struct platform_device *pdev)
 	}
 #endif
 
-	hdmi.code = def_force_hdmi_code;
+	/* hdmi.code = def_force_hdmi_code; */
+	printk("zp: hdmi.code = def_force_hdmi_code");
 	hdmi.pdata = pdev->dev.platform_data;
 	hdmi.pdev = pdev;
 
@@ -1687,4 +1876,11 @@ int hdmi_init_platform_driver(void)
 void hdmi_uninit_platform_driver(void)
 {
 	return platform_driver_unregister(&omapdss_hdmihw_driver);
+}
+
+const struct omap_video_timings *hdmi_get_omap_timing(int ix)
+{
+	if (ix < 0 || ix >= ARRAY_SIZE(all_timings_direct))
+		return NULL;
+	return all_timings_direct + ix;
 }

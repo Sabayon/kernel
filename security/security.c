@@ -373,6 +373,7 @@ int security_path_rmdir(struct path *dir, struct dentry *dentry)
 		return 0;
 	return security_ops->path_rmdir(dir, dentry);
 }
+EXPORT_SYMBOL(security_path_rmdir);
 
 int security_path_unlink(struct path *dir, struct dentry *dentry)
 {
@@ -389,6 +390,7 @@ int security_path_symlink(struct path *dir, struct dentry *dentry,
 		return 0;
 	return security_ops->path_symlink(dir, dentry, old_name);
 }
+EXPORT_SYMBOL(security_path_symlink);
 
 int security_path_link(struct dentry *old_dentry, struct path *new_dir,
 		       struct dentry *new_dentry)
@@ -397,6 +399,7 @@ int security_path_link(struct dentry *old_dentry, struct path *new_dir,
 		return 0;
 	return security_ops->path_link(old_dentry, new_dir, new_dentry);
 }
+EXPORT_SYMBOL(security_path_link);
 
 int security_path_rename(struct path *old_dir, struct dentry *old_dentry,
 			 struct path *new_dir, struct dentry *new_dentry)
@@ -415,6 +418,7 @@ int security_path_truncate(struct path *path)
 		return 0;
 	return security_ops->path_truncate(path);
 }
+EXPORT_SYMBOL(security_path_truncate);
 
 int security_path_chmod(struct dentry *dentry, struct vfsmount *mnt,
 			mode_t mode)
@@ -423,6 +427,7 @@ int security_path_chmod(struct dentry *dentry, struct vfsmount *mnt,
 		return 0;
 	return security_ops->path_chmod(dentry, mnt, mode);
 }
+EXPORT_SYMBOL(security_path_chmod);
 
 int security_path_chown(struct path *path, uid_t uid, gid_t gid)
 {
@@ -430,6 +435,7 @@ int security_path_chown(struct path *path, uid_t uid, gid_t gid)
 		return 0;
 	return security_ops->path_chown(path, uid, gid);
 }
+EXPORT_SYMBOL(security_path_chown);
 
 int security_path_chroot(struct path *path)
 {
@@ -506,6 +512,7 @@ int security_inode_readlink(struct dentry *dentry)
 		return 0;
 	return security_ops->inode_readlink(dentry);
 }
+EXPORT_SYMBOL(security_inode_readlink);
 
 int security_inode_follow_link(struct dentry *dentry, struct nameidata *nd)
 {
@@ -520,6 +527,7 @@ int security_inode_permission(struct inode *inode, int mask)
 		return 0;
 	return security_ops->inode_permission(inode, mask, 0);
 }
+EXPORT_SYMBOL(security_inode_permission);
 
 int security_inode_exec_permission(struct inode *inode, unsigned int flags)
 {
@@ -626,6 +634,7 @@ int security_file_permission(struct file *file, int mask)
 
 	return fsnotify_perm(file, mask);
 }
+EXPORT_SYMBOL(security_file_permission);
 
 int security_file_alloc(struct file *file)
 {
@@ -653,6 +662,7 @@ int security_file_mmap(struct file *file, unsigned long reqprot,
 		return ret;
 	return ima_file_mmap(file, prot);
 }
+EXPORT_SYMBOL(security_file_mmap);
 
 int security_file_mprotect(struct vm_area_struct *vma, unsigned long reqprot,
 			    unsigned long prot)

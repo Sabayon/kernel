@@ -80,6 +80,7 @@ KBUILD_EXTRA_WARNINGS += -Wredundant-decls
 KBUILD_EXTRA_WARNINGS += -Wshadow
 KBUILD_EXTRA_WARNINGS += -Wswitch-default
 KBUILD_EXTRA_WARNINGS += $(call cc-option, -Wvla,)
+KBUILD_EXTRA_WARNINGS += $(call cc-option, -Wunused-but-set-variable)
 KBUILD_CFLAGS += $(KBUILD_EXTRA_WARNINGS)
 endif
 

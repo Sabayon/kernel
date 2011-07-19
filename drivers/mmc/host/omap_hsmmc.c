@@ -1441,6 +1441,9 @@ static void set_data_timeout(struct omap_hsmmc_host *host,
 			dto = 14;
 	}
 
+	/* Set dto to max value of 14 to avoid SD Card timeouts */
+	dto = 14;
+
 	reg &= ~DTO_MASK;
 	reg |= dto << DTO_SHIFT;
 	OMAP_HSMMC_WRITE(host->base, SYSCTL, reg);

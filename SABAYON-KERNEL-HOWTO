@@ -65,3 +65,15 @@ How to cook a Sabayon kernel, in 4 steps:
    # now take the tarball and push it to distfiles.sabayon.org
    $ scp linux-3.0+sabayon.tar.bz2 <user>@distfiles.sabayon.org:/sabayon/rsync/rsync.sabayon.org/distfiles/sys-kernel/
    # win!
+
+
+NOTES:
+
+   sys-kernel/linux-server:
+     the kernel config is taken from the standard sabayon kernel,
+     with these changes:
+
+       - paravirtualization support
+       - IO scheduler changes
+       - Server-oriented preemption support
+       - anything else?

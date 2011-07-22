@@ -6,6 +6,10 @@ How to cook a Sabayon kernel, in 4 steps:
    $ git remote add stable <git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-3.x.y.git>
    $ git merge stable/<sometag> && git push && git push --tags
 
+   # PLEASE NOTE: it is better to handle bugfix releases separately to avoid
+   # destroying origin/master like lxnay did with 3.0. So, subsequent stable
+   # patches should be applied in respective branches (you'll read about
+   # branches later on in this file)
 
 2. Update Sabayon patches.
 

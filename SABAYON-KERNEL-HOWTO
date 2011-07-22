@@ -1,0 +1,67 @@
+How to cook a Sabayon kernel, in 4 steps:
+
+1. sync origin/master against the new stable kernel sources branch.
+   hrt/allstable.git or Greg KH stable repos are good. Example:
+
+   $ git remote add stable <git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-3.x.y.git>
+   $ git merge stable/<sometag> && git push && git push --tags
+
+
+2. Update Sabayon patches.
+
+   If we want to make a Sabayon Linux 3.0 kernel, do the following:
+
+   $ mkdir sabayon/patches/3.0<-rXX>
+   # copy patches in there and create a "series" file, listing
+     the patch order, one patch file name per line.
+   # MAKE sure these patches applies and the changes compile !!
+
+   # now push the changes
+   $ git add sabayon/patches && git push
+
+
+3. Create a new branch off git HEAD or whatever else you want, and apply patches.
+
+   # in this example, we'll branch off HEAD, which is v3.0 + our last commit.
+   # it is _VERY_ important to prefix all our branches with "sabayon-", followed
+   # by the release we're going to match.
+   $ git branch sabayon-3.0
+   $ git checkout sabayon-3.0
+   # create the remote branch
+   $ git push origin sabayon-3.0
+
+   # now apply patches you have in sabayon/patches/<release>
+   $ for p in $(cat sabayon/patches/<release>/series); \
+       do patch -p1 < "sabayon/patches/<release>/${p}" || exit 1; done
+
+   # then create new config files in sabayon/config,
+   # either using make oldconfig or menuconfig and selectively
+   # add new options.
+   # you can keep some good previous config files in sabayon/patches
+   # at origin/master if you really want to.
+
+   # in this example we'll use an already available 2.6.39-r2 config
+   $ cp sabayon/config/sabayon-2.6.39-r2-amd64.config .config
+   $ make oldconfig
+
+   # test compilation
+   $ make bzImage modules
+   # then copy over
+   $ cp .config sabayon/config/sabayon-3.0-amd64.config
+   # repeat for every kernel profile we have (sabayon-x86, server-{amd64,x86})
+   # and cleanup the generated cruft
+   $ make distclean
+
+   # now commit all!
+   $ git add sabayon/config/* && git commit -a -m "Sabayon Kernel 3.0"
+   # and push
+   $ git push
+
+4. Make the phat tarball!
+
+   # using sabayon-3.0 tag as example (same used below).
+   # don't use the original tarball name to avoid collisions in /usr/portage/distfiles
+   $ git archive --prefix=linux-3.0+sabayon/ --format=tar sabayon-3.0 | bzip2 > linux-3.0+sabayon.tar.bz2
+   # now take the tarball and push it to distfiles.sabayon.org
+   $ scp linux-3.0+sabayon.tar.bz2 <user>@distfiles.sabayon.org:/sabayon/rsync/rsync.sabayon.org/distfiles/sys-kernel/
+   # win!

@@ -69,6 +69,7 @@ static DEFINE_SPINLOCK(inode_lru_lock);
 
 __cacheline_aligned_in_smp DEFINE_SPINLOCK(inode_sb_list_lock);
 __cacheline_aligned_in_smp DEFINE_SPINLOCK(inode_wb_list_lock);
+EXPORT_SYMBOL(inode_sb_list_lock);
 
 /*
  * iprune_sem provides exclusion between the icache shrinking and the

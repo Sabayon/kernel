@@ -1,10 +1,10 @@
 aufs2.1 kbuild patch for linux-2.6.
 
 diff --git a/fs/Kconfig b/fs/Kconfig
-index f3aa9b0..d0eaf6e 100644
+index 19891aa..b660b64 100644
 --- a/fs/Kconfig
 +++ b/fs/Kconfig
-@@ -191,6 +191,7 @@ source "fs/pstore/Kconfig"
+@@ -208,6 +208,7 @@ source "fs/pstore/Kconfig"
  source "fs/sysv/Kconfig"
  source "fs/ufs/Kconfig"
  source "fs/exofs/Kconfig"
@@ -22,10 +22,10 @@ index fb68c2b..c031a85 100644
  obj-$(CONFIG_PSTORE)		+= pstore/
 +obj-$(CONFIG_AUFS_FS)           += aufs/
 diff --git a/include/linux/Kbuild b/include/linux/Kbuild
-index 75cf611..f9f42b5 100644
+index 01f6362..8b3b9f1 100644
 --- a/include/linux/Kbuild
 +++ b/include/linux/Kbuild
-@@ -64,6 +64,7 @@ header-y += atmppp.h
+@@ -65,6 +65,7 @@ header-y += atmppp.h
  header-y += atmsap.h
  header-y += atmsvc.h
  header-y += audit.h
@@ -36,10 +36,10 @@ index 75cf611..f9f42b5 100644
 aufs2.1 base patch for linux-2.6.
 
 diff --git a/fs/namei.c b/fs/namei.c
-index e6cd611..27d7dc7 100644
+index 0223c41..cc5dc02 100644
 --- a/fs/namei.c
 +++ b/fs/namei.c
-@@ -1768,7 +1768,7 @@ static struct dentry *__lookup_hash(struct qstr *name,
+@@ -1690,7 +1690,7 @@ static struct dentry *__lookup_hash(struct qstr *name,
   * needs parent already locked. Doesn't follow mounts.
   * SMP-safe.
   */
@@ -49,10 +49,10 @@ index e6cd611..27d7dc7 100644
  	return __lookup_hash(&nd->last, nd->path.dentry, nd);
  }
 diff --git a/fs/splice.c b/fs/splice.c
-index 50a5d978..886e942 100644
+index aa866d3..19afec6 100644
 --- a/fs/splice.c
 +++ b/fs/splice.c
-@@ -1081,8 +1081,8 @@ EXPORT_SYMBOL(generic_splice_sendpage);
+@@ -1085,8 +1085,8 @@ EXPORT_SYMBOL(generic_splice_sendpage);
  /*
   * Attempt to initiate a splice from pipe to file.
   */
@@ -63,7 +63,7 @@ index 50a5d978..886e942 100644
  {
  	ssize_t (*splice_write)(struct pipe_inode_info *, struct file *,
  				loff_t *, size_t, unsigned int);
-@@ -1109,9 +1109,9 @@ static long do_splice_from(struct pipe_inode_info *pipe, struct file *out,
+@@ -1113,9 +1113,9 @@ static long do_splice_from(struct pipe_inode_info *pipe, struct file *out,
  /*
   * Attempt to initiate a splice from a file to a pipe.
   */
@@ -119,10 +119,10 @@ index 01e4c1e..0e800e2 100644
  
  /*
 diff --git a/fs/inode.c b/fs/inode.c
-index 33c963d..e31e8d5 100644
+index 43566d1..4291eae 100644
 --- a/fs/inode.c
 +++ b/fs/inode.c
-@@ -112,6 +112,7 @@ static DEFINE_SPINLOCK(inode_lru_lock);
+@@ -69,6 +69,7 @@ static DEFINE_SPINLOCK(inode_lru_lock);
  
  __cacheline_aligned_in_smp DEFINE_SPINLOCK(inode_sb_list_lock);
  __cacheline_aligned_in_smp DEFINE_SPINLOCK(inode_wb_list_lock);
@@ -131,10 +131,10 @@ index 33c963d..e31e8d5 100644
  /*
   * iprune_sem provides exclusion between the icache shrinking and the
 diff --git a/fs/namei.c b/fs/namei.c
-index 27d7dc7..3c72fd5 100644
+index cc5dc02..121d5ba 100644
 --- a/fs/namei.c
 +++ b/fs/namei.c
-@@ -364,6 +364,7 @@ int deny_write_access(struct file * file)
+@@ -365,6 +365,7 @@ int deny_write_access(struct file * file)
  
  	return 0;
  }
@@ -142,7 +142,7 @@ index 27d7dc7..3c72fd5 100644
  
  /**
   * path_get - get a reference to a path
-@@ -1772,6 +1773,7 @@ struct dentry *lookup_hash(struct nameidata *nd)
+@@ -1694,6 +1695,7 @@ struct dentry *lookup_hash(struct nameidata *nd)
  {
  	return __lookup_hash(&nd->last, nd->path.dentry, nd);
  }
@@ -151,10 +151,10 @@ index 27d7dc7..3c72fd5 100644
  /**
   * lookup_one_len - filesystem helper to lookup single pathname component
 diff --git a/fs/namespace.c b/fs/namespace.c
-index 7dba2ed..d7570d1 100644
+index fe59bd1..7d3843f 100644
 --- a/fs/namespace.c
 +++ b/fs/namespace.c
-@@ -1524,6 +1524,7 @@ int iterate_mounts(int (*f)(struct vfsmount *, void *), void *arg,
+@@ -1508,6 +1508,7 @@ int iterate_mounts(int (*f)(struct vfsmount *, void *), void *arg,
  	}
  	return 0;
  }
@@ -236,10 +236,10 @@ index b52cf01..c1b341c 100644
  static long do_sys_truncate(const char __user *pathname, loff_t length)
  {
 diff --git a/fs/splice.c b/fs/splice.c
-index 886e942..9a77a3e 100644
+index 19afec6..11f07f8 100644
 --- a/fs/splice.c
 +++ b/fs/splice.c
-@@ -1105,6 +1105,7 @@ long do_splice_from(struct pipe_inode_info *pipe, struct file *out,
+@@ -1109,6 +1109,7 @@ long do_splice_from(struct pipe_inode_info *pipe, struct file *out,
  
  	return splice_write(pipe, out, ppos, len, flags);
  }
@@ -247,7 +247,7 @@ index 886e942..9a77a3e 100644
  
  /*
   * Attempt to initiate a splice from a file to a pipe.
-@@ -1131,6 +1132,7 @@ long do_splice_to(struct file *in, loff_t *ppos,
+@@ -1135,6 +1136,7 @@ long do_splice_to(struct file *in, loff_t *ppos,
  
  	return splice_read(in, ppos, pipe, len, flags);
  }
@@ -256,28 +256,28 @@ index 886e942..9a77a3e 100644
  /**
   * splice_direct_to_actor - splices data directly between two non-pipes
 diff --git a/security/commoncap.c b/security/commoncap.c
-index f20e984..d39acd9 100644
+index a93b3b7..024282c 100644
 --- a/security/commoncap.c
 +++ b/security/commoncap.c
-@@ -976,3 +976,4 @@ int cap_file_mmap(struct file *file, unsigned long reqprot,
+@@ -971,3 +971,4 @@ int cap_file_mmap(struct file *file, unsigned long reqprot,
  	}
  	return ret;
  }
 +EXPORT_SYMBOL(cap_file_mmap);
 diff --git a/security/device_cgroup.c b/security/device_cgroup.c
-index 8d9c48f..29108aa 100644
+index 1be6826..215278c 100644
 --- a/security/device_cgroup.c
 +++ b/security/device_cgroup.c
-@@ -515,6 +515,7 @@ found:
+@@ -508,6 +508,7 @@ found:
  
  	return -EPERM;
  }
-+EXPORT_SYMBOL(devcgroup_inode_permission);
++EXPORT_SYMBOL(__devcgroup_inode_permission);
  
  int devcgroup_inode_mknod(int mode, dev_t dev)
  {
 diff --git a/security/security.c b/security/security.c
-index 1011423..3bb850b 100644
+index 4ba6d4c..9f64bb8 100644
 --- a/security/security.c
 +++ b/security/security.c
 @@ -373,6 +373,7 @@ int security_path_rmdir(struct path *dir, struct dentry *dentry)
@@ -338,13 +338,13 @@ index 1011423..3bb850b 100644
  {
 @@ -520,6 +527,7 @@ int security_inode_permission(struct inode *inode, int mask)
  		return 0;
- 	return security_ops->inode_permission(inode, mask);
+ 	return security_ops->inode_permission(inode, mask, 0);
  }
 +EXPORT_SYMBOL(security_inode_permission);
  
  int security_inode_exec_permission(struct inode *inode, unsigned int flags)
  {
-@@ -628,6 +636,7 @@ int security_file_permission(struct file *file, int mask)
+@@ -626,6 +634,7 @@ int security_file_permission(struct file *file, int mask)
  
  	return fsnotify_perm(file, mask);
  }
@@ -352,7 +352,7 @@ index 1011423..3bb850b 100644
  
  int security_file_alloc(struct file *file)
  {
-@@ -655,6 +664,7 @@ int security_file_mmap(struct file *file, unsigned long reqprot,
+@@ -653,6 +662,7 @@ int security_file_mmap(struct file *file, unsigned long reqprot,
  		return ret;
  	return ima_file_mmap(file, prot);
  }
@@ -360,7 +360,7 @@ index 1011423..3bb850b 100644
  
  int security_file_mprotect(struct vm_area_struct *vma, unsigned long reqprot,
  			    unsigned long prot)
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/Documentation/ABI/testing/debugfs-aufs	2011-01-06 01:00:24.000000000 +0100
 @@ -0,0 +1,37 @@
 +What:		/debug/aufs/si_<id>/
@@ -400,7 +400,7 @@ index 1011423..3bb850b 100644
 +		be created.
 +		When the aufs mount option 'noxino' is specified, it
 +		will be empty. About XINO files, see the aufs manual.
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/Documentation/ABI/testing/sysfs-aufs	2011-01-06 01:00:24.000000000 +0100
 @@ -0,0 +1,24 @@
 +What:		/sys/fs/aufs/si_<id>/
@@ -427,9 +427,9 @@ index 1011423..3bb850b 100644
 +		even if it is the default path.
 +		When the aufs mount option 'noxino' is specified, it
 +		will be empty. About XINO files, see the aufs manual.
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
-+++ b/fs/aufs/aufs.h	2011-03-16 08:48:40.000000000 +0100
-@@ -0,0 +1,61 @@
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
++++ b/fs/aufs/aufs.h	2011-07-22 21:35:24.000000000 +0200
+@@ -0,0 +1,60 @@
 +/*
 + * Copyright (C) 2005-2011 Junjiro R. Okajima
 + *
@@ -479,7 +479,6 @@ index 1011423..3bb850b 100644
 +#include "inode.h"
 +#include "loop.h"
 +#include "module.h"
-+/* never include ./mtx.h */
 +#include "opts.h"
 +#include "rwsem.h"
 +#include "spl.h"
@@ -491,7 +490,7 @@ index 1011423..3bb850b 100644
 +
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_H__ */
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/branch.c	2011-03-16 08:48:40.000000000 +0100
 @@ -0,0 +1,1160 @@
 +/*
@@ -1654,7 +1653,7 @@ index 1011423..3bb850b 100644
 +	AuTraceErr(err);
 +	return err;
 +}
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/branch.h	2011-03-16 08:48:40.000000000 +0100
 @@ -0,0 +1,233 @@
 +/*
@@ -1890,9 +1889,9 @@ index 1011423..3bb850b 100644
 +
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_BRANCH_H__ */
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
-+++ b/fs/aufs/conf.mk	2011-01-06 01:00:24.000000000 +0100
-@@ -0,0 +1,37 @@
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
++++ b/fs/aufs/conf.mk	2011-07-22 21:35:24.000000000 +0200
+@@ -0,0 +1,38 @@
 +
 +AuConfStr = CONFIG_AUFS_FS=${CONFIG_AUFS_FS}
 +
@@ -1907,6 +1906,7 @@ index 1011423..3bb850b 100644
 +	HNOTIFY HFSNOTIFY \
 +	EXPORT INO_T_64 \
 +	RDU \
++	PROC_MAP \
 +	SP_IATTR \
 +	SHWH \
 +	BR_RAMFS \
@@ -1930,7 +1930,7 @@ index 1011423..3bb850b 100644
 +${obj}/sysfs.o: ${AuConfName}
 +
 +-include ${srctree}/${src}/conf_priv.mk
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/cpup.c	2011-03-16 08:48:40.000000000 +0100
 @@ -0,0 +1,1063 @@
 +/*
@@ -2996,7 +2996,7 @@ index 1011423..3bb850b 100644
 +	dput(parent);
 +	return err;
 +}
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/cpup.h	2011-03-16 08:48:40.000000000 +0100
 @@ -0,0 +1,83 @@
 +/*
@@ -3082,7 +3082,7 @@ index 1011423..3bb850b 100644
 +
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_CPUP_H__ */
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/dbgaufs.c	2011-03-16 08:48:40.000000000 +0100
 @@ -0,0 +1,334 @@
 +/*
@@ -3419,7 +3419,7 @@ index 1011423..3bb850b 100644
 +		err = 0;
 +	return err;
 +}
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/dbgaufs.h	2011-03-16 08:48:40.000000000 +0100
 @@ -0,0 +1,52 @@
 +/*
@@ -3474,7 +3474,7 @@ index 1011423..3bb850b 100644
 +
 +#endif /* __KERNEL__ */
 +#endif /* __DBGAUFS_H__ */
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/dcsub.c	2011-03-16 08:48:40.000000000 +0100
 @@ -0,0 +1,243 @@
 +/*
@@ -3720,7 +3720,7 @@ index 1011423..3bb850b 100644
 +
 +	return path_is_under(path + 0, path + 1);
 +}
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/dcsub.h	2011-03-16 08:48:40.000000000 +0100
 @@ -0,0 +1,95 @@
 +/*
@@ -3818,8 +3818,8 @@ index 1011423..3bb850b 100644
 +
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_DCSUB_H__ */
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
-+++ b/fs/aufs/debug.c	2011-05-22 23:30:54.000000000 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
++++ b/fs/aufs/debug.c	2011-07-22 21:35:24.000000000 +0200
 @@ -0,0 +1,479 @@
 +/*
 + * Copyright (C) 2005-2011 Junjiro R. Okajima
@@ -4028,7 +4028,7 @@ index 1011423..3bb850b 100644
 +	    && au_test_aufs(file->f_dentry->d_sb)
 +	    && au_fi(file))
 +		snprintf(a, sizeof(a), ", gen %d, mmapped %d",
-+			 au_figen(file), !!au_fi(file)->fi_hvmop);
++			 au_figen(file), atomic_read(&au_fi(file)->fi_mmapped));
 +	dpri("f%d: mode 0x%x, flags 0%o, cnt %ld, v %llu, pos %llu%s\n",
 +	     bindex, file->f_mode, file->f_flags, (long)file_count(file),
 +	     file->f_version, file->f_pos, a);
@@ -4300,7 +4300,7 @@ index 1011423..3bb850b 100644
 +
 +	return 0;
 +}
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/debug.h	2011-05-22 23:30:54.000000000 +0200
 @@ -0,0 +1,252 @@
 +/*
@@ -4555,7 +4555,7 @@ index 1011423..3bb850b 100644
 +
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_DEBUG_H__ */
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/dentry.c	2011-05-22 23:30:54.000000000 +0200
 @@ -0,0 +1,1140 @@
 +/*
@@ -5698,7 +5698,7 @@ index 1011423..3bb850b 100644
 +	.d_revalidate	= aufs_d_revalidate,
 +	.d_release	= aufs_d_release
 +};
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/dentry.h	2011-05-22 23:30:54.000000000 +0200
 @@ -0,0 +1,238 @@
 +/*
@@ -5939,7 +5939,7 @@ index 1011423..3bb850b 100644
 +
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_DENTRY_H__ */
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/dinfo.c	2011-05-22 23:30:54.000000000 +0200
 @@ -0,0 +1,543 @@
 +/*
@@ -6485,7 +6485,7 @@ index 1011423..3bb850b 100644
 +			return bindex;
 +	return -1;
 +}
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/dir.c	2011-03-16 08:48:40.000000000 +0100
 @@ -0,0 +1,647 @@
 +/*
@@ -7135,7 +7135,7 @@ index 1011423..3bb850b 100644
 +	.flush		= aufs_flush_dir,
 +	.fsync		= aufs_fsync_dir
 +};
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/dir.h	2011-03-16 08:48:40.000000000 +0100
 @@ -0,0 +1,138 @@
 +/*
@@ -7276,9 +7276,9 @@ index 1011423..3bb850b 100644
 +
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_DIR_H__ */
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
-+++ b/fs/aufs/dynop.c	2011-05-22 23:30:54.000000000 +0200
-@@ -0,0 +1,425 @@
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
++++ b/fs/aufs/dynop.c	2011-07-22 21:35:24.000000000 +0200
+@@ -0,0 +1,377 @@
 +/*
 + * Copyright (C) 2010-2011 Junjiro R. Okajima
 + *
@@ -7480,34 +7480,6 @@ index 1011423..3bb850b 100644
 +	dyaop->da_get_xip_mem = h_aop->get_xip_mem;
 +}
 +
-+#define DySetVmop(func) \
-+	DySet(func, dyvmop->dv_op, aufs_vm_ops, h_vmop, h_sb)
-+#define DySetVmopForce(func) \
-+	DySetForce(func, dyvmop->dv_op, aufs_vm_ops)
-+
-+static void dy_vmop(struct au_dykey *key, const void *h_op,
-+		    struct super_block *h_sb __maybe_unused)
-+{
-+	struct au_dyvmop *dyvmop = (void *)key;
-+	const struct vm_operations_struct *h_vmop = h_op;
-+	DyDbgDeclare(cnt);
-+
-+	AuDbg("%s\n", au_sbtype(h_sb));
-+
-+	DySetVmop(open);
-+	DySetVmop(close);
-+	DySetVmop(fault);
-+	DySetVmop(page_mkwrite);
-+	DySetVmop(access);
-+#ifdef CONFIG_NUMA
-+	DySetVmop(set_policy);
-+	DySetVmop(get_policy);
-+	DySetVmop(migrate);
-+#endif
-+
-+	DyDbgSize(cnt, *h_vmop);
-+}
-+
 +/* ---------------------------------------------------------------------- */
 +
 +static void dy_bug(struct kref *kref)
@@ -7528,10 +7500,6 @@ index 1011423..3bb850b 100644
 +		[AuDy_AOP] = {
 +			.sz	= sizeof(struct au_dyaop),
 +			.set	= dy_aop
-+		},
-+		[AuDy_VMOP] = {
-+			.sz	= sizeof(struct au_dyvmop),
-+			.set	= dy_vmop
 +		}
 +	};
 +	const struct op *p;
@@ -7668,21 +7636,6 @@ index 1011423..3bb850b 100644
 +	spin_unlock(&spl->spin);
 +}
 +
-+const struct vm_operations_struct *
-+au_dy_vmop(struct file *file, struct au_branch *br,
-+	   const struct vm_operations_struct *h_vmop)
-+{
-+	struct au_dyvmop *dyvmop;
-+	struct au_dynop op;
-+
-+	op.dy_type = AuDy_VMOP;
-+	op.dy_hvmop = h_vmop;
-+	dyvmop = (void *)dy_get(&op, br);
-+	if (IS_ERR(dyvmop))
-+		return (void *)dyvmop;
-+	return &dyvmop->dv_op;
-+}
-+
 +/* ---------------------------------------------------------------------- */
 +
 +void __init au_dy_init(void)
@@ -7691,7 +7644,6 @@ index 1011423..3bb850b 100644
 +
 +	/* make sure that 'struct au_dykey *' can be any type */
 +	BUILD_BUG_ON(offsetof(struct au_dyaop, da_key));
-+	BUILD_BUG_ON(offsetof(struct au_dyvmop, dv_key));
 +
 +	for (i = 0; i < AuDyLast; i++)
 +		au_spl_init(dynop + i);
@@ -7704,9 +7656,9 @@ index 1011423..3bb850b 100644
 +	for (i = 0; i < AuDyLast; i++)
 +		WARN_ON(!list_empty(&dynop[i].head));
 +}
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
-+++ b/fs/aufs/dynop.h	2011-03-16 08:48:40.000000000 +0100
-@@ -0,0 +1,89 @@
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
++++ b/fs/aufs/dynop.h	2011-07-22 21:35:24.000000000 +0200
+@@ -0,0 +1,80 @@
 +/*
 + * Copyright (C) 2010-2011 Junjiro R. Okajima
 + *
@@ -7740,14 +7692,13 @@ index 1011423..3bb850b 100644
 +#include <linux/aufs_type.h>
 +#include "inode.h"
 +
-+enum {AuDy_AOP, AuDy_VMOP, AuDyLast};
++enum {AuDy_AOP, AuDyLast};
 +
 +struct au_dynop {
 +	int						dy_type;
 +	union {
 +		const void				*dy_hop;
 +		const struct address_space_operations	*dy_haop;
-+		const struct vm_operations_struct	*dy_hvmop;
 +	};
 +};
 +
@@ -7773,11 +7724,6 @@ index 1011423..3bb850b 100644
 +			      void **, unsigned long *);
 +};
 +
-+struct au_dyvmop {
-+	struct au_dykey			dv_key;
-+	struct vm_operations_struct	dv_op; /* not const */
-+};
-+
 +/* ---------------------------------------------------------------------- */
 +
 +/* dynop.c */
@@ -7787,16 +7733,13 @@ index 1011423..3bb850b 100644
 +		struct inode *h_inode);
 +int au_dy_irefresh(struct inode *inode);
 +void au_dy_arefresh(int do_dio);
-+const struct vm_operations_struct *
-+au_dy_vmop(struct file *file, struct au_branch *br,
-+	   const struct vm_operations_struct *h_vmop);
 +
 +void __init au_dy_init(void);
 +void au_dy_fin(void);
 +
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_DYNOP_H__ */
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/export.c	2011-05-22 23:30:54.000000000 +0200
 @@ -0,0 +1,805 @@
 +/*
@@ -8604,7 +8547,7 @@ index 1011423..3bb850b 100644
 +	BUILD_BUG_ON(sizeof(u) != sizeof(int));
 +	atomic_set(&sbinfo->si_xigen_next, u);
 +}
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/file.c	2011-05-22 23:30:54.000000000 +0200
 @@ -0,0 +1,676 @@
 +/*
@@ -9283,9 +9226,9 @@ index 1011423..3bb850b 100644
 +	.error_remove_page	= aufs_error_remove_page
 +#endif /* CONFIG_AUFS_DEBUG */
 +};
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
-+++ b/fs/aufs/file.h	2011-03-16 08:48:40.000000000 +0100
-@@ -0,0 +1,236 @@
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
++++ b/fs/aufs/file.h	2011-07-22 21:35:24.000000000 +0200
+@@ -0,0 +1,293 @@
 +/*
 + * Copyright (C) 2005-2011 Junjiro R. Okajima
 + *
@@ -9313,6 +9256,7 @@ index 1011423..3bb850b 100644
 +
 +#ifdef __KERNEL__
 +
++#include <linux/file.h>
 +#include <linux/fs.h>
 +#include <linux/poll.h>
 +#include <linux/aufs_type.h>
@@ -9347,9 +9291,7 @@ index 1011423..3bb850b 100644
 +	/* do not union them */
 +	struct {				/* for non-dir */
 +		struct au_hfile			fi_htop;
-+		struct vm_operations_struct	*fi_hvmop;
-+		struct mutex			fi_vm_mtx;
-+		struct mutex			fi_mmap;
++		atomic_t			fi_mmapped;
 +	};
 +	struct au_fidir		*fi_hdir;	/* for dir only */
 +} ____cacheline_aligned_in_smp;
@@ -9394,7 +9336,6 @@ index 1011423..3bb850b 100644
 +
 +/* f_op.c */
 +extern const struct file_operations aufs_file_fop;
-+extern const struct vm_operations_struct aufs_vm_ops;
 +int au_do_open_nondir(struct file *file, int flags);
 +int aufs_release_nondir(struct inode *inode __maybe_unused, struct file *file);
 +
@@ -9514,17 +9455,76 @@ index 1011423..3bb850b 100644
 +	return atomic_read(&au_fi(f)->fi_generation);
 +}
 +
++static inline void au_set_mmapped(struct file *f)
++{
++	if (atomic_inc_return(&au_fi(f)->fi_mmapped))
++		return;
++	pr_warning("fi_mmapped wrapped around\n");
++	while (!atomic_inc_return(&au_fi(f)->fi_mmapped))
++		;
++}
++
++static inline void au_unset_mmapped(struct file *f)
++{
++	atomic_dec(&au_fi(f)->fi_mmapped);
++}
++
 +static inline int au_test_mmapped(struct file *f)
 +{
-+	FiMustAnyLock(f);
-+	return !!(au_fi(f)->fi_hvmop);
++	return atomic_read(&au_fi(f)->fi_mmapped);
++}
++
++/* customize vma->vm_file */
++
++static inline void au_do_vm_file_reset(struct vm_area_struct *vma,
++				       struct file *file)
++{
++	fput(vma->vm_file);
++	get_file(file);
++	vma->vm_file = file;
++}
++
++#ifdef CONFIG_MMU
++#define AuDbgVmRegion(file, vma) do {} while (0)
++
++static inline void au_vm_file_reset(struct vm_area_struct *vma,
++				    struct file *file)
++{
++	au_do_vm_file_reset(vma, file);
++}
++#else
++#define AuDbgVmRegion(file, vma) \
++	AuDebugOn((vma)->vm_region && (vma)->vm_region->vm_file != (file))
++
++static inline void au_vm_file_reset(struct vm_area_struct *vma,
++				    struct file *file)
++{
++	au_do_vm_file_reset(vma, file);
++	fput(vma->vm_region->vm_file);
++	get_file(file);
++	vma->vm_region->vm_file = file;
++}
++#endif /* CONFIG_MMU */
++
++/* handle vma->vm_prfile */
++static inline void au_vm_prfile_set(struct vm_area_struct *vma,
++				    struct file *file)
++{
++#ifdef CONFIG_AUFS_PROC_MAP
++	get_file(file);
++	vma->vm_prfile = file;
++#ifndef CONFIG_MMU
++	get_file(file);
++	vma->vm_region->vm_prfile = file;
++#endif
++#endif
 +}
 +
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_FILE_H__ */
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
-+++ b/fs/aufs/finfo.c	2011-05-22 23:30:54.000000000 +0200
-@@ -0,0 +1,157 @@
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
++++ b/fs/aufs/finfo.c	2011-07-22 21:35:24.000000000 +0200
+@@ -0,0 +1,153 @@
 +/*
 + * Copyright (C) 2005-2011 Junjiro R. Okajima
 + *
@@ -9647,14 +9647,10 @@ index 1011423..3bb850b 100644
 +void au_fi_init_once(void *_finfo)
 +{
 +	struct au_finfo *finfo = _finfo;
-+	static struct lock_class_key aufs_fi, aufs_fi_vm, aufs_fi_mmap;
++	static struct lock_class_key aufs_fi;
 +
 +	au_rw_init(&finfo->fi_rwsem);
 +	au_rw_class(&finfo->fi_rwsem, &aufs_fi);
-+	mutex_init(&finfo->fi_vm_mtx);
-+	lockdep_set_class(&finfo->fi_vm_mtx, &aufs_fi_vm);
-+	mutex_init(&finfo->fi_mmap);
-+	lockdep_set_class(&finfo->fi_mmap, &aufs_fi_mmap);
 +}
 +
 +int au_finfo_init(struct file *file, struct au_fidir *fidir)
@@ -9682,9 +9678,9 @@ index 1011423..3bb850b 100644
 +out:
 +	return err;
 +}
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
-+++ b/fs/aufs/f_op.c	2011-05-22 23:30:54.000000000 +0200
-@@ -0,0 +1,939 @@
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
++++ b/fs/aufs/f_op.c	2011-07-22 21:35:24.000000000 +0200
+@@ -0,0 +1,731 @@
 +/*
 + * Copyright (C) 2005-2011 Junjiro R. Okajima
 + *
@@ -9731,7 +9727,7 @@ index 1011423..3bb850b 100644
 +
 +	finfo = au_fi(file);
 +	memset(&finfo->fi_htop, 0, sizeof(finfo->fi_htop));
-+	finfo->fi_hvmop = NULL;
++	atomic_set(&finfo->fi_mmapped, 0);
 +	bindex = au_dbstart(dentry);
 +	h_file = au_h_open(dentry, bindex, flags, file);
 +	if (IS_ERR(h_file))
@@ -10010,8 +10006,11 @@ index 1011423..3bb850b 100644
 +	err = -EINVAL;
 +	h_file = au_hf_top(file);
 +	if (au_test_loopback_kthread()) {
-+		file->f_mapping = h_file->f_mapping;
-+		smp_mb(); /* unnecessary? */
++		au_warn_loopback(h_file->f_dentry->d_sb);
++		if (file->f_mapping != h_file->f_mapping) {
++			file->f_mapping = h_file->f_mapping;
++			smp_mb(); /* unnecessary? */
++		}
 +	}
 +	err = vfsub_splice_to(h_file, ppos, pipe, len, flags);
 +	/* todo: necessasry? */
@@ -10065,108 +10064,6 @@ index 1011423..3bb850b 100644
 +
 +/* ---------------------------------------------------------------------- */
 +
-+static struct file *au_safe_file(struct vm_area_struct *vma)
-+{
-+	struct file *file;
-+
-+	file = vma->vm_file;
-+	if (au_fi(file) && au_test_aufs(file->f_dentry->d_sb))
-+		return file;
-+	return NULL;
-+}
-+
-+static void au_reset_file(struct vm_area_struct *vma, struct file *file)
-+{
-+	vma->vm_file = file;
-+	/* smp_mb(); */ /* flush vm_file */
-+}
-+
-+static int aufs_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
-+{
-+	int err;
-+	static DECLARE_WAIT_QUEUE_HEAD(wq);
-+	struct file *file, *h_file;
-+	struct au_finfo *finfo;
-+
-+	/* todo: non-robr mode, user vm_file as it is? */
-+	wait_event(wq, (file = au_safe_file(vma)));
-+
-+	/* do not revalidate, no si lock */
-+	finfo = au_fi(file);
-+	AuDebugOn(finfo->fi_hdir);
-+	h_file = finfo->fi_htop.hf_file;
-+	AuDebugOn(!h_file || !finfo->fi_hvmop);
-+
-+	mutex_lock(&finfo->fi_vm_mtx);
-+	vma->vm_file = h_file;
-+	err = finfo->fi_hvmop->fault(vma, vmf);
-+	/* todo: necessary? */
-+	/* file->f_ra = h_file->f_ra; */
-+	au_reset_file(vma, file);
-+	mutex_unlock(&finfo->fi_vm_mtx);
-+#if 0 /* def CONFIG_SMP */
-+	/* wake_up_nr(&wq, online_cpu - 1); */
-+	wake_up_all(&wq);
-+#else
-+	wake_up(&wq);
-+#endif
-+
-+	return err;
-+}
-+
-+static int aufs_page_mkwrite(struct vm_area_struct *vma, struct vm_fault *vmf)
-+{
-+	int err;
-+	static DECLARE_WAIT_QUEUE_HEAD(wq);
-+	struct file *file, *h_file;
-+	struct au_finfo *finfo;
-+
-+	wait_event(wq, (file = au_safe_file(vma)));
-+
-+	finfo = au_fi(file);
-+	AuDebugOn(finfo->fi_hdir);
-+	h_file = finfo->fi_htop.hf_file;
-+	AuDebugOn(!h_file || !finfo->fi_hvmop);
-+
-+	mutex_lock(&finfo->fi_vm_mtx);
-+	vma->vm_file = h_file;
-+	err = finfo->fi_hvmop->page_mkwrite(vma, vmf);
-+	au_reset_file(vma, file);
-+	mutex_unlock(&finfo->fi_vm_mtx);
-+	wake_up(&wq);
-+
-+	return err;
-+}
-+
-+static void aufs_vm_close(struct vm_area_struct *vma)
-+{
-+	static DECLARE_WAIT_QUEUE_HEAD(wq);
-+	struct file *file, *h_file;
-+	struct au_finfo *finfo;
-+
-+	wait_event(wq, (file = au_safe_file(vma)));
-+
-+	finfo = au_fi(file);
-+	AuDebugOn(finfo->fi_hdir);
-+	h_file = finfo->fi_htop.hf_file;
-+	AuDebugOn(!h_file || !finfo->fi_hvmop);
-+
-+	mutex_lock(&finfo->fi_vm_mtx);
-+	vma->vm_file = h_file;
-+	finfo->fi_hvmop->close(vma);
-+	au_reset_file(vma, file);
-+	mutex_unlock(&finfo->fi_vm_mtx);
-+	wake_up(&wq);
-+}
-+
-+const struct vm_operations_struct aufs_vm_ops = {
-+	.close		= aufs_vm_close,
-+	.fault		= aufs_fault,
-+	.page_mkwrite	= aufs_page_mkwrite
-+};
-+
-+/* ---------------------------------------------------------------------- */
-+
 +/* cf. linux/include/linux/mman.h: calc_vm_prot_bits() */
 +#define AuConv_VM_PROT(f, b)	_calc_vm_trans(f, VM_##b, PROT_##b)
 +
@@ -10201,45 +10098,6 @@ index 1011423..3bb850b 100644
 +		| AuConv_VM_MAP(flags, EXECUTABLE)
 +		| AuConv_VM_MAP(flags, LOCKED);
 +}
-+
-+static struct vm_operations_struct *
-+au_hvmop(struct file *h_file, struct vm_area_struct *vma, unsigned long *flags)
-+{
-+	struct vm_operations_struct *h_vmop;
-+	unsigned long prot;
-+	int err;
-+
-+	h_vmop = ERR_PTR(-ENODEV);
-+	if (!h_file->f_op || !h_file->f_op->mmap)
-+		goto out;
-+
-+	prot = au_prot_conv(vma->vm_flags);
-+	err = security_file_mmap(h_file, /*reqprot*/prot, prot,
-+				 au_flag_conv(vma->vm_flags), vma->vm_start, 0);
-+	h_vmop = ERR_PTR(err);
-+	if (unlikely(err))
-+		goto out;
-+
-+	err = h_file->f_op->mmap(h_file, vma);
-+	h_vmop = ERR_PTR(err);
-+	if (unlikely(err))
-+		goto out;
-+
-+	/* oops, it became 'const' */
-+	h_vmop = (struct vm_operations_struct *)vma->vm_ops;
-+	*flags = vma->vm_flags;
-+	err = do_munmap(current->mm, vma->vm_start,
-+			vma->vm_end - vma->vm_start);
-+	if (unlikely(err)) {
-+		AuIOErr("failed internal unmapping %.*s, %d\n",
-+			AuDLNPair(h_file->f_dentry), err);
-+		h_vmop = ERR_PTR(-EIO);
-+	}
-+
-+out:
-+	return h_vmop;
-+}
-+
 +/*
 + * This is another ugly approach to keep the lock order, particularly
 + * mm->mmap_sem and aufs rwsem. The previous approach was reverted and you can
@@ -10254,36 +10112,6 @@ index 1011423..3bb850b 100644
 + * rwsem to its internal workqueue.
 + */
 +
-+/* very ugly approach */
-+#include "mtx.h"
-+
-+static void au_fi_mmap_lock_and_sell(struct file *file)
-+{
-+	struct mutex *mtx;
-+
-+	FiMustWriteLock(file);
-+
-+	mtx = &au_fi(file)->fi_mmap;
-+	mutex_lock(mtx);
-+	mutex_release(&mtx->dep_map, /*nested*/0, _RET_IP_);
-+}
-+
-+static void au_fi_mmap_buy(struct file *file)
-+{
-+	struct mutex *mtx;
-+
-+	mtx = &au_fi(file)->fi_mmap;
-+	MtxMustLock(mtx);
-+
-+	mutex_set_owner(mtx);
-+	mutex_acquire(&mtx->dep_map, /*subclass*/0, /*trylock*/0, _RET_IP_);
-+}
-+
-+static void au_fi_mmap_unlock(struct file *file)
-+{
-+	mutex_unlock(&au_fi(file)->fi_mmap);
-+}
-+
 +struct au_mmap_pre_args {
 +	/* input */
 +	struct file *file;
@@ -10293,12 +10121,10 @@ index 1011423..3bb850b 100644
 +	int *errp;
 +	struct file *h_file;
 +	struct au_branch *br;
-+	int mmapped;
 +};
 +
 +static int au_mmap_pre(struct file *file, struct vm_area_struct *vma,
-+		       struct file **h_file, struct au_branch **br,
-+		       int *mmapped)
++		       struct file **h_file, struct au_branch **br)
 +{
 +	int err;
 +	aufs_bindex_t bstart;
@@ -10314,7 +10140,6 @@ index 1011423..3bb850b 100644
 +	if (unlikely(err))
 +		goto out;
 +
-+	*mmapped = !!au_test_mmapped(file);
 +	if (wlock) {
 +		struct au_pin pin;
 +
@@ -10329,8 +10154,7 @@ index 1011423..3bb850b 100644
 +	*br = au_sbr(sb, bstart);
 +	*h_file = au_hf_top(file);
 +	get_file(*h_file);
-+	if (!*mmapped)
-+		au_fi_mmap_lock_and_sell(file);
++	au_set_mmapped(file);
 +
 +out_unlock:
 +	fi_write_unlock(file);
@@ -10342,79 +10166,48 @@ index 1011423..3bb850b 100644
 +static void au_call_mmap_pre(void *args)
 +{
 +	struct au_mmap_pre_args *a = args;
-+	*a->errp = au_mmap_pre(a->file, a->vma, &a->h_file, &a->br,
-+			       &a->mmapped);
++	*a->errp = au_mmap_pre(a->file, a->vma, &a->h_file, &a->br);
 +}
 +
 +static int aufs_mmap(struct file *file, struct vm_area_struct *vma)
 +{
 +	int err, wkq_err;
-+	unsigned long h_vmflags;
-+	struct au_finfo *finfo;
-+	struct dentry *h_dentry;
-+	struct vm_operations_struct *h_vmop, *vmop;
++	unsigned long prot;
 +	struct au_mmap_pre_args args = {
 +		.file		= file,
 +		.vma		= vma,
 +		.errp		= &err
 +	};
 +
++	AuDbgVmRegion(file, vma);
 +	wkq_err = au_wkq_wait_pre(au_call_mmap_pre, &args);
 +	if (unlikely(wkq_err))
 +		err = wkq_err;
 +	if (unlikely(err))
 +		goto out;
-+	if (!args.mmapped)
-+		au_fi_mmap_buy(file);
 +
-+	h_dentry = args.h_file->f_dentry;
-+	if (!args.mmapped && au_test_fs_bad_mapping(h_dentry->d_sb)) {
-+		/*
-+		 * by this assignment, f_mapping will differs from aufs inode
-+		 * i_mapping.
-+		 * if someone else mixes the use of f_dentry->d_inode and
-+		 * f_mapping->host, then a problem may arise.
-+		 */
-+		file->f_mapping = args.h_file->f_mapping;
-+	}
-+
-+	/* always try this internal mmap to get vma flags */
-+	h_vmflags = 0; /* gcc warning */
-+	h_vmop = au_hvmop(args.h_file, vma, &h_vmflags);
-+	err = PTR_ERR(h_vmop);
-+	if (IS_ERR(h_vmop))
-+		goto out_unlock;
-+	finfo = au_fi(file);
-+	AuDebugOn(args.mmapped && h_vmop != finfo->fi_hvmop);
-+
-+	vmop = (void *)au_dy_vmop(file, args.br, h_vmop);
-+	err = PTR_ERR(vmop);
-+	if (IS_ERR(vmop))
-+		goto out_unlock;
-+
-+	/*
-+	 * unnecessary to handle MAP_DENYWRITE and deny_write_access()?
-+	 * currently MAP_DENYWRITE from userspace is ignored, but elf loader
-+	 * sets it. when FMODE_EXEC is set (by open_exec() or sys_uselib()),
-+	 * both of the aufs file and the lower file is deny_write_access()-ed.
-+	 * finally I hope we can skip handlling MAP_DENYWRITE here.
-+	 */
-+	err = generic_file_mmap(file, vma);
++	au_vm_file_reset(vma, args.h_file);
++	prot = au_prot_conv(vma->vm_flags);
++	err = security_file_mmap(args.h_file, /*reqprot*/prot, prot,
++				 au_flag_conv(vma->vm_flags), vma->vm_start, 0);
 +	if (unlikely(err))
-+		goto out_unlock;
++		goto out_reset;
 +
-+	vma->vm_ops = vmop;
-+	vma->vm_flags = h_vmflags;
-+	if (!args.mmapped)
-+		finfo->fi_hvmop = h_vmop;
++	err = args.h_file->f_op->mmap(args.h_file, vma);
++	if (unlikely(err))
++		goto out_reset;
 +
++	au_vm_prfile_set(vma, file);
 +	vfsub_file_accessed(args.h_file);
 +	/* update without lock, I don't think it a problem */
-+	fsstack_copy_attr_atime(file->f_dentry->d_inode, h_dentry->d_inode);
++	fsstack_copy_attr_atime(file->f_dentry->d_inode,
++				args.h_file->f_dentry->d_inode);
++	goto out_fput; /* success */
 +
-+out_unlock:
-+	if (!args.mmapped)
-+		au_fi_mmap_unlock(file);
++out_reset:
++	au_unset_mmapped(file);
++	au_vm_file_reset(vma, file);
++out_fput:
 +	fput(args.h_file);
 +out:
 +	return err;
@@ -10590,12 +10383,7 @@ index 1011423..3bb850b 100644
 +
 +const struct file_operations aufs_file_fop = {
 +	.owner		= THIS_MODULE,
-+	/*
-+	 * while generic_file_llseek/_unlocked() don't use BKL,
-+	 * don't use it since it operates file->f_mapping->host.
-+	 * in aufs, it may be a real file and may confuse users by UDBA.
-+	 */
-+	/* .llseek		= generic_file_llseek, */
++
 +	.llseek		= default_llseek,
 +
 +	.read		= aufs_read,
@@ -10624,7 +10412,7 @@ index 1011423..3bb850b 100644
 +	.aio_splice_read  = aufs_aio_splice_read
 +#endif
 +};
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/f_op_sp.c	2011-03-16 08:48:40.000000000 +0100
 @@ -0,0 +1,299 @@
 +/*
@@ -10926,7 +10714,7 @@ index 1011423..3bb850b 100644
 +
 +	return ret;
 +}
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/fstype.h	2011-03-16 08:48:40.000000000 +0100
 @@ -0,0 +1,497 @@
 +/*
@@ -11426,7 +11214,7 @@ index 1011423..3bb850b 100644
 +
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_FSTYPE_H__ */
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/hfsnotify.c	2011-03-16 08:48:40.000000000 +0100
 @@ -0,0 +1,247 @@
 +/*
@@ -11676,7 +11464,7 @@ index 1011423..3bb850b 100644
 +	.fin_br		= au_hfsn_fin_br,
 +	.init_br	= au_hfsn_init_br
 +};
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/hfsplus.c	2011-03-16 08:48:40.000000000 +0100
 @@ -0,0 +1,58 @@
 +/*
@@ -11737,7 +11525,7 @@ index 1011423..3bb850b 100644
 +		au_sbr_put(dentry->d_sb, bindex);
 +	}
 +}
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/hnotify.c	2011-03-16 08:48:40.000000000 +0100
 @@ -0,0 +1,709 @@
 +/*
@@ -12449,7 +12237,7 @@ index 1011423..3bb850b 100644
 +	if (au_cachep[AuCache_HNOTIFY])
 +		au_hn_destroy_cache();
 +}
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/iinfo.c	2011-03-16 08:48:40.000000000 +0100
 @@ -0,0 +1,264 @@
 +/*
@@ -12716,7 +12504,7 @@ index 1011423..3bb850b 100644
 +	iinfo->ii_hinode = NULL;
 +	AuRwDestroy(&iinfo->ii_rwsem);
 +}
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/inode.c	2011-03-16 08:48:40.000000000 +0100
 @@ -0,0 +1,471 @@
 +/*
@@ -13190,7 +12978,7 @@ index 1011423..3bb850b 100644
 +		mask |= MAY_READ; /* force permission check */
 +	return au_test_h_perm(h_inode, mask);
 +}
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/inode.h	2011-03-16 08:48:40.000000000 +0100
 @@ -0,0 +1,546 @@
 +/*
@@ -13739,7 +13527,7 @@ index 1011423..3bb850b 100644
 +
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_INODE_H__ */
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/ioctl.c	2011-03-16 08:48:40.000000000 +0100
 @@ -0,0 +1,158 @@
 +/*
@@ -13900,7 +13688,7 @@ index 1011423..3bb850b 100644
 +}
 +#endif
 +#endif
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/i_op_add.c	2011-05-22 23:30:54.000000000 +0200
 @@ -0,0 +1,711 @@
 +/*
@@ -14614,7 +14402,7 @@ index 1011423..3bb850b 100644
 +out:
 +	return err;
 +}
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/i_op.c	2011-03-16 08:48:40.000000000 +0100
 @@ -0,0 +1,976 @@
 +/*
@@ -15593,7 +15381,7 @@ index 1011423..3bb850b 100644
 +	.getattr	= aufs_getattr,
 +	.truncate_range	= aufs_truncate_range
 +};
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/i_op_del.c	2011-03-16 08:48:40.000000000 +0100
 @@ -0,0 +1,481 @@
 +/*
@@ -16077,7 +15865,7 @@ index 1011423..3bb850b 100644
 +	AuTraceErr(err);
 +	return err;
 +}
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/i_op_ren.c	2011-03-16 08:48:40.000000000 +0100
 @@ -0,0 +1,1017 @@
 +/*
@@ -17097,9 +16885,9 @@ index 1011423..3bb850b 100644
 +	AuTraceErr(err);
 +	return err;
 +}
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
-+++ b/fs/aufs/Kconfig	2011-05-22 23:30:54.000000000 +0200
-@@ -0,0 +1,180 @@
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
++++ b/fs/aufs/Kconfig	2011-07-22 21:35:24.000000000 +0200
+@@ -0,0 +1,203 @@
 +config AUFS_FS
 +	tristate "Aufs (Advanced multi layered unification filesystem) support"
 +	depends on EXPERIMENTAL
@@ -17202,6 +16990,29 @@ index 1011423..3bb850b 100644
 +	shows better performance in most cases.
 +	See detail in aufs.5.
 +
++config AUFS_PROC_MAP
++	bool "support for /proc/maps and lsof(1)"
++	depends on PROC_FS
++	help
++	When you issue mmap(2) in aufs, it is actually a direct mmap(2)
++	call to the file on the branch fs since the file in aufs is
++	purely virtual. And the file path printed in /proc/maps (and
++	others) will be the path on the branch fs. In most cases, it
++	does no harm. But some utilities like lsof(1) may confuse since
++	the utility or user may expect the file path in aufs to be
++	printed.
++	To address this issue, aufs provides a patch which introduces a
++	new member called vm_prfile into struct vm_are_struct. The patch
++	is meaningless without enabling this configuration since nobody
++	sets the new vm_prfile member.
++	If you don't apply the patch, then enabling this configuration
++	will cause a compile error.
++	This approach is fragile since if someone else make some changes
++	around vm_file, then vm_prfile may not work anymore. As a
++	workaround such case, aufs provides this configuration. If you
++	disable it, then lsof(1) may produce incorrect result but the
++	problem will be gone even if the aufs patch is applied (I hope).
++
 +config AUFS_SP_IATTR
 +	bool "Respect the attributes (mtime/ctime mainly) of special files"
 +	help
@@ -17280,9 +17091,9 @@ index 1011423..3bb850b 100644
 +	Automatic configuration for internal use.
 +	When aufs supports Magic SysRq, enabled automatically.
 +endif
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
-+++ b/fs/aufs/loop.c	2011-03-16 08:48:40.000000000 +0100
-@@ -0,0 +1,63 @@
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
++++ b/fs/aufs/loop.c	2011-07-22 21:35:24.000000000 +0200
+@@ -0,0 +1,133 @@
 +/*
 + * Copyright (C) 2005-2011 Junjiro R. Okajima
 + *
@@ -17346,9 +17157,79 @@ index 1011423..3bb850b 100644
 +
 +	return ret;
 +}
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
-+++ b/fs/aufs/loop.h	2011-03-16 08:48:40.000000000 +0100
-@@ -0,0 +1,42 @@
++
++/* ---------------------------------------------------------------------- */
++
++#define au_warn_loopback_step	16
++static int au_warn_loopback_nelem = au_warn_loopback_step;
++static unsigned long *au_warn_loopback_array;
++
++void au_warn_loopback(struct super_block *h_sb)
++{
++	int i, new_nelem;
++	unsigned long *a, magic;
++	static DEFINE_SPINLOCK(spin);
++
++	magic = h_sb->s_magic;
++	spin_lock(&spin);
++	a = au_warn_loopback_array;
++	for (i = 0; i < au_warn_loopback_nelem && *a; i++)
++		if (a[i] == magic) {
++			spin_unlock(&spin);
++			return;
++		}
++
++	/* h_sb is new to us, print it */
++	if (i < au_warn_loopback_nelem) {
++		a[i] = magic;
++		goto pr;
++	}
++
++	/* expand the array */
++	new_nelem = au_warn_loopback_nelem + au_warn_loopback_step;
++	a = au_kzrealloc(au_warn_loopback_array,
++			 au_warn_loopback_nelem * sizeof(unsigned long),
++			 new_nelem * sizeof(unsigned long), GFP_ATOMIC);
++	if (a) {
++		au_warn_loopback_nelem = new_nelem;
++		au_warn_loopback_array = a;
++		a[i] = magic;
++		goto pr;
++	}
++
++	spin_unlock(&spin);
++	AuWarn1("realloc failed, ignored\n");
++	return;
++
++pr:
++	spin_unlock(&spin);
++	pr_warning("you may want to try another patch for loopback file "
++		   "on %s(0x%lx) branch\n", au_sbtype(h_sb), magic);
++}
++
++int au_loopback_init(void)
++{
++	int err;
++	struct super_block *sb __maybe_unused;
++
++	AuDebugOn(sizeof(sb->s_magic) != sizeof(unsigned long));
++
++	err = 0;
++	au_warn_loopback_array = kcalloc(au_warn_loopback_step,
++					 sizeof(unsigned long), GFP_NOFS);
++	if (unlikely(!au_warn_loopback_array))
++		err = -ENOMEM;
++
++	return err;
++}
++
++void au_loopback_fin(void)
++{
++	kfree(au_warn_loopback_array);
++}
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
++++ b/fs/aufs/loop.h	2011-07-22 21:35:24.000000000 +0200
+@@ -0,0 +1,50 @@
 +/*
 + * Copyright (C) 2005-2011 Junjiro R. Okajima
 + *
@@ -17383,15 +17264,23 @@ index 1011423..3bb850b 100644
 +/* loop.c */
 +int au_test_loopback_overlap(struct super_block *sb, struct dentry *h_adding);
 +int au_test_loopback_kthread(void);
++void au_warn_loopback(struct super_block *h_sb);
++
++int au_loopback_init(void);
++void au_loopback_fin(void);
 +#else
 +AuStubInt0(au_test_loopback_overlap, struct super_block *sb,
 +	   struct dentry *h_adding)
 +AuStubInt0(au_test_loopback_kthread, void)
++AuStubVoid(au_warn_loopback, struct super_block *h_sb)
++
++AuStubInt0(au_loopback_init, void)
++AuStubVoid(au_loopback_fin, void)
 +#endif /* BLK_DEV_LOOP */
 +
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_LOOP_H__ */
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/magic.mk	2011-01-06 01:00:25.000000000 +0100
 @@ -0,0 +1,54 @@
 +
@@ -17448,7 +17337,7 @@ index 1011423..3bb850b 100644
 +ifdef CONFIG_HFSPLUS_FS
 +ccflags-y += -DHFSPLUS_SUPER_MAGIC=0x482b
 +endif
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/Makefile	2011-01-06 01:00:24.000000000 +0100
 @@ -0,0 +1,38 @@
 +
@@ -17489,9 +17378,9 @@ index 1011423..3bb850b 100644
 +aufs-$(CONFIG_AUFS_BR_HFSPLUS) += hfsplus.o
 +aufs-$(CONFIG_AUFS_DEBUG) += debug.o
 +aufs-$(CONFIG_AUFS_MAGIC_SYSRQ) += sysrq.o
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
-+++ b/fs/aufs/module.c	2011-03-16 08:48:40.000000000 +0100
-@@ -0,0 +1,183 @@
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
++++ b/fs/aufs/module.c	2011-07-22 21:35:24.000000000 +0200
+@@ -0,0 +1,189 @@
 +/*
 + * Copyright (C) 2005-2011 Junjiro R. Okajima
 + *
@@ -17628,9 +17517,12 @@ index 1011423..3bb850b 100644
 +	err = au_wkq_init();
 +	if (unlikely(err))
 +		goto out_procfs;
-+	err = au_hnotify_init();
++	err = au_loopback_init();
 +	if (unlikely(err))
 +		goto out_wkq;
++	err = au_hnotify_init();
++	if (unlikely(err))
++		goto out_loopback;
 +	err = au_sysrq_init();
 +	if (unlikely(err))
 +		goto out_hin;
@@ -17650,6 +17542,8 @@ index 1011423..3bb850b 100644
 +	au_sysrq_fin();
 +out_hin:
 +	au_hnotify_fin();
++out_loopback:
++	au_loopback_fin();
 +out_wkq:
 +	au_wkq_fin();
 +out_procfs:
@@ -17667,6 +17561,7 @@ index 1011423..3bb850b 100644
 +	au_cache_fin();
 +	au_sysrq_fin();
 +	au_hnotify_fin();
++	au_loopback_fin();
 +	au_wkq_fin();
 +	au_procfs_fin();
 +	sysaufs_fin();
@@ -17675,7 +17570,7 @@ index 1011423..3bb850b 100644
 +
 +module_init(aufs_init);
 +module_exit(aufs_exit);
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/module.h	2011-03-16 08:48:40.000000000 +0100
 @@ -0,0 +1,91 @@
 +/*
@@ -17769,58 +17664,7 @@ index 1011423..3bb850b 100644
 +
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_MODULE_H__ */
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
-+++ b/fs/aufs/mtx.h	2011-03-16 08:48:40.000000000 +0100
-@@ -0,0 +1,48 @@
-+/*
-+ * Copyright (C) 2010-2011 Junjiro R. Okajima
-+ *
-+ * This program, aufs is free software; you can redistribute it and/or modify
-+ * it under the terms of the GNU General Public License as published by
-+ * the Free Software Foundation; either version 2 of the License, or
-+ * (at your option) any later version.
-+ *
-+ * This program is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ * GNU General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU General Public License
-+ * along with this program; if not, write to the Free Software
-+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-+ */
-+
-+/*
-+ * very ugly approach for aufs_mmap()
-+ * never include this file from other than f_op.c.
-+ * see f_op.c in detail.
-+ */
-+
-+#ifndef __AUFS_MTX_H__
-+#define __AUFS_MTX_H__
-+
-+#ifdef __KERNEL__
-+
-+/* copied from ../kernel/mutex{,-debug}.h */
-+struct mutex;
-+struct thread_info;
-+#ifdef CONFIG_DEBUG_MUTEXES
-+static inline void mutex_set_owner(struct mutex *lock)
-+{
-+	lock->owner = current_thread_info();
-+}
-+#else
-+static inline void mutex_set_owner(struct mutex *lock)
-+{
-+#ifdef CONFIG_SMP
-+	lock->owner = current_thread_info();
-+#endif
-+}
-+#endif
-+
-+#endif /* __KERNEL__ */
-+#endif /* __AUFS_MTX_H__ */
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/opts.c	2011-03-16 08:48:40.000000000 +0100
 @@ -0,0 +1,1595 @@
 +/*
@@ -19418,7 +19262,7 @@ index 1011423..3bb850b 100644
 +{
 +	return au_mntflags(sb) & AuOptMask_UDBA;
 +}
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/opts.h	2011-03-16 08:48:40.000000000 +0100
 @@ -0,0 +1,210 @@
 +/*
@@ -19631,7 +19475,7 @@ index 1011423..3bb850b 100644
 +
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_OPTS_H__ */
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/plink.c	2011-03-16 08:48:40.000000000 +0100
 @@ -0,0 +1,515 @@
 +/*
@@ -20149,7 +19993,7 @@ index 1011423..3bb850b 100644
 +		iput(inode);
 +	}
 +}
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/poll.c	2011-03-16 08:48:40.000000000 +0100
 @@ -0,0 +1,56 @@
 +/*
@@ -20208,7 +20052,7 @@ index 1011423..3bb850b 100644
 +	AuTraceErr((int)mask);
 +	return mask;
 +}
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/procfs.c	2011-03-16 08:48:40.000000000 +0100
 @@ -0,0 +1,169 @@
 +/*
@@ -20380,7 +20224,7 @@ index 1011423..3bb850b 100644
 +out:
 +	return err;
 +}
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/rdu.c	2011-03-16 08:48:40.000000000 +0100
 @@ -0,0 +1,383 @@
 +/*
@@ -20766,7 +20610,7 @@ index 1011423..3bb850b 100644
 +	return err;
 +}
 +#endif
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/rwsem.h	2011-03-16 08:48:40.000000000 +0100
 @@ -0,0 +1,189 @@
 +/*
@@ -20958,7 +20802,7 @@ index 1011423..3bb850b 100644
 +
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_RWSEM_H__ */
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/sbinfo.c	2011-03-16 08:48:40.000000000 +0100
 @@ -0,0 +1,344 @@
 +/*
@@ -21305,7 +21149,7 @@ index 1011423..3bb850b 100644
 +	p = radix_tree_delete(&sbinfo->au_si_pid.tree, current->pid);
 +	spin_unlock(&sbinfo->au_si_pid.tree_lock);
 +}
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/spl.h	2011-03-16 08:48:40.000000000 +0100
 @@ -0,0 +1,66 @@
 +/*
@@ -21374,9 +21218,9 @@ index 1011423..3bb850b 100644
 +
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_SPL_H__ */
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
-+++ b/fs/aufs/super.c	2011-05-22 23:30:54.000000000 +0200
-@@ -0,0 +1,929 @@
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
++++ b/fs/aufs/super.c	2011-07-22 21:35:24.000000000 +0200
+@@ -0,0 +1,930 @@
 +/*
 + * Copyright (C) 2005-2011 Junjiro R. Okajima
 + *
@@ -22237,6 +22081,7 @@ index 1011423..3bb850b 100644
 +	dput(root);
 +	sb->s_root = NULL;
 +out_info:
++	dbgaufs_si_fin(au_sbi(sb));
 +	kobject_put(&au_sbi(sb)->si_kobj);
 +	sb->s_fs_info = NULL;
 +out_opts:
@@ -22306,7 +22151,7 @@ index 1011423..3bb850b 100644
 +	/* no need to __module_get() and module_put(). */
 +	.owner		= THIS_MODULE,
 +};
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/super.h	2011-03-16 08:48:40.000000000 +0100
 @@ -0,0 +1,527 @@
 +/*
@@ -22836,7 +22681,7 @@ index 1011423..3bb850b 100644
 +
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_SUPER_H__ */
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/sysaufs.c	2011-03-16 08:48:40.000000000 +0100
 @@ -0,0 +1,107 @@
 +/*
@@ -22946,7 +22791,7 @@ index 1011423..3bb850b 100644
 +out:
 +	return err;
 +}
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/sysaufs.h	2011-03-16 08:48:40.000000000 +0100
 @@ -0,0 +1,105 @@
 +/*
@@ -23054,7 +22899,7 @@ index 1011423..3bb850b 100644
 +
 +#endif /* __KERNEL__ */
 +#endif /* __SYSAUFS_H__ */
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/sysfs.c	2011-03-16 08:48:40.000000000 +0100
 @@ -0,0 +1,250 @@
 +/*
@@ -23307,7 +23152,7 @@ index 1011423..3bb850b 100644
 +				   br->br_name, err);
 +	}
 +}
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/sysrq.c	2011-05-22 23:30:54.000000000 +0200
 @@ -0,0 +1,151 @@
 +/*
@@ -23461,7 +23306,7 @@ index 1011423..3bb850b 100644
 +	if (unlikely(err))
 +		pr_err("err %d (ignored)\n", err);
 +}
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/vdir.c	2011-03-16 08:48:40.000000000 +0100
 @@ -0,0 +1,886 @@
 +/*
@@ -24350,7 +24195,7 @@ index 1011423..3bb850b 100644
 +	/* smp_mb(); */
 +	return 0;
 +}
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/vfsub.c	2011-05-22 23:30:54.000000000 +0200
 @@ -0,0 +1,818 @@
 +/*
@@ -25171,7 +25016,7 @@ index 1011423..3bb850b 100644
 +
 +	return err;
 +}
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/vfsub.h	2011-05-22 23:30:54.000000000 +0200
 @@ -0,0 +1,231 @@
 +/*
@@ -25405,7 +25250,7 @@ index 1011423..3bb850b 100644
 +
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_VFSUB_H__ */
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/wbr_policy.c	2011-03-16 08:48:40.000000000 +0100
 @@ -0,0 +1,700 @@
 +/*
@@ -26108,7 +25953,7 @@ index 1011423..3bb850b 100644
 +		.fin	= au_wbr_create_fin_mfs
 +	}
 +};
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/whout.c	2011-03-16 08:48:40.000000000 +0100
 @@ -0,0 +1,1062 @@
 +/*
@@ -27173,7 +27018,7 @@ index 1011423..3bb850b 100644
 +		au_whtmp_rmdir_free(args);
 +	}
 +}
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/whout.h	2011-03-16 08:48:40.000000000 +0100
 @@ -0,0 +1,89 @@
 +/*
@@ -27265,7 +27110,7 @@ index 1011423..3bb850b 100644
 +
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_WHOUT_H__ */
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/wkq.c	2011-03-16 08:48:40.000000000 +0100
 @@ -0,0 +1,236 @@
 +/*
@@ -27504,7 +27349,7 @@ index 1011423..3bb850b 100644
 +
 +	return err;
 +}
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/wkq.h	2011-03-16 08:48:40.000000000 +0100
 @@ -0,0 +1,90 @@
 +/*
@@ -27597,7 +27442,7 @@ index 1011423..3bb850b 100644
 +
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_WKQ_H__ */
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
 +++ b/fs/aufs/xino.c	2011-05-22 23:30:54.000000000 +0200
 @@ -0,0 +1,1265 @@
 +/*
@@ -28865,8 +28710,8 @@ index 1011423..3bb850b 100644
 +out:
 +	return err;
 +}
---- /dev/null	2011-05-21 23:49:08.874727375 +0200
-+++ b/include/linux/aufs_type.h	2011-05-22 23:30:54.000000000 +0200
+--- /dev/null	2011-07-19 14:30:37.993842008 +0200
++++ b/include/linux/aufs_type.h	2011-07-22 21:35:24.000000000 +0200
 @@ -0,0 +1,206 @@
 +/*
 + * Copyright (C) 2005-2011 Junjiro R. Okajima
@@ -28894,7 +28739,7 @@ index 1011423..3bb850b 100644
 +#include <linux/limits.h>
 +#include <linux/types.h>
 +
-+#define AUFS_VERSION	"2.1-standalone.tree-39-rcN-20110418"
++#define AUFS_VERSION	"2.1-standalone.tree-3.0-rcN-20110718"
 +
 +/* todo? move this to linux-2.6.19/include/magic.h */
 +#define AUFS_SUPER_MAGIC	('a' << 24 | 'u' << 16 | 'f' << 8 | 's')

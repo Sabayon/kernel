@@ -15,9 +15,25 @@
 #include <linux/list.h>
 #include <linux/err.h>
 #include <linux/slab.h>
+#include <linux/clk.h>
+#include <linux/irqreturn.h>
 
+#include <plat/serial.h>
+
+#include "pm.h"
 #include "powerdomain.h"
+#include "clock.h"
+#include "cminst44xx.h"
+#include "prcm44xx.h"
+#include "cm1_44xx.h"
+#include "cm2_44xx.h"
+#include "prm44xx.h"
+#include "prminst44xx.h"
+
 #include <mach/omap4-common.h>
+
+#include "prm-regbits-44xx.h"
+#include "cm-regbits-44xx.h"
 
 struct power_state {
 	struct powerdomain *pwrdm;

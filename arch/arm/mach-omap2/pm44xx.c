@@ -16,12 +16,15 @@
 #include <linux/err.h>
 #include <linux/slab.h>
 #include <linux/clk.h>
-#include <linux/irqreturn.h>
+#include <linux/gpio.h>
+#include <linux/interrupt.h>
+#include <linux/delay.h>
 
 #include <plat/serial.h>
 
 #include "pm.h"
 #include "powerdomain.h"
+#include "clockdomain.h"
 #include "clock.h"
 #include "cminst44xx.h"
 #include "prcm44xx.h"
@@ -31,6 +34,7 @@
 #include "prminst44xx.h"
 
 #include <mach/omap4-common.h>
+#include <plat/common.h>
 
 #include "prm-regbits-44xx.h"
 #include "cm-regbits-44xx.h"
@@ -46,7 +50,50 @@ struct power_state {
 
 static LIST_HEAD(pwrst_list);
 
+#define MAX_IOPAD_LATCH_TIME 1000
+void omap4_trigger_ioctrl(void)
+{
+	int i = 0;
+
+	/* Trigger WUCLKIN enable */
+	omap4_prminst_rmw_inst_reg_bits(OMAP4430_WUCLK_CTRL_MASK, OMAP4430_WUCLK_CTRL_MASK,
+		OMAP4430_PRM_PARTITION, OMAP4430_PRM_DEVICE_INST, OMAP4_PRM_IO_PMCTRL_OFFSET);
+	omap_test_timeout(
+		((omap4_prminst_read_inst_reg(OMAP4430_PRM_PARTITION, OMAP4430_PRM_DEVICE_INST, OMAP4_PRM_IO_PMCTRL_OFFSET)
+		>> OMAP4430_WUCLK_STATUS_SHIFT) == 1),
+		MAX_IOPAD_LATCH_TIME, i);
+	/* Trigger WUCLKIN disable */
+	omap4_prminst_rmw_inst_reg_bits(OMAP4430_WUCLK_CTRL_MASK, 0x0,
+		OMAP4430_PRM_PARTITION, OMAP4430_PRM_DEVICE_INST, OMAP4_PRM_IO_PMCTRL_OFFSET);
+	return;
+}
+
 #ifdef CONFIG_SUSPEND
+/* This is a common low power function called from suspend and
+ * cpuidle
+ */
+void omap4_enter_sleep(void)
+{
+	u32 cpu_id = smp_processor_id();
+
+	omap_uart_prepare_idle(0);
+	omap_uart_prepare_idle(1);
+	omap_uart_prepare_idle(2);
+	omap_uart_prepare_idle(3);
+	omap2_gpio_prepare_for_idle(0);
+	omap4_trigger_ioctrl();
+
+	omap4_enter_lowpower(cpu_id, PWRDM_POWER_OFF);
+
+	omap2_gpio_resume_after_idle();
+	omap_uart_resume_idle(0);
+	omap_uart_resume_idle(1);
+	omap_uart_resume_idle(2);
+	omap_uart_resume_idle(3);
+
+	return;
+}
+
 static int omap4_pm_suspend(void)
 {
 	do_wfi();
@@ -212,6 +259,14 @@ static void __init prcm_setup_regs(void)
 	omap4_prminst_write_inst_reg(0x3, OMAP4430_PRM_PARTITION,
 		OMAP4430_PRM_DEVICE_INST, OMAP4_PRM_PWRREQCTRL_OFFSET);
 }
+
+int omap4_can_sleep(void)
+{
+	if (!omap_uart_can_sleep())
+		return -1;
+	return 0;
+}
+
 static irqreturn_t prcm_interrupt_handler (int irq, void *dev_id)
 {
 	u32 irqenable_mpu, irqstatus_mpu;
@@ -234,12 +289,6 @@ static irqreturn_t prcm_interrupt_handler (int irq, void *dev_id)
 	return IRQ_HANDLED;
 }
 
-int omap4_can_sleep(void)
-{
-	if (!omap_uart_can_sleep())
-		return -1;
-	return 0;
-}
 
 /**
  * omap4_pm_init - Init routine for OMAP4 PM
@@ -256,6 +305,22 @@ static int __init omap4_pm_init(void)
 
 	pr_err("Power Management for TI OMAP4.\n");
 
+	/* Enable IO_ST interrupt */
+	omap4_prminst_rmw_inst_reg_bits(OMAP4430_IO_ST_MASK, OMAP4430_IO_ST_MASK,
+		OMAP4430_PRM_PARTITION, OMAP4430_PRM_OCP_SOCKET_INST, OMAP4_PRM_IRQENABLE_MPU_OFFSET);
+
+	/* Enable GLOBAL_WUEN */
+	omap4_prminst_rmw_inst_reg_bits(OMAP4430_GLOBAL_WUEN_MASK, OMAP4430_GLOBAL_WUEN_MASK,
+		OMAP4430_PRM_PARTITION, OMAP4430_PRM_DEVICE_INST, OMAP4_PRM_IO_PMCTRL_OFFSET);
+
+	ret = request_irq(OMAP44XX_IRQ_PRCM,
+			  (irq_handler_t)prcm_interrupt_handler,
+			  IRQF_DISABLED, "prcm", NULL);
+	if (ret) {
+		printk(KERN_ERR "request_irq failed to register for 0x%x\n",
+		       OMAP44XX_IRQ_PRCM);
+		goto err2;
+	}
 	ret = pwrdm_for_each(pwrdms_setup, NULL);
 	if (ret) {
 		pr_err("Failed to setup powerdomains\n");

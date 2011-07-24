@@ -71,8 +71,10 @@ static struct snd_soc_dai_link omap4_hdmi_dai = {
 	.ops = &omap4_hdmi_dai_ops,
 };
 
+/* Audio machine driver */
 static struct snd_soc_card snd_soc_omap4_hdmi = {
-	.name = "OMAP4HDMI",
+	.name = "SDP4430HDMI",
+	.long_name = "TI OMAP4 HDMI Board",
 	.dai_link = &omap4_hdmi_dai,
 	.num_links = 1,
 };
@@ -111,19 +113,46 @@ static struct platform_driver omap4_hdmi_driver = {
 	.remove = __devexit_p(omap4_hdmi_remove),
 };
 
-static int __init omap4_hdmi_init(void)
-{
-	return platform_driver_register(&omap4_hdmi_driver);
-}
-module_init(omap4_hdmi_init);
+static struct platform_device *omap4_hdmi_snd_device;
 
-static void __exit omap4_hdmi_exit(void)
+static int __init omap4_hdmi_soc_init(void)
 {
-	platform_driver_unregister(&omap4_hdmi_driver);
+	int ret;
+
+	if (!(machine_is_omap_4430sdp() || machine_is_omap4_panda()))
+		return -ENODEV;
+	printk(KERN_INFO "OMAP4 HDMI audio SoC init\n");
+
+	if (machine_is_omap4_panda())
+		snd_soc_omap4_hdmi.name = "PandaHDMI";
+
+	omap4_hdmi_snd_device = platform_device_alloc("soc-audio",
+		OMAP4_HDMI_SND_DEV_ID);
+	if (!omap4_hdmi_snd_device) {
+		printk(KERN_ERR "Platform device allocation failed\n");
+		return -ENOMEM;
+	}
+
+	platform_set_drvdata(omap4_hdmi_snd_device, &snd_soc_omap4_hdmi);
+
+	ret = platform_device_add(omap4_hdmi_snd_device);
+	if (ret)
+		goto err;
+
+	return 0;
+err:
+	printk(KERN_ERR "Unable to add platform device\n");
+	platform_device_put(omap4_hdmi_snd_device);
+	return ret;
 }
-module_exit(omap4_hdmi_exit);
+module_init(omap4_hdmi_soc_init);
+
+static void __exit omap4_hdmi_soc_exit(void)
+{
+	platform_device_unregister(omap4_hdmi_snd_device);
+}
+module_exit(omap4_hdmi_soc_exit);
 
 MODULE_AUTHOR("Ricardo Neri <ricardo.neri@ti.com>");
-MODULE_DESCRIPTION("OMAP4 HDMI machine ASoC driver");
+MODULE_DESCRIPTION("ALSA SoC OMAP4 HDMI AUDIO");
 MODULE_LICENSE("GPL");
-MODULE_ALIAS("platform:" DRV_NAME);

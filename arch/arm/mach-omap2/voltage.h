@@ -104,6 +104,35 @@ struct omap_volt_pmic_info {
 };
 
 /**
+ * struct omap_vdd_dep_volt - Map table for voltage dependencies
+ * @main_vdd_volt	: The main vdd voltage
+ * @dep_vdd_volt	: The voltage at which the dependent vdd should be
+ *			  when the main vdd is at <main_vdd_volt> voltage
+ *
+ * Table containing the parent vdd voltage and the dependent vdd voltage
+ * corresponding to it.
+ */
+struct omap_vdd_dep_volt {
+	u32 main_vdd_volt;
+	u32 dep_vdd_volt;
+};
+
+/**
+ * struct omap_vdd_dep_info -  Dependent vdd info
+ * @name		: Dependent vdd name
+ * @_dep_voltdm		: internal structure meant to prevent multiple lookups
+ * @dep_table		: Table containing the dependent vdd voltage
+ *			  corresponding to every main vdd voltage.
+ * @nr_dep_entries	: number of dependency voltage entries
+ */
+struct omap_vdd_dep_info {
+	char *name;
+	struct voltagedomain *_dep_voltdm;
+	struct omap_vdd_dep_volt *dep_table;
+	int nr_dep_entries;
+};
+
+/**
  * omap_vdd_info - Per Voltage Domain info
  *
  * @volt_data		: voltage table having the distinct voltages supported
@@ -121,6 +150,8 @@ struct omap_volt_pmic_info {
  * @curr_volt		: current voltage for this vdd.
  * @vp_enabled		: flag to keep track of whether vp is enabled or not
  * @volt_scale		: API to scale the voltage of the vdd.
+ * @dep_vdd_info	: Array ending with a 0 terminator for dependency
+ *			  voltage information.
  */
 struct omap_vdd_info {
 	struct omap_volt_data *volt_data;
@@ -137,6 +168,7 @@ struct omap_vdd_info {
 	void (*write_reg) (u32 val, u16 mod, u8 offset);
 	int (*volt_scale) (struct omap_vdd_info *vdd,
 		unsigned long target_volt);
+	struct omap_vdd_dep_info *dep_vdd_info;
 };
 
 unsigned long omap_vp_get_curr_volt(struct voltagedomain *voltdm);

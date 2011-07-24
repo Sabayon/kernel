@@ -74,6 +74,8 @@ static int hdmi_panel_enable(struct omap_dss_device *dssdev)
 	r = omapdss_hdmi_display_enable(dssdev);
 	if (r) {
 		DSSERR("failed to power on\n");
+		/* swallow the error */
+		r = 0;
 		goto err;
 	}
 

@@ -158,8 +158,8 @@ EXPORT_SYMBOL_GPL(twl4030_audio_get_mclk);
 
 static int __devinit twl4030_audio_probe(struct platform_device *pdev)
 {
-	struct twl4030_codec *codec;
-	struct twl4030_codec_data *pdata = pdev->dev.platform_data;
+	struct twl4030_audio *audio;
+	struct twl4030_audio_data *pdata = pdev->dev.platform_data;
 	struct mfd_cell *cell = NULL;
 	int ret, childs = 0;
 	u8 val;
@@ -206,11 +206,11 @@ static int __devinit twl4030_audio_probe(struct platform_device *pdev)
 	audio->resource[TWL4030_AUDIO_RES_APLL].reg = TWL4030_REG_APLL_CTL;
 	audio->resource[TWL4030_AUDIO_RES_APLL].mask = TWL4030_APLL_EN;
 
-	if (pdata->audio) {
-		cell = &codec->cells[childs];
+	if (pdata->codec) {
+		cell = &audio->cells[childs];
 		cell->name = "twl4030-codec";
-		cell->platform_data = pdata->audio;
-		cell->pdata_size = sizeof(*pdata->audio);
+		cell->platform_data = pdata->codec;
+		cell->pdata_size = sizeof(*pdata->codec);
 		childs++;
 	}
 	if (pdata->vibra) {

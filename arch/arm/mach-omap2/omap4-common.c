@@ -24,7 +24,7 @@
 
 #ifdef CONFIG_CACHE_L2X0
 #define L2X0_POR_OFFSET_VALUE		0x9
-static void __iomem *l2cache_base;
+void __iomem *l2cache_base;
 #endif
 
 void __iomem *gic_dist_base_addr;

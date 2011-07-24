@@ -936,6 +936,8 @@ static void dapm_seq_run_coalesced(struct snd_soc_dapm_context *dapm,
 			"pop test : Applying 0x%x/0x%x to %x in %dms\n",
 			value, mask, reg, card->pop_time);
 		pop_wait(card->pop_time);
+		w = list_first_entry(pending, struct snd_soc_dapm_widget,
+				power_list);
 		soc_widget_update_bits(w, reg, mask, value);
 	}
 

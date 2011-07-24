@@ -308,6 +308,7 @@ static int generic_dpi_panel_probe(struct omap_dss_device *dssdev)
 	struct panel_config *panel_config = NULL;
 	struct panel_drv_data *drv_data = NULL;
 	int i;
+	const char *default_disp_name;
 
 	dev_dbg(&dssdev->dev, "probe\n");
 
@@ -337,6 +338,16 @@ static int generic_dpi_panel_probe(struct omap_dss_device *dssdev)
 	drv_data->panel_config = panel_config;
 
 	dev_set_drvdata(&dssdev->dev, drv_data);
+
+	default_disp_name = omap_dss_get_def_disp();
+
+	if (!panel_data->i2c_bus_num && dssdev->name && default_disp_name &&
+				strcmp(dssdev->name, default_disp_name) == 0) {
+		dev_dbg(&dssdev->dev, "manually enabling %s",
+			dssdev->name);
+		dssdev->state = OMAP_DSS_DISPLAY_SUSPENDED;
+		dssdev->activate_after_resume = true;
+	}
 
 	return 0;
 }

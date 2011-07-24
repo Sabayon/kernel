@@ -44,6 +44,8 @@
 #include "omap-dmic.h"
 #include "../codecs/twl6040.h"
 
+#define SDP4430_SND_DEV_ID 0
+
 static int twl6040_power_mode;
 static int mcbsp_cfg;
 static struct i2c_client *tps6130x_client;
@@ -1198,7 +1200,8 @@ static int __init sdp4430_soc_init(void)
 	else if (machine_is_omap4_panda())
 		snd_soc_sdp4430.name = "Panda";
 
-	sdp4430_snd_device = platform_device_alloc("soc-audio", -1);
+	sdp4430_snd_device = platform_device_alloc("soc-audio",
+		SDP4430_SND_DEV_ID);
 	if (!sdp4430_snd_device) {
 		printk(KERN_ERR "Platform device allocation failed\n");
 		return -ENOMEM;

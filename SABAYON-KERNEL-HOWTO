@@ -11,35 +11,43 @@ How to cook a Sabayon kernel, in 4 steps:
 
    If we want to make a Sabayon Linux 3.0 kernel, do the following:
 
+   # create new 3.0 branch (we are going to track all the 3.0.x stable
+   # releases in there)
+   $ git branch 3.0
+   # switch to it
+   $ git checkout 3.0
+
+   # create the patches directory and stash your patches there
    $ mkdir sabayon/patches/3.0<-rXX>
-   # copy patches in there and create a "series" file, listing
-     the patch order, one patch file name per line.
-   # MAKE sure these patches applies and the changes compile !!
 
-   # now push the changes
-   $ git add sabayon/patches && git push
+   # add the patches to the branch and push it out
+   # (creating the remote branch as well)
+   $ git add -f sabayon/patches && git push origin 3.0
 
-
-3. Create a new branch off git HEAD or whatever else you want, and apply patches.
-
-   # in this example, we'll branch off HEAD, which is v3.0 + our last commit.
-   # it is _VERY_ important to prefix all our branches with "sabayon-", followed
-   # by the release we're going to match.
-   $ git branch sabayon-3.0
-   $ git checkout sabayon-3.0
-   # create the remote branch
-   $ git push origin sabayon-3.0
+3. Apply patches and test configuration.
 
    # now apply patches you have in sabayon/patches/<release>
    $ for p in $(cat sabayon/patches/<release>/series); \
        do patch -p1 < "sabayon/patches/<release>/${p}" || exit 1; done
+
+   # At this point, use "git status" to determine new files that
+   # must be staged in order to be pushed out.
 
    # then create new config files in sabayon/config,
    # either using make oldconfig or menuconfig and selectively
    # add new options.
    # you can keep some good previous config files in sabayon/patches
    # at origin/master if you really want to.
+   # It is very important that these configuration files are named
+   # using the tag we're going to create afterwards.
+   # In this case, our tag for Sabayon 3.0 kernel will be:
+   #    sabayon-3.0
+   # So that the config file names must be:
+   #    sabayon-3.0[-rX]-<arch>.config
+   # The [-rX] is optional and X must be an integer from 0 to 999.
+   # In fact, successive revisions are going to get -r1, -r2, etc.
 
+   # Test out and update config files (very important)
    # in this example we'll use an already available 2.6.39-r2 config
    $ cp sabayon/config/sabayon-2.6.39-r2-amd64.config .config
    $ make oldconfig
@@ -56,6 +64,9 @@ How to cook a Sabayon kernel, in 4 steps:
    $ git add sabayon/config/* && git commit -a -m "Sabayon Kernel 3.0"
    # and push
    $ git push
+
+   # Now it's time to create the tag out of our current HEAD
+   $ git tag sabayon-3.0 && git push --tags
 
 4. Make the phat tarball!
 

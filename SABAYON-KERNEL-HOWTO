@@ -65,6 +65,11 @@ How to cook a Sabayon kernel, in 4 steps:
    # and push
    $ git push
 
+   # NOW, make SURE that Makefile has SUBLEVEL = 0
+   # if not, change it and commit! This is very important because
+   # Entropy would require users to manually upgrade kernels
+   # across minor (patch) releases. Which is unwanted
+
    # Now it's time to create the tag out of our current HEAD
    $ git tag sabayon-3.0 && git push --tags
 

@@ -470,6 +470,11 @@ void __init omap4430_init_early(void)
 	omap2_init_common_infrastructure();
 }
 
+void __init am335x_init_early(void)
+{
+	omap2_init_common_infrastructure();
+}
+
 void __init omap_sdrc_init(struct omap_sdrc_params *sdrc_cs0,
 				      struct omap_sdrc_params *sdrc_cs1)
 {

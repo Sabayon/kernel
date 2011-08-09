@@ -467,6 +467,13 @@ void __init omap4430_init_early(void)
 	omap4xxx_clk_init();
 }
 
+void __init am335x_init_early(void)
+{
+	omap2_set_globals_am33xx();
+	omap_common_init_early();
+	omap3xxx_clk_init();
+}
+
 void __init omap_sdrc_init(struct omap_sdrc_params *sdrc_cs0,
 				      struct omap_sdrc_params *sdrc_cs1)
 {

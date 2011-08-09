@@ -94,6 +94,8 @@
 #define P4e_s(a)	(TF(a & NAND_Ecc_P4e)		<< 0)
 #define P4o_s(a)	(TF(a & NAND_Ecc_P4o)		<< 1)
 
+#define MAX_HWECC_BYTES_OOB_64     24
+
 static const char *part_probes[] = { "cmdlinepart", NULL };
 
 /* oob info generated runtime depending on ecc algorithm and layout selected */
@@ -1102,7 +1104,14 @@ static int __devinit omap_nand_probe(struct platform_device *pdev)
 			omap_oobinfo.oobfree->offset = offset;
 			omap_oobinfo.oobfree->length = info->mtd.oobsize -
 						offset - omap_oobinfo.eccbytes;
-			offset = info->mtd.oobsize - omap_oobinfo.eccbytes;
+			/*
+			offset is calculated considering the following :
+			1) 12 bytes ECC for 512 byte access and 24 bytes ECC for
+			256 byte access in OOB_64 can be supported
+			2)Ecc bytes lie to the end of OOB area.
+			3)Ecc layout must match with u-boot's ECC layout.
+			*/
+			offset = info->mtd.oobsize - MAX_HWECC_BYTES_OOB_64;
 		}
 
 		for (i = 0; i < omap_oobinfo.eccbytes; i++)

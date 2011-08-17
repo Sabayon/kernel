@@ -251,6 +251,7 @@ obj-$(CONFIG_MACH_CRANEBOARD)		+= board-am3517crane.o
 obj-$(CONFIG_MACH_SBC3530)		+= board-omap3stalker.o
 obj-$(CONFIG_MACH_TI8168EVM)		+= board-ti8168evm.o
 obj-$(CONFIG_MACH_AM335XEVM)		+= board-am335xevm.o
+obj-$(CONFIG_MACH_AM335XIAEVM)		+= board-am335xevm.o
 
 # Platform specific device init code
 

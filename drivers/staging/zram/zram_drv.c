@@ -32,6 +32,7 @@
 #include <linux/lzo.h>
 #include <linux/string.h>
 #include <linux/vmalloc.h>
+#include <linux/tuxonice.h>
 
 #include "zram_drv.h"
 
@@ -653,6 +654,50 @@ static void destroy_device(struct zram *zram)
 		blk_cleanup_queue(zram->queue);
 }
 
+#ifdef CONFIG_TOI
+static int zram_toi_flag_disk(struct zram *zram)
+{
+	int index, t = 0;
+
+	for (index = 0; index < zram->disksize >> PAGE_SHIFT; index++) {
+		struct page *page = zram->table[index].page;
+
+		if (page) {
+			SetPagePrecompressed(page);
+			t++;
+		}
+	}
+
+	return t;
+}
+
+int zram_toi_flag_disks(void)
+{
+	int i, t = 0;
+	struct zram *zram;
+
+	for (i = 0; i < num_devices; i++) {
+		zram = &devices[i];
+
+		t += zram_toi_flag_disk(zram);
+	}
+
+	return t;
+}
+
+void set_toi_hook(void)
+{
+	toi_flag_zram_disks = zram_toi_flag_disks;
+}
+
+void clear_toi_hook(void)
+{
+	toi_flag_zram_disks = NULL;
+}
+#else
+#define set_toi_hook() { }
+#define clear_toi_hook() { }
+#endif
 static int __init zram_init(void)
 {
 	int ret, dev_id;
@@ -690,6 +735,8 @@ static int __init zram_init(void)
 			goto free_devices;
 	}
 
+	set_toi_hook();
+
 	return 0;
 
 free_devices:
@@ -706,6 +753,8 @@ static void __exit zram_exit(void)
 {
 	int i;
 	struct zram *zram;
+
+	clear_toi_hook();
 
 	for (i = 0; i < num_devices; i++) {
 		zram = &devices[i];

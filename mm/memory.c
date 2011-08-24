@@ -1576,6 +1576,7 @@ no_page_table:
 		return ERR_PTR(-EFAULT);
 	return page;
 }
+EXPORT_SYMBOL_GPL(follow_page);
 
 static inline int stack_guard_page(struct vm_area_struct *vma, unsigned long addr)
 {

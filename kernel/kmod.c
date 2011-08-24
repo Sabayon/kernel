@@ -315,6 +315,7 @@ int usermodehelper_disable(void)
 	usermodehelper_disabled = 0;
 	return -EAGAIN;
 }
+EXPORT_SYMBOL_GPL(usermodehelper_disable);
 
 /**
  * usermodehelper_enable - allow new helpers to be started again
@@ -323,6 +324,7 @@ void usermodehelper_enable(void)
 {
 	usermodehelper_disabled = 0;
 }
+EXPORT_SYMBOL_GPL(usermodehelper_enable);
 
 /**
  * usermodehelper_is_disabled - check if new helpers are allowed to be started

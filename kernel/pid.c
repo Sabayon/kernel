@@ -422,6 +422,7 @@ struct task_struct *find_task_by_pid_ns(pid_t nr, struct pid_namespace *ns)
 	rcu_lockdep_assert(rcu_read_lock_held());
 	return pid_task(find_pid_ns(nr, ns), PIDTYPE_PID);
 }
+EXPORT_SYMBOL_GPL(find_task_by_pid_ns);
 
 struct task_struct *find_task_by_vpid(pid_t vnr)
 {

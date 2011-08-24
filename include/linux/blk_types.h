@@ -151,6 +151,8 @@ enum rq_flag_bits {
 	__REQ_IO_STAT,		/* account I/O stat */
 	__REQ_MIXED_MERGE,	/* merge of different types, fail separately */
 	__REQ_SECURE,		/* secure discard (used with __REQ_DISCARD) */
+	__REQ_TOI,		/* TuxOnIce I/O */
+	__REQ_ON_PLUG,		/* on plug list */
 	__REQ_NR_BITS,		/* stops here */
 };
 
@@ -191,5 +193,7 @@ enum rq_flag_bits {
 #define REQ_IO_STAT		(1 << __REQ_IO_STAT)
 #define REQ_MIXED_MERGE		(1 << __REQ_MIXED_MERGE)
 #define REQ_SECURE		(1 << __REQ_SECURE)
+#define REQ_TOI			(1 << __REQ_TOI)
+#define REQ_ON_PLUG		(1 << __REQ_ON_PLUG)
 
 #endif /* __LINUX_BLK_TYPES_H */

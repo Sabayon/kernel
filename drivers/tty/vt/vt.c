@@ -2473,6 +2473,7 @@ int vt_kmsg_redirect(int new)
 	else
 		return kmsg_con;
 }
+EXPORT_SYMBOL_GPL(vt_kmsg_redirect);
 
 /*
  *	Console on virtual terminal

@@ -1,0 +1,22 @@
+I've yet to find any desktop workload that benefits from anything higher than
+a swappiness of zero. Change the default to 0.
+
+-ck
+
+---
+ mm/vmscan.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+Index: linux-3.0.0-ck1/mm/vmscan.c
+===================================================================
+--- linux-3.0.0-ck1.orig/mm/vmscan.c	2011-08-11 12:41:06.473183573 +1000
++++ linux-3.0.0-ck1/mm/vmscan.c	2011-08-11 12:44:10.760183568 +1000
+@@ -148,7 +148,7 @@ struct scan_control {
+ /*
+  * From 0 .. 100.  Higher means more swappy.
+  */
+-int vm_swappiness = 60;
++int vm_swappiness;
+ long vm_total_pages;	/* The total number of pages which the VM controls */
+ 
+ static LIST_HEAD(shrinker_list);

@@ -1,0 +1,24 @@
+Add -ck version in inconspicuous place where it will merge relatively easily
+with later kernel versions.
+
+-ck
+
+---
+ Makefile |    4 ++++
+ 1 file changed, 4 insertions(+)
+
+Index: linux-3.0.0-ck1/Makefile
+===================================================================
+--- linux-3.0.0-ck1.orig/Makefile	2011-08-11 12:41:05.544183573 +1000
++++ linux-3.0.0-ck1/Makefile	2011-08-11 12:44:14.274183568 +1000
+@@ -10,6 +10,10 @@ NAME = Sneaky Weasel
+ # Comments in this file are targeted only to the developer, do not
+ # expect to learn how to build the kernel reading this file.
+ 
++CKVERSION = -ck1
++CKNAME = BFS Powered
++EXTRAVERSION := $(EXTRAVERSION)$(CKVERSION)
++
+ # Do not:
+ # o  use make's built-in rules and variables
+ #    (this increases performance and avoids hard-to-debug behaviour);

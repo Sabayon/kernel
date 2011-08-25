@@ -327,19 +327,20 @@ OMAP_ERROR UnBlankDisplay(OMAPLFB_DEVINFO *psDevInfo)
 #if defined(SUPPORT_DRI_DRM) && defined(PVR_DISPLAY_CONTROLLER_DRM_IOCTL)
 static OMAP_ERROR BlankDisplay(OMAPLFB_DEVINFO *psDevInfo, int blank_cmd)
 {
+	int ret = OMAP_OK;
+
 	DEBUG_PRINTK("Executing for display %u",
 		psDevInfo->uDeviceID);
 
-	acquire_console_sem();
+	console_lock();
 	if (fb_blank(psDevInfo->psLINFBInfo, blank_cmd))
 	{
-		release_console_sem();
 		WARNING_PRINTK("fb_blank %i failed", blank_cmd);
-		return OMAP_ERROR_GENERIC;
+		ret = OMAP_ERROR_GENERIC;
 	}
-	release_console_sem();
+	console_unlock();
 
-	return OMAP_OK;
+	return ret;
 }
 #endif
 

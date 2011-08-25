@@ -354,13 +354,20 @@ static int PVRSRVDrmProbe(struct platform_device *pDevice);
 static int PVRSRVDrmRemove(struct platform_device *pDevice);
 #endif	
 
+static struct drm_bus sPVRdrmbus = {
+	.bus_type = DRIVER_BUS_PLATFORM,
+
+ //       int (*get_irq)(struct drm_device *dev);
+ //       const char *(*get_name)(struct drm_device *dev);
+ //       int (*set_busid)(struct drm_device *dev, struct drm_master *master);
+ //       int (*set_unique)(struct drm_device *dev, struct drm_master *master,
+   //                       struct drm_unique *unique);
+   //     int (*irq_by_busid)(struct drm_device *dev, struct drm_irq_busid *p);
+};
+
 static struct drm_driver sPVRDrmDriver = 
 {
-#if defined(PVR_DRI_DRM_PLATFORM_DEV)
-	.driver_features = DRIVER_USE_PLATFORM_DEVICE,
-#else
 	.driver_features = 0,
-#endif
 	.dev_priv_size = 0,
 	.load = PVRSRVDrmLoad,
 	.unload = PVRSRVDrmUnload,
@@ -382,7 +389,7 @@ static struct drm_driver sPVRDrmDriver =
 		.poll = drm_poll,
 		.fasync = drm_fasync,
 	},
-#if defined(PVR_DRI_DRM_PLATFORM_DEV)
+#if 0
 	.platform_driver =
 	{
 		.id_table = asPlatIdList,
@@ -403,12 +410,16 @@ static struct drm_driver sPVRDrmDriver =
 		.id_table = asPciIdList,
 	},
 #endif
+
+	.bus = &sPVRdrmbus,
+
 	.name = PVR_DRM_NAME,
 	.desc = PVR_DRM_DESC,
 	.date = PVR_BUILD_DATE,
 	.major = PVRVERSION_MAJ,
 	.minor = PVRVERSION_MIN,
 	.patchlevel = PVRVERSION_BUILD,
+
 };
 
 #if defined(PVR_DRI_DRM_PLATFORM_DEV) && !defined(SUPPORT_DRI_DRM_EXT)

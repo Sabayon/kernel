@@ -199,7 +199,7 @@ struct ehci_dbg_port {
 	u32	data47;
 	u32	address;
 #define DBGP_EPADDR(dev, ep)	(((dev)<<8)|(ep))
-};
+}  __attribute__ ((packed,aligned(__alignof__(int))));
 
 #ifdef CONFIG_EARLY_PRINTK_DBGP
 #include <linux/init.h>

@@ -26,10 +26,6 @@
 
 #if defined(SUPPORT_DRI_DRM)
 
-#ifndef AUTOCONF_INCLUDED
- #include <linux/config.h>
-#endif
-
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
@@ -37,8 +33,8 @@
 #include <linux/fs.h>
 #include <linux/proc_fs.h>
 #include <linux/sched.h>
-#include <asm/ioctl.h>
 #include <drm/drmP.h>
+#include <asm/ioctl.h>
 #include <drm/drm.h>
 
 #include "img_defs.h"
@@ -327,16 +323,27 @@ PVRDRM_Display_ioctl(struct drm_device *dev, void *arg, struct drm_file *pFile)
 #define	PVR_DRM_UNLOCKED	0
 #endif
 
+#define DRM_IOCTL_PVR_DRM_UNLOCKED PVR_DRM_UNLOCKED
+
+/*
+ * 289 #define DRM_IOCTL_DEF(ioctl, func, flags) \
+ * 290         [DRM_IOCTL_NR(ioctl)] = {ioctl, func, flags}
+ *
+ * #define DRM_IOCTL_DEF_DRV(ioctl, _func, _flags)                 \
+ *         [DRM_IOCTL_NR(DRM_##ioctl)] = {.cmd = DRM_##ioctl, .func = _func, .flags = _flags, .cmd_drv = DRM_IOCTL_##ioctl}
+ */
+
+
 #if !defined(SUPPORT_DRI_DRM_EXT)
 struct drm_ioctl_desc sPVRDrmIoctls[] = {
-	DRM_IOCTL_DEF(PVR_DRM_SRVKM_IOCTL, PVRSRV_BridgeDispatchKM, PVR_DRM_UNLOCKED),
-	DRM_IOCTL_DEF(PVR_DRM_IS_MASTER_IOCTL, PVRDRMIsMaster, DRM_MASTER | PVR_DRM_UNLOCKED),
-	DRM_IOCTL_DEF(PVR_DRM_UNPRIV_IOCTL, PVRDRMUnprivCmd, PVR_DRM_UNLOCKED),
+	DRM_IOCTL_DEF_DRV(PVR_DRM_SRVKM_IOCTL, PVRSRV_BridgeDispatchKM, PVR_DRM_UNLOCKED),
+	DRM_IOCTL_DEF_DRV(PVR_DRM_IS_MASTER_IOCTL, PVRDRMIsMaster, DRM_MASTER | PVR_DRM_UNLOCKED),
+	DRM_IOCTL_DEF_DRV(PVR_DRM_UNPRIV_IOCTL, PVRDRMUnprivCmd, PVR_DRM_UNLOCKED),
 #if defined(PDUMP)
-	DRM_IOCTL_DEF(PVR_DRM_DBGDRV_IOCTL, dbgdrv_ioctl, PVR_DRM_UNLOCKED),
+	DRM_IOCTL_DEF_DRV(PVR_DRM_DBGDRV_IOCTL, dbgdrv_ioctl, PVR_DRM_UNLOCKED),
 #endif
 #if defined(DISPLAY_CONTROLLER) && defined(PVR_DISPLAY_CONTROLLER_DRM_IOCTL)
-	DRM_IOCTL_DEF(PVR_DRM_DISP_IOCTL, PVRDRM_Display_ioctl, DRM_MASTER | PVR_DRM_UNLOCKED)
+	DRM_IOCTL_DEF_DRV(PVR_DRM_DISP_IOCTL, PVRDRM_Display_ioctl, DRM_MASTER | PVR_DRM_UNLOCKED)
 #endif
 };
 
@@ -362,8 +369,8 @@ static struct drm_driver sPVRDrmDriver =
 	.suspend = PVRSRVDriverSuspend,
 	.resume = PVRSRVDriverResume,
 #endif
-	.get_map_ofs = drm_core_get_map_ofs,
-	.get_reg_ofs = drm_core_get_reg_ofs,
+	//.get_map_ofs = drm_core_get_map_ofs,
+	//.get_reg_ofs = drm_core_get_reg_ofs,
 	.ioctls = sPVRDrmIoctls,
 	.fops = 
 	{

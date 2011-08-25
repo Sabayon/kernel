@@ -35,7 +35,7 @@
 
 #if defined(LDM_PLATFORM)
 #include <linux/platform_device.h>
-#if defined(SGX_EARLYSUSPEND)
+#if defined(SGX_EARLYSUSPEND) && defined(CONFIG_HAS_EARLYSUSPEND)
 #include <linux/earlysuspend.h>
 #endif
 #endif
@@ -1485,7 +1485,7 @@ static void CommonSuspend(void)
 	bDeviceSuspended = OMAP_TRUE;
 }
 
-#if defined(SGX_EARLYSUSPEND)
+#if defined(SGX_EARLYSUSPEND) && defined(CONFIG_HAS_EARLYSUSPEND)
 
 static struct early_suspend driver_early_suspend;
 
@@ -1587,7 +1587,7 @@ static int __init omap_sgx_dc_init(void)
 		return -ENODEV;
 	}
 
-#if defined(SGX_EARLYSUSPEND)
+#if defined(SGX_EARLYSUSPEND) && defined(CONFIG_HAS_EARLYSUSPEND)
 	driver_early_suspend.suspend = DriverSuspend_Entry;
         driver_early_suspend.resume = DriverResume_Entry;
         driver_early_suspend.level = EARLY_SUSPEND_LEVEL_DISABLE_FB;
@@ -1607,7 +1607,7 @@ static IMG_VOID __exit omap_sgx_dc_deinit(IMG_VOID)
 #if defined(LDM_PLATFORM)
 	DEBUG_PRINTK("Removing platform driver");
 	platform_driver_unregister(&omap_sgx_dc_driver);
-#if defined(SGX_EARLYSUSPEND)
+#if defined(SGX_EARLYSUSPEND) && defined(CONFIG_HAS_EARLYSUSPEND)
         unregister_early_suspend(&driver_early_suspend);
 #endif
 #endif

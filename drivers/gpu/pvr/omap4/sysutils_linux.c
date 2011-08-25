@@ -199,7 +199,7 @@ IMG_VOID DisableSGXClocks(SYS_DATA *psSysData)
 
 #if defined(LDM_PLATFORM) && !defined(PVR_DRI_DRM_NOT_PCI)
 	{
-		int res = pm_runtime_put_sync(&gpsPVRLDMDev->dev);
+		int res = 0; // !!! pm_runtime_put_sync(&gpsPVRLDMDev->dev);
 		if (res < 0)
 		{
 			PVR_DPF((PVR_DBG_ERROR, "DisableSGXClocks: pm_runtime_put_sync failed (%d)", -res));

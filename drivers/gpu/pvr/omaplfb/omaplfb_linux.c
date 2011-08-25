@@ -24,8 +24,13 @@
  *
  ******************************************************************************/
 
-#include <linux/version.h>
+#if defined(SUPPORT_DRI_DRM)
+#include <drm/drmP.h>
+#else
 #include <linux/module.h>
+#endif
+
+#include <linux/version.h>
 #include <linux/fb.h>
 #include <asm/io.h>
 
@@ -59,12 +64,20 @@
 #endif
 #endif
 
-
 #include "img_defs.h"
 #include "servicesext.h"
 #include "kerneldisplay.h"
 #include "omaplfb.h"
 #include "pvrmodule.h"
+
+#if defined(SUPPORT_DRI_DRM)
+#include "pvr_drm.h"
+#include "3rdparty_dc_drm_shared.h"
+#endif
+
+#if !defined(PVR_LINUX_USING_WORKQUEUES)
+#error "PVR_LINUX_USING_WORKQUEUES must be defined"
+#endif
 
 MODULE_SUPPORTED_DEVICE(DEVNAME);
 
@@ -236,14 +249,19 @@ void OMAPLFBFlip(OMAPLFB_SWAPCHAIN *psSwapChain, unsigned long aPhyAddr)
 	omapfb_unlock(fbdev);
 }
 
+void OMAPLFBPresentSync(OMAPLFB_DEVINFO *psDevInfo, OMAPLFB_FLIP_ITEM *psFlipItem)
+{
+	OMAPLFBPresentSyncAddr(psDevInfo, (unsigned long)psFlipItem->sSysAddr->uiAddr);
+}
+
 /*
  * Present frame and synchronize with the display to prevent tearing
  * On DSI panels the sync function is used to handle FRAMEDONE IRQ
  * On DPI panels the wait_for_vsync is used to handle VSYNC IRQ
  * in: psDevInfo
  */
-void OMAPLFBPresentSync(OMAPLFB_DEVINFO *psDevInfo,
-	OMAPLFB_FLIP_ITEM *psFlipItem)
+void OMAPLFBPresentSyncAddr(OMAPLFB_DEVINFO *psDevInfo,
+	unsigned long paddr)
 {
 	struct fb_info *framebuffer = psDevInfo->psLINFBInfo;
 	struct omapfb_info *ofbi = FB2OFB(framebuffer);
@@ -269,15 +287,13 @@ void OMAPLFBPresentSync(OMAPLFB_DEVINFO *psDevInfo,
 		driver->get_update_mode(display) == OMAP_DSS_UPDATE_MANUAL) {
 		/* Wait first for the DSI bus to be released then update */
 		err = driver->sync(display);
-		OMAPLFBFlipNoLock(psDevInfo->psSwapChain,
-			(unsigned long)psFlipItem->sSysAddr->uiAddr);
+		OMAPLFBFlipNoLock(psDevInfo->psSwapChain, paddr);
 	} else if (manager && manager->wait_for_vsync) {
 		/*
 		 * Update the video pipelines registers then wait until the
 		 * frame is shown with a VSYNC
 		 */
-		OMAPLFBFlipNoLock(psDevInfo->psSwapChain,
-			(unsigned long)psFlipItem->sSysAddr->uiAddr);
+		OMAPLFBFlipNoLock(psDevInfo->psSwapChain, paddr);
 		err = manager->wait_for_vsync(manager);
 	}
 
@@ -291,44 +307,6 @@ void OMAPLFBPresentSync(OMAPLFB_DEVINFO *psDevInfo,
 #if defined(LDM_PLATFORM)
 
 static volatile OMAP_BOOL bDeviceSuspended;
-
-static int omaplfb_probe(struct platform_device *pdev)
-{
-	struct omaplfb_device *odev;
-
-	odev = kzalloc(sizeof(*odev), GFP_KERNEL);
-
-	if (!odev)
-		return -ENOMEM;
-
-	if (OMAPLFBInit(odev) != OMAP_OK) {
-		dev_err(&pdev->dev, "failed to setup omaplfb\n");
-		kfree(odev);
-		return -ENODEV;
-	}
-
-	odev->dev = &pdev->dev;
-	platform_set_drvdata(pdev, odev);
-	omaplfb_create_sysfs(odev);
-
-	return 0;
-}
-
-static int omaplfb_remove(struct platform_device *pdev)
-{
-	struct omaplfb_device *odev;
-
-	odev = platform_get_drvdata(pdev);
-
-	omaplfb_remove_sysfs(odev);
-
-	if (OMAPLFBDeinit() != OMAP_OK)
-		WARNING_PRINTK("Driver cleanup failed");
-
-	kfree(odev);
-
-	return 0;
-}
 
 /*
  * Common suspend driver function
@@ -345,7 +323,6 @@ static void OMAPLFBCommonSuspend(void)
 	OMAPLFBDriverSuspend();
 	bDeviceSuspended = OMAP_TRUE;
 }
-
 #if 0
 /*
  * Function called when the driver is requested to release
@@ -368,6 +345,8 @@ static struct platform_device omaplfb_device = {
 
 #if defined(SGX_EARLYSUSPEND) && defined(CONFIG_HAS_EARLYSUSPEND)
 
+static struct early_suspend omaplfb_early_suspend;
+
 /*
  * Android specific, driver is requested to be suspended
  * in: ea_event
@@ -389,23 +368,18 @@ static void OMAPLFBDriverResume_Entry(struct early_suspend *ea_event)
 	bDeviceSuspended = OMAP_FALSE;
 }
 
+
+#if !defined (SUPPORT_DRI_DRM)
 static struct platform_driver omaplfb_driver = {
 	.driver = {
 		.name = DRVNAME,
-		.owner  = THIS_MODULE,
-	},
-	.probe = omaplfb_probe,
-	.remove = omaplfb_remove,
+	}
 };
-
-static struct early_suspend omaplfb_early_suspend = {
-	.suspend = OMAPLFBDriverSuspend_Entry,
-	.resume = OMAPLFBDriverResume_Entry,
-	.level = EARLY_SUSPEND_LEVEL_STOP_DRAWING,
-};
+#endif
 
 #else /* defined(SGX_EARLYSUSPEND) && defined(CONFIG_HAS_EARLYSUSPEND) */
 
+#if !defined (SUPPORT_DRI_DRM)
 /*
  * Function called when the driver is requested to be suspended
  * in: pDevice, state
@@ -444,14 +418,12 @@ static IMG_VOID OMAPLFBDriverShutdown_Entry(
 static struct platform_driver omaplfb_driver = {
 	.driver = {
 		.name = DRVNAME,
-		.owner  = THIS_MODULE,
 	},
-	.probe = omaplfb_probe,
-	.remove = omaplfb_remove,
 	.suspend = OMAPLFBDriverSuspend_Entry,
 	.resume	= OMAPLFBDriverResume_Entry,
 	.shutdown = OMAPLFBDriverShutdown_Entry,
 };
+#endif /* !defined (SUPPORT_DRI_DRM)*/
 
 #endif /* defined(SGX_EARLYSUSPEND) && defined(CONFIG_HAS_EARLYSUSPEND) */
 
@@ -460,12 +432,29 @@ static struct platform_driver omaplfb_driver = {
 /*
  * Driver init function
  */
+#if defined(SUPPORT_DRI_DRM)
+int PVR_DRM_MAKENAME(DISPLAY_CONTROLLER, _Init)(struct drm_device *dev)
+#else
 static int __init OMAPLFB_Init(void)
+#endif
 {
+	if(OMAPLFBInit() != OMAP_OK)
+	{
+		WARNING_PRINTK("Driver init failed");
+		return -ENODEV;
+	}
+
 #if defined(LDM_PLATFORM)
 	DEBUG_PRINTK("Registering platform driver");
+#if !defined(SUPPORT_DRI_DRM)
 	if (platform_driver_register(&omaplfb_driver))
+	{
+		WARNING_PRINTK("Unable to register platform driver");
+		if(OMAPLFBDeinit() != OMAP_OK)
+			WARNING_PRINTK("Driver cleanup failed\n");
 		return -ENODEV;
+	}
+#endif
 #if 0
 	DEBUG_PRINTK("Registering device driver");
 	if (platform_device_register(&omaplfb_device))
@@ -479,7 +468,10 @@ static int __init OMAPLFB_Init(void)
 #endif
 
 #if defined(SGX_EARLYSUSPEND) && defined(CONFIG_HAS_EARLYSUSPEND)
-	register_early_suspend(&omaplfb_early_suspend);
+	omaplfb_early_suspend.suspend = OMAPLFBDriverSuspend_Entry;
+        omaplfb_early_suspend.resume = OMAPLFBDriverResume_Entry;
+        omaplfb_early_suspend.level = EARLY_SUSPEND_LEVEL_DISABLE_FB;
+        register_early_suspend(&omaplfb_early_suspend);
 	DEBUG_PRINTK("Registered early suspend support");
 #endif
 
@@ -490,22 +482,30 @@ static int __init OMAPLFB_Init(void)
 /*
  * Driver exit function
  */
+#if defined(SUPPORT_DRI_DRM)
+void PVR_DRM_MAKENAME(DISPLAY_CONTROLLER, _Cleanup)(struct drm_device unref__ *dev)
+#else
 static IMG_VOID __exit OMAPLFB_Cleanup(IMG_VOID)
-{    
+#endif
+{
 #if defined(LDM_PLATFORM)
 #if 0
 	DEBUG_PRINTK(format,...)("Removing platform device");
 	platform_device_unregister(&omaplfb_device);
 #endif
+#if !defined(SUPPORT_DRI_DRM)
 	DEBUG_PRINTK("Removing platform driver");
 	platform_driver_unregister(&omaplfb_driver);
+#endif
 #if defined(SGX_EARLYSUSPEND) && defined(CONFIG_HAS_EARLYSUSPEND)
-	DEBUG_PRINTK("Removed early suspend support");
-	unregister_early_suspend(&omaplfb_early_suspend);
+        unregister_early_suspend(&omaplfb_early_suspend);
 #endif
 #endif
+	if(OMAPLFBDeinit() != OMAP_OK)
+		WARNING_PRINTK("Driver cleanup failed");
 }
 
+#if !defined(SUPPORT_DRI_DRM)
 late_initcall(OMAPLFB_Init);
 module_exit(OMAPLFB_Cleanup);
-
+#endif

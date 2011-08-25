@@ -51,6 +51,12 @@ PVRSRV_ERROR AllocateDeviceID(SYS_DATA *psSysData, IMG_UINT32 *pui32DevID)
 	SYS_DEVICE_ID* psDeviceWalker;
 	SYS_DEVICE_ID* psDeviceEnd;
 
+	if (!psSysData) {
+		pr_err("NULL psSysData\n");
+		WARN_ON(1);
+		return -1;
+	}
+
 	psDeviceWalker = &psSysData->sDeviceID[0];
 	psDeviceEnd = psDeviceWalker + psSysData->ui32NumDevices;
 

@@ -61,13 +61,13 @@ extern "C" {
 
 #define PVR_DBGDRIV_MESSAGE		DBGPRIV_DBGDRV_MESSAGE, "", 0
 
-#if !defined(PVRSRV_NEED_PVR_ASSERT) && defined(DEBUG)
+//#if !defined(PVRSRV_NEED_PVR_ASSERT) && defined(DEBUG)
 #define PVRSRV_NEED_PVR_ASSERT
-#endif
+//#endif
 
-#if defined(PVRSRV_NEED_PVR_ASSERT) && !defined(PVRSRV_NEED_PVR_DPF)
+//#if defined(PVRSRV_NEED_PVR_ASSERT) && !defined(PVRSRV_NEED_PVR_DPF)
 #define PVRSRV_NEED_PVR_DPF
-#endif
+//#endif
 
 #if !defined(PVRSRV_NEED_PVR_TRACE) && (defined(DEBUG) || defined(TIMING))
 #define PVRSRV_NEED_PVR_TRACE

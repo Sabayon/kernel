@@ -154,7 +154,7 @@ static PVRSRV_ERROR SysLocateDevices(SYS_DATA *psSysData)
 	gsSGXDeviceMap.ui32IRQ = 0;
 
 #else 
-#if defined(PVR_LINUX_DYNAMIC_SGX_RESOURCE_INFO)
+#if defined(IT_AINT_DEFINED) && defined(PVR_LINUX_DYNAMIC_SGX_RESOURCE_INFO)
 
 	dev_res = platform_get_resource(gpsPVRLDMDev, IORESOURCE_MEM, 0);
 	if (dev_res == NULL)
@@ -284,6 +284,9 @@ PVRSRV_ERROR SysInitialise(IMG_VOID)
 #if !defined(SGX_DYNAMIC_TIMING_INFO)
 	SGX_TIMING_INFORMATION*	psTimingInfo;
 #endif
+
+	pr_err("++++++++++ SysInitialise\n");
+
 	gpsSysData = &gsSysData;
 	OSMemSet(gpsSysData, 0, sizeof(SYS_DATA));
 

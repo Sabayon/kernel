@@ -42,6 +42,7 @@
 
 #if defined(PVR_LDM_PLATFORM_PRE_REGISTERED)
 #if !defined(NO_HARDWARE)
+
 #define PVR_USE_PRE_REGISTERED_PLATFORM_DEV
 #endif
 #endif
@@ -214,7 +215,8 @@ static LDM_DRV powervr_driver = {
 
 LDM_DEV *gpsPVRLDMDev;
 
-#if defined(MODULE) && defined(PVR_LDM_PLATFORM_MODULE) && \
+// #if defined(MODULE) && 
+#if defined(PVR_LDM_PLATFORM_MODULE) && \
 	!defined(PVR_USE_PRE_REGISTERED_PLATFORM_DEV)
 static void PVRSRVDeviceRelease(struct device unref__ *pDevice)
 {
@@ -238,6 +240,8 @@ static int __devinit PVRSRVDriverProbe(LDM_DEV *pDevice, const struct pci_device
 {
 	SYS_DATA *psSysData;
 
+	pr_err("*********** PVRSRVDriverProbe\n");
+
 	PVR_TRACE(("PVRSRVDriverProbe(pDevice=%p)", pDevice));
 
 #if 0
@@ -252,6 +256,9 @@ static int __devinit PVRSRVDriverProbe(LDM_DEV *pDevice, const struct pci_device
 	if ( psSysData == IMG_NULL)
 	{
 		gpsPVRLDMDev = pDevice;
+
+		pr_err("********** calling SysInitialise\n");
+
 
 		if (SysInitialise() != PVRSRV_OK)
 		{
@@ -505,11 +512,11 @@ static int PVRSRVRelease(struct inode unref__ * pInode, struct file *pFile)
 }
 
 
-#if defined(SUPPORT_DRI_DRM)
+//#if defined(SUPPORT_DRI_DRM)
 int PVRCore_Init(void)
-#else
-static int __init PVRCore_Init(void)
-#endif
+//#else
+//static int __init PVRCore_Init(void)
+//#endif
 {
 	int error;
 #if !defined(PVR_LDM_MODULE)
@@ -522,7 +529,7 @@ static int __init PVRCore_Init(void)
 	
 	PVRDPFInit();
 #endif
-	PVR_TRACE(("PVRCore_Init"));
+	pr_err("************************ PVRCore_Init\n");
 
 	LinuxInitMutex(&gPVRSRVLock);
 
@@ -532,13 +539,21 @@ static int __init PVRCore_Init(void)
 		return error;
 	}
 
+	pr_err("************************ PVRCore_Init  2\n");
+
 	if (PVROSFuncInit() != PVRSRV_OK)
 	{
 		error = -ENOMEM;
 		goto init_failed;
 	}
 
+ pr_err("************************ PVRCore_Init 3\n");
+
+
 	PVRLinuxMUtilsInit();
+
+ pr_err("************************ PVRCore_Init 4\n");
+
 
 	if(LinuxMMInit() != PVRSRV_OK)
 	{
@@ -546,7 +561,13 @@ static int __init PVRCore_Init(void)
 		goto init_failed;
 	}
 
+ pr_err("************************ PVRCore_Init 5\n");
+
+
 	LinuxBridgeInit();
+
+ pr_err("************************ PVRCore_Init 6\n");
+
 
 	PVRMMapInit();
 
@@ -560,7 +581,11 @@ static int __init PVRCore_Init(void)
 		goto init_failed;
 	}
 
-#if defined(MODULE) && !defined(PVR_USE_PRE_REGISTERED_PLATFORM_DEV)
+//#if defined(MODULE) && !defined(PVR_USE_PRE_REGISTERED_PLATFORM_DEV)
+#if !defined(PVR_USE_PRE_REGISTERED_PLATFORM_DEV)
+
+	pr_err("****************** Registering device\n");
+
 	if ((error = platform_device_register(&powervr_device)) != 0)
 	{
 		platform_driver_unregister(&powervr_driver);
@@ -572,6 +597,9 @@ static int __init PVRCore_Init(void)
 #endif
 #endif 
 
+ pr_err("************************ PVRCore_Init 7\n");
+
+
 #if defined(PVR_LDM_PCI_MODULE)
 	if ((error = pci_register_driver(&powervr_driver)) != 0)
 	{
@@ -582,6 +610,9 @@ static int __init PVRCore_Init(void)
 #endif 
 
 #else 
+
+ pr_err("************************ PVRCore_Init 8\n");
+
 	
 	if ((eError = SysInitialise()) != PVRSRV_OK)
 	{
@@ -671,6 +702,9 @@ sys_deinit:
 	}
 #endif	
 init_failed:
+
+	pr_err("************************ PVRCore_Init FAILED\n");
+
 	PVRMMapCleanup();
 	LinuxMMCleanup();
 	LinuxBridgeDeInit();

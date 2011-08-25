@@ -24,6 +24,9 @@
  *
  ******************************************************************************/
 
+extern int num_registered_fb;
+
+
 #include <linux/version.h>
 #include <linux/kernel.h>
 #include <linux/console.h>

@@ -63,12 +63,10 @@
 #define	PVR_OMAP4_TIMING_PRCM
 #endif
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,35))
-#include <plat/gpu.h>
+//#include <plat/gpu.h>
 #if !defined(PVR_NO_OMAP_TIMER)
 #define	PVR_OMAP_USE_DM_TIMER_API
 #include <plat/dmtimer.h>
-#endif
 #endif
 
 #if !defined(PVR_NO_OMAP_TIMER)

@@ -1221,8 +1221,10 @@ static int dsi_pll_power(struct platform_device *dsidev,
 {
 	int t = 0;
 
+	pr_err("dsi_pll_power\n");
+
 	/* DSI-PLL power command 0x3 is not working */
-	if (dss_has_feature(FEAT_DSI_PLL_PWR_BUG) &&
+	if (//dss_has_feature(FEAT_DSI_PLL_PWR_BUG) &&
 			state == DSI_PLL_POWER_ON_DIV)
 		state = DSI_PLL_POWER_ON_ALL;
 
@@ -1232,7 +1234,7 @@ static int dsi_pll_power(struct platform_device *dsidev,
 	/* PLL_PWR_STATUS */
 	while (FLD_GET(dsi_read_reg(dsidev, DSI_CLK_CTRL), 29, 28) != state) {
 		if (++t > 1000) {
-			DSSERR("Failed to set DSI PLL power mode to %d\n",
+			pr_err("********** Failed to set DSI PLL power mode to %d\n",
 					state);
 			return -ENODEV;
 		}
@@ -1586,7 +1588,7 @@ int dsi_pll_init(struct platform_device *dsidev, bool enable_hsclk,
 	int r = 0;
 	enum dsi_pll_power_state pwstate;
 
-	DSSDBG("PLL init\n");
+	pr_err("************ PLL init\n");
 
 	if (dsi->vdds_dsi_reg == NULL) {
 		struct regulator *vdds_dsi;
@@ -4220,7 +4222,7 @@ int omapdss_dsi_display_enable(struct omap_dss_device *dssdev)
 	struct dsi_data *dsi = dsi_get_dsidrv_data(dsidev);
 	int r = 0;
 
-	DSSDBG("dsi_display_enable\n");
+	pr_err("dsi_display_enable\n");
 
 	WARN_ON(!dsi_bus_is_locked(dsidev));
 

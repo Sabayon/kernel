@@ -26,6 +26,7 @@
 #include <plat/dvfs.h>
 #include "smartreflex.h"
 #include "powerdomain.h"
+#include "pm.h"
 
 /**
  * DOC: Introduction
@@ -837,6 +838,11 @@ int omap_device_scale(struct device *req_dev, struct device *target_dev,
 	if (IS_ERR_OR_NULL(pdev)) {
 		pr_err("%s: pdev is null!\n", __func__);
 		return -EINVAL;
+	}
+
+	if (!omap_pm_is_ready()) {
+		dev_dbg(target_dev, "%s: pm is not ready yet\n", __func__);
+		return -EBUSY;
 	}
 
 	/* Lock me to ensure cross domain scaling is secure */

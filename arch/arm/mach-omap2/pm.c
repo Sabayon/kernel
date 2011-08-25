@@ -26,6 +26,10 @@
 
 static struct omap_device_pm_latency *pm_lats;
 
+static int _init_omap_device(char *name);
+
+bool omap_pm_is_ready_status;
+
 static int _init_omap_device(char *name)
 {
 	struct omap_hwmod *oh;
@@ -287,6 +291,10 @@ static int __init omap2_common_pm_late_init(void)
 
 	/* Smartreflex device init */
 	omap_devinit_smartreflex();
+
+	omap_pm_is_ready_status = true;
+	/* let the other CPU know as well */
+	smp_wmb();
 
 	return 0;
 }

@@ -94,6 +94,13 @@ ccflags-$(CONFIG_SGX_PDUMP) += -Idrivers/gpu/pvr/pdump \
 	-DPDUMP \
 	-DSUPPORT_DBGDRV_EVENT_OBJECTS
 
+ccflags-$(CONFIG_DRM) += \
+	-DSUPPORT_DRI_DRM \
+	-DPVR_SECURE_DRM_AUTH_EXPORT \
+	-DPVR_DRI_DRM_PLATFORM_DEV \
+	-DPVR_LDM_PLATFORM_PRE_REGISTERED \
+	-DPVR_DISPLAY_CONTROLLER_DRM_IOCTL
+
 pvr_common-y := \
 	osfunc.o \
 	mutils.o \
@@ -126,6 +133,9 @@ pvr_common-y := \
 	lists.o \
 	mem_debug.o \
 	osfunc_common.o
+
+pvr_common-$(CONFIG_DRM) += \
+	pvr_drm.o
 
 pvr540-$(CONFIG_SGX540) := \
 	omap4/sysconfig.o \

@@ -80,7 +80,7 @@ endif
 # PRCM
 obj-$(CONFIG_ARCH_OMAP2)		+= prcm.o cm2xxx_3xxx.o prm2xxx_3xxx.o
 obj-$(CONFIG_ARCH_OMAP3)		+= prcm.o cm2xxx_3xxx.o prm2xxx_3xxx.o \
-					   vc3xxx_data.o vp3xxx_data.o
+					   vc3xxx_data.o vp3xxx_data.o dvfs.o
 obj-$(CONFIG_SOC_OMAPAM33XX)		+= cminst33xx.o prminst33xx.o cm33xx.o
 
 # XXX The presence of cm2xxx_3xxx.o on the line below is temporary and
@@ -89,7 +89,7 @@ obj-$(CONFIG_SOC_OMAPAM33XX)		+= cminst33xx.o prminst33xx.o cm33xx.o
 obj-$(CONFIG_ARCH_OMAP4)		+= prcm.o cm2xxx_3xxx.o cminst44xx.o \
 					   cm44xx.o prcm_mpu44xx.o \
 					   prminst44xx.o vc44xx_data.o \
-					   vp44xx_data.o
+					   vp44xx_data.o dvfs.o
 
 # OMAP voltage domains
 voltagedomain-common			:= voltage.o vc.o vp.o

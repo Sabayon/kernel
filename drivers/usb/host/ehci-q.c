@@ -1082,6 +1082,20 @@ static struct ehci_qh *qh_append_tds (
 			wmb ();
 			dummy->hw_token = token;
 
+			/* The mb() below is added to make sure that
+			 * 'token' can be writen into qtd, so that ehci
+			 * HC can see the up-to-date qtd descriptor. On
+			 * some archs(at least on ARM Cortex A9 dual core),
+			 * writing into coherenet memory doesn't mean the
+			 * value written can reach physical memory
+			 * immediately, and the value may be buffered
+			 * inside L2 cache. 'dummy->hw_token = token;'
+			 * after mb() is added for obeying correct mb()
+			 * usage.
+			 * */
+			 mb();
+			 token = dummy->hw_token;
+
 			urb->hcpriv = qh_get (qh);
 		}
 	}

@@ -160,4 +160,6 @@ source "drivers/staging/mei/Kconfig"
 
 source "drivers/staging/nvec/Kconfig"
 
+source "drivers/staging/omapdrm/Kconfig"
+
 endif # STAGING

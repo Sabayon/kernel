@@ -707,7 +707,7 @@ static void omap_init_vout(void)
 static inline void omap_init_vout(void) {}
 #endif
 
-static struct omap_device_pm_latency omap_gpu_latency[] = {
+static struct omap_device_pm_latency omap_drm_latency[] = {
 	[0] = {
 		.deactivate_func	= omap_device_idle_hwmods,
 		.activate_func		= omap_device_enable_hwmods,
@@ -725,15 +725,15 @@ static void omap_init_gpu(void)
 {
 	struct omap_hwmod *oh;
 	struct omap_device *od;
-	int max_omap_gpu_hwmod_name_len = 16;
-	char oh_name[max_omap_gpu_hwmod_name_len];
+	int max_omap_drm_hwmod_name_len = 16;
+	char oh_name[max_omap_drm_hwmod_name_len];
 	int l;
 	struct gpu_platform_data *pdata;
-	char *name = "pvrsrvkm";
+	char *name = "omapdrm_pvr";
 
-	l = snprintf(oh_name, max_omap_gpu_hwmod_name_len,
+	l = snprintf(oh_name, max_omap_drm_hwmod_name_len,
 		     "gpu");
-	WARN(l >= max_omap_gpu_hwmod_name_len,
+	WARN(l >= max_omap_drm_hwmod_name_len,
 		"String buffer overflow in GPU device setup\n");
 
 	oh = omap_hwmod_lookup(oh_name);
@@ -756,7 +756,7 @@ static void omap_init_gpu(void)
 
 	od = omap_device_build(name, 0, oh, pdata,
 			     sizeof(struct gpu_platform_data),
-			     omap_gpu_latency, ARRAY_SIZE(omap_gpu_latency), 0);
+			     omap_drm_latency, ARRAY_SIZE(omap_drm_latency), 0);
 	WARN(IS_ERR(od), "Could not build omap_device for %s %s\n",
 	     name, oh_name);
 

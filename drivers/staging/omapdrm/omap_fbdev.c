@@ -277,3 +277,27 @@ fail:
 	}
 	return NULL;
 }
+
+void omap_fbdev_free(struct drm_device *dev)
+{
+	struct omap_drm_private *priv = dev->dev_private;
+	struct drm_fb_helper *helper = priv->fbdev;
+	struct omap_fbdev *fbdev;
+	struct fb_info *fbi;
+
+	DBG();
+
+	fbi = helper->fbdev;
+
+	unregister_framebuffer(fbi);
+	framebuffer_release(fbi);
+
+	drm_fb_helper_fini(helper);
+
+	fbdev = to_omap_fbdev(priv->fbdev);
+
+	kfree(fbdev);
+
+	priv->fbdev = NULL;
+}
+

@@ -106,11 +106,16 @@ enum drm_connector_status omap_connector_detect(
 static void omap_connector_destroy(struct drm_connector *connector)
 {
 	struct omap_connector *omap_connector = to_omap_connector(connector);
+	struct omap_dss_device *dssdev = omap_connector->dssdev;
+
+	dssdev->driver->disable(dssdev);
 
 	DBG("%s", omap_connector->dssdev->name);
 	drm_sysfs_connector_remove(connector);
 	drm_connector_cleanup(connector);
 	kfree(omap_connector);
+
+	omap_dss_put_device(dssdev);
 }
 
 #define MAX_EDID  256
@@ -340,6 +345,8 @@ struct drm_connector * omap_connector_init(struct drm_device *dev,
 	struct omap_connector *omap_connector;
 
 	DBG("%s", dssdev->name);
+
+	omap_dss_get_device(dssdev);
 
 	omap_connector = kzalloc(sizeof(struct omap_connector), GFP_KERNEL);
 	if (!omap_connector) {

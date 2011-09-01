@@ -40,6 +40,7 @@ struct omap_drm_private {
 };
 
 struct drm_fb_helper * omap_fbdev_init(struct drm_device *dev);
+void omap_fbdev_free(struct drm_device *dev);
 
 struct drm_crtc * omap_crtc_init(struct drm_device *dev,
 		struct omap_overlay *ovl, int id);

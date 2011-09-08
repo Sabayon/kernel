@@ -380,6 +380,7 @@ void __init omap2_init_common_infrastructure(void)
 		am33xx_voltagedomains_init();
 		am33xx_powerdomains_init();
 		am33xx_clockdomains_init();
+		am33xx_hwmod_init();
 	} else if (cpu_is_omap34xx()) {
 		omap3xxx_voltagedomains_init();
 		omap3xxx_powerdomains_init();

@@ -27,6 +27,7 @@
 #include "clock34xx.h"
 #include "clock36xx.h"
 #include "clock3517.h"
+#include "clock33xx.h"
 
 #include "cm2xxx_3xxx.h"
 #include "cm-regbits-34xx.h"
@@ -3518,8 +3519,8 @@ int __init omap3xxx_clk_init(void)
 		cpu_mask = RATE_IN_TI816X;
 		cpu_clkflg = CK_TI816X;
 	} else if (cpu_is_am33xx()) {
-		cpu_mask = RATE_IN_AM33XX;
-		cpu_clkflg = CK_AM33XX;
+		am33xx_clk_init();
+		return 0;
 	} else if (cpu_is_omap34xx()) {
 		if (omap_rev() == OMAP3430_REV_ES1_0) {
 			cpu_mask = RATE_IN_3430ES1;

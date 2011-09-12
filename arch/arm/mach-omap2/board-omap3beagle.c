@@ -35,6 +35,7 @@
 #include <linux/i2c/twl.h>
 #include <linux/netdevice.h>
 #include <linux/if_ether.h>
+#include <linux/i2c/tsc2007.h>
 
 #include <mach/hardware.h>
 #include <asm/mach-types.h>
@@ -87,11 +88,15 @@ static struct {
 	int usb_pwr_level;
 	int reset_gpio;
 	int usr_button_gpio;
+	char *lcd_driver_name;
+	int lcd_pwren;
 } beagle_config = {
 	.mmc1_gpio_wp = -EINVAL,
 	.usb_pwr_level = GPIOF_OUT_INIT_LOW,
 	.reset_gpio = 129,
 	.usr_button_gpio = 4,
+	.lcd_driver_name = "",
+	.lcd_pwren = 156
 };
 
 /*
@@ -471,9 +476,53 @@ static struct omap_dss_device beagle_tv_device = {
 	.phy.venc.type = OMAP_DSS_VENC_TYPE_SVIDEO,
 };
 
+static int beagle_enable_lcd(struct omap_dss_device *dssdev)
+{
+       if (gpio_is_valid(beagle_config.lcd_pwren)) {
+               printk(KERN_INFO "%s: Enabling LCD\n", __FUNCTION__);
+               gpio_set_value(beagle_config.lcd_pwren, 0);
+       } else {
+               printk(KERN_INFO "%s: Invalid LCD enable GPIO: %d\n",
+                       __FUNCTION__, beagle_config.lcd_pwren);
+       }
+
+       return 0;
+}
+
+static void beagle_disable_lcd(struct omap_dss_device *dssdev)
+{
+       if (gpio_is_valid(beagle_config.lcd_pwren)) {
+               printk(KERN_INFO "%s: Disabling LCD\n", __FUNCTION__);
+               gpio_set_value(beagle_config.lcd_pwren, 1);
+       } else {
+               printk(KERN_INFO "%s: Invalid LCD enable GPIO: %d\n",
+                       __FUNCTION__, beagle_config.lcd_pwren);
+       }
+
+       return;
+}
+
+static struct panel_generic_dpi_data lcd_panel = {
+	.name = "tfc_s9700rtwv35tr-01b",
+	.platform_enable = beagle_enable_lcd,
+	.platform_disable = beagle_disable_lcd,
+};
+
+static struct omap_dss_device beagle_lcd_device = {
+	.type                   = OMAP_DISPLAY_TYPE_DPI,
+	.name                   = "lcd",
+	.driver_name		= "generic_dpi_panel",
+	.phy.dpi.data_lines     = 24,
+	.platform_enable        = beagle_enable_lcd,
+	.platform_disable       = beagle_disable_lcd,
+	.reset_gpio 		= -EINVAL,
+	.data			= &lcd_panel,
+};
+
 static struct omap_dss_device *beagle_dss_devices[] = {
 	&beagle_dvi_device,
 	&beagle_tv_device,
+	&beagle_lcd_device,
 };
 
 static struct omap_dss_board_info beagle_dss_data = {
@@ -490,6 +539,11 @@ static void __init beagle_display_init(void)
 			     "DVI reset");
 	if (r < 0)
 		printk(KERN_ERR "Unable to get DVI reset GPIO\n");
+
+       r = gpio_request_one(beagle_config.lcd_pwren, GPIOF_OUT_INIT_LOW,
+                            "LCD power");
+       if (r < 0)
+               printk(KERN_ERR "Unable to get LCD power enable GPIO\n");
 }
 
 #include "sdram-micron-mt46h32m32lf-6.h"
@@ -646,6 +700,53 @@ static struct i2c_board_info __initdata beagle_i2c2_zippy[] = {
 };
 #else
 static struct i2c_board_info __initdata beagle_i2c2_zippy[] = {};
+#endif
+
+#if defined(CONFIG_INPUT_TOUCHSCREEN) && \
+	defined(CONFIG_TOUCHSCREEN_TSC2007)
+/* Touchscreen */
+#define OMAP3BEAGLE_TSC2007_GPIO 157
+static int omap3beagle_tsc2007_get_pendown_state(void)
+{
+	return !gpio_get_value(OMAP3BEAGLE_TSC2007_GPIO);
+}
+
+static int omap3beagle_tsc2007_init(void)
+{
+	int gpio = OMAP3BEAGLE_TSC2007_GPIO;
+	int ret = 0;
+	printk(KERN_WARNING "TSC2007_init started");
+	ret = gpio_request(gpio, "tsc2007_pen_down");
+	if (ret < 0) {
+		printk(KERN_ERR "Failed to request GPIO %d for "
+		"tsc2007 pen down IRQ\n", gpio);
+		return ret;
+	}
+
+	omap_mux_init_gpio(OMAP3BEAGLE_TSC2007_GPIO, OMAP_PIN_INPUT_PULLUP);
+	gpio_direction_input(gpio);
+
+	irq_set_irq_type(OMAP_GPIO_IRQ(OMAP3BEAGLE_TSC2007_GPIO), IRQ_TYPE_EDGE_FALLING);
+
+	return ret;
+}
+
+static struct tsc2007_platform_data tsc2007_info = {
+	.model = 2007,
+	.x_plate_ohms = 180,
+	.get_pendown_state = omap3beagle_tsc2007_get_pendown_state,
+	.init_platform_hw = omap3beagle_tsc2007_init,
+};
+
+static struct i2c_board_info __initdata beagle_i2c2_bbtoys_ulcd[] = {
+	{
+		I2C_BOARD_INFO("tsc2007", 0x48),
+		.irq = OMAP_GPIO_IRQ(OMAP3BEAGLE_TSC2007_GPIO),
+		.platform_data = &tsc2007_info,
+	},
+};
+#else
+static struct i2c_board_info __initdata beagle_i2c2_bbtoys_ulcd[] = {};
 #endif
 
 static int __init omap3_beagle_i2c_init(void)
@@ -817,6 +918,10 @@ static void __init omap3_beagle_init(void)
 
 	gpio_buttons[0].gpio = beagle_config.usr_button_gpio;
 
+	/* TODO: set lcd_driver_name by command line or device tree */
+	beagle_config.lcd_driver_name = "tfc_s9700rtwv35tr-01b",
+	lcd_panel.name = beagle_config.lcd_driver_name;
+
 	platform_add_devices(omap3_beagle_devices,
 			ARRAY_SIZE(omap3_beagle_devices));
 	omap_display_init(&beagle_dss_data);
@@ -890,6 +995,13 @@ static void __init omap3_beagle_init(void)
 		platform_device_register(&wl12xx_device);
 		printk(KERN_INFO "Beagle expansionboard: registering wl12xx wifi platform device\n");
 		platform_device_register(&omap_vwlan_device);
+	}
+
+	if(!strcmp(expansionboard_name, "bbtoys-ulcd"))
+	{
+		printk(KERN_INFO "Beagle expansionboard: registering bbtoys-ulcd\n");
+		omap_register_i2c_bus(2, 400,  beagle_i2c2_bbtoys_ulcd,
+							ARRAY_SIZE(beagle_i2c2_bbtoys_ulcd));
 	}
 
 	usb_musb_init(NULL);

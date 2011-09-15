@@ -33,6 +33,8 @@
 
 #include <linux/regulator/machine.h>
 #include <linux/i2c/twl.h>
+#include <linux/netdevice.h>
+#include <linux/if_ether.h>
 
 #include <mach/hardware.h>
 #include <asm/mach-types.h>
@@ -42,6 +44,7 @@
 
 #include <plat/board.h>
 #include <plat/common.h>
+#include <mach/id.h>
 #include <video/omapdss.h>
 #include <video/omap-panel-generic-dpi.h>
 #include <plat/gpmc.h>
@@ -89,6 +92,90 @@ static struct {
 	.usb_pwr_level = GPIOF_OUT_INIT_LOW,
 	.reset_gpio = 129,
 	.usr_button_gpio = 4,
+};
+
+/*
+ * This device path represents the onboard USB <-> Ethernet bridge
+ * on the BeagleBoard-xM which needs a random or all-zeros
+ * mac address replaced with a per-cpu stable generated one
+ */
+
+static const char * const xm_fixup_mac_device_paths[] = {
+	"usb1/1-2/1-2.1/1-2.1:1.0",
+};
+
+static int beagle_device_path_need_mac(struct device *dev)
+{
+	const char **try = (const char **) xm_fixup_mac_device_paths;
+	const char *path;
+	int count = ARRAY_SIZE(xm_fixup_mac_device_paths);
+	const char *p;
+	int len;
+	struct device *devn;
+
+	while (count--) {
+
+		p = *try + strlen(*try);
+		devn = dev;
+
+		while (devn) {
+
+			path = dev_name(devn);
+			len = strlen(path);
+
+			if ((p - *try) < len) {
+				devn = NULL;
+				continue;
+			}
+
+			p -= len;
+
+			if (strncmp(path, p, len)) {
+				devn = NULL;
+				continue;
+			}
+
+			devn = devn->parent;
+			if (p == *try)
+				return count;
+
+			if (devn != NULL && (p - *try) < 2)
+				devn = NULL;
+
+			p--;
+			if (devn != NULL && *p != '/')
+				devn = NULL;
+		}
+
+		try++;
+	}
+
+	return -ENOENT;
+}
+
+static int omap_beagle_netdev_event(struct notifier_block *this,
+						 unsigned long event, void *ptr)
+{
+	struct net_device *dev = ptr;
+	struct sockaddr sa;
+	int n;
+
+	if (event != NETDEV_REGISTER)
+		return NOTIFY_DONE;
+
+	n = beagle_device_path_need_mac(dev->dev.parent);
+	if (n >= 0) {
+		sa.sa_family = dev->type;
+		omap2_die_id_to_ethernet_mac(sa.sa_data, n);
+		dev->netdev_ops->ndo_set_mac_address(dev, &sa);
+	}
+
+	return NOTIFY_DONE;
+}
+
+static struct notifier_block omap_beagle_netdev_notifier = {
+	.notifier_call = omap_beagle_netdev_event,
+	.priority = 1,
 };
 
 static struct gpio omap3_beagle_rev_gpios[] __initdata = {
@@ -146,14 +233,17 @@ static void __init omap3_beagle_init_rev(void)
 		printk(KERN_INFO "OMAP3 Beagle Rev: xM Ax/Bx\n");
 		omap3_beagle_version = OMAP3BEAGLE_BOARD_XM;
 		beagle_config.usb_pwr_level = GPIOF_OUT_INIT_HIGH;
+		register_netdevice_notifier(&omap_beagle_netdev_notifier);
 		break;
 	case 2:
 		printk(KERN_INFO "OMAP3 Beagle Rev: xM C\n");
 		omap3_beagle_version = OMAP3BEAGLE_BOARD_XMC;
+		register_netdevice_notifier(&omap_beagle_netdev_notifier);
 		break;
 	default:
 		printk(KERN_INFO "OMAP3 Beagle Rev: unknown %hd\n", beagle_rev);
 		omap3_beagle_version = OMAP3BEAGLE_BOARD_UNKN;
+		register_netdevice_notifier(&omap_beagle_netdev_notifier);
 	}
 }
 

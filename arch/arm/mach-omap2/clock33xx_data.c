@@ -1728,23 +1728,17 @@ static struct clk wdt0_clkmux_ck = {
 	.recalc		= &followparent_recalc,
 };
 
-
-
-static struct clk wdt1_clkmux_ck = {
-	.name		= "wdt1_clkmux_ck",
-	.parent		= &clk_rc32k_ck,
-	.ops		= &clkops_null,
-	.recalc		= &followparent_recalc,
-};
-
 static struct clk wd_timer1_fck = {
 	.name           = "wd_timer1_fck",
-	.ops            = &clkops_omap2_dflt,
+	.init		= &omap2_init_clksel_parent,
+	.clksel		= wdt0_clkmux_sel,
+	.ops            = &clkops_am33xx_dflt_wait,
 	.enable_reg     = AM33XX_CM_WKUP_WDT1_CLKCTRL,
 	.enable_bit     = AM33XX_MODULEMODE_SWCTRL,
+	.clksel_reg	= AM33XX_CLKSEL_WDT1_CLK,
+	.clksel_mask	= AM33XX_CLKSEL_0_1_MASK,
 	.clkdm_name     = "l4_wkup_clkdm",
-	.parent         = &wdt1_clkmux_ck,
-	.recalc         = &followparent_recalc,
+	.recalc         = &omap2_clksel_recalc,
 };
 
 static struct clk wdt0_fck = {
@@ -1912,7 +1906,6 @@ static struct omap_clk am33xx_clks[] = {
 	CLK(NULL,	"gpt7_ick",		&timer7_ick,	CK_AM33XX),
 	CLK(NULL,	"vtp_clk_div_ck",	&vtp_clk_div_ck,	CK_AM33XX),
 	CLK(NULL,	"wdt0_clkmux_ck",	&wdt0_clkmux_ck,	CK_AM33XX),
-	CLK(NULL,	"wdt1_clkmux_ck",	&wdt1_clkmux_ck,	CK_AM33XX),
 };
 
 int __init am33xx_clk_init(void)

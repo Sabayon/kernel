@@ -59,6 +59,9 @@ static struct omap_hwmod am33xx_gpio3_hwmod;
 static struct omap_hwmod am33xx_i2c1_hwmod;
 static struct omap_hwmod am33xx_i2c2_hwmod;
 static struct omap_hwmod am33xx_usbss_hwmod;
+static struct omap_hwmod am33xx_mmc0_hwmod;
+static struct omap_hwmod am33xx_mmc1_hwmod;
+static struct omap_hwmod am33xx_mmc2_hwmod;
 
 /*
  * Interconnects hwmod structures
@@ -1011,20 +1014,63 @@ static struct omap_hwmod am33xx_mlb_hwmod = {
 };
 
 /* 'mmc' class */
+static struct omap_hwmod_class_sysconfig am33xx_mmc_sysc = {
+	.rev_offs	= 0x1fc,
+	.sysc_offs	= 0x10,
+	.syss_offs	= 0x14,
+	.sysc_flags	= (SYSC_HAS_CLOCKACTIVITY | SYSC_HAS_SIDLEMODE |
+			SYSC_HAS_ENAWAKEUP | SYSC_HAS_SOFTRESET |
+			SYSC_HAS_AUTOIDLE | SYSS_HAS_RESET_STATUS),
+	.idlemodes	= (SIDLE_FORCE | SIDLE_NO | SIDLE_SMART),
+	.sysc_fields	= &omap_hwmod_sysc_type1,
+};
+
 static struct omap_hwmod_class am33xx_mmc_hwmod_class = {
-	.name = "mmc",
+	.name	= "mmc",
+	.sysc	= &am33xx_mmc_sysc,
 };
 
 /* mmc0 */
 static struct omap_hwmod_irq_info am33xx_mmc0_irqs[] = {
-	{ .irq = 64 },
+	{ .irq = AM33XX_IRQ_MMCHS0 },
 	{ .irq = -1 }
 };
 
+static struct omap_hwmod_dma_info am33xx_mmc0_edma_reqs[] = {
+	{ .name = "tx", .dma_req = AM33XX_DMA_MMCHS0_W, },
+	{ .name = "rx", .dma_req = AM33XX_DMA_MMCHS0_R, },
+	{ .dma_req = -1 }
+};
+
+static struct omap_hwmod_addr_space am33xx_mmc0_addr_space[] = {
+	{
+		.pa_start	= AM33XX_MMC0_BASE,
+		.pa_end		= AM33XX_MMC0_BASE + SZ_4K - 1,
+		.flags		= ADDR_MAP_ON_INIT | ADDR_TYPE_RT,
+	},
+};
+
+static struct omap_hwmod_ocp_if am33xx_l4ls__mmc0 = {
+	.master		= &am33xx_l4ls_hwmod,
+	.slave		= &am33xx_mmc0_hwmod,
+	.clk		= "mmc0_ick",
+	.addr		= am33xx_mmc0_addr_space,
+	.user		= OCP_USER_MPU,
+};
+
+static struct omap_hwmod_ocp_if *am33xx_mmc0_slaves[] = {
+       &am33xx_l4ls__mmc0,
+};
+
+static struct omap_mmc_dev_attr am33xx_mmc0_dev_attr = {
+       .flags = OMAP_HSMMC_SUPPORTS_DUAL_VOLT,
+};
+
 static struct omap_hwmod am33xx_mmc0_hwmod = {
-	.name		= "mmc0",
+	.name		= "mmc1",
 	.class		= &am33xx_mmc_hwmod_class,
 	.mpu_irqs       = am33xx_mmc0_irqs,
+	.sdma_reqs	= am33xx_mmc0_edma_reqs,
 	.main_clk	= "mmc0_fck",
 	.clkdm_name	= "l4ls_clkdm",
 	.prcm = {
@@ -1033,18 +1079,52 @@ static struct omap_hwmod am33xx_mmc0_hwmod = {
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
 	},
+	.dev_attr	= &am33xx_mmc0_dev_attr,
+	.slaves		= am33xx_mmc0_slaves,
+	.slaves_cnt	= ARRAY_SIZE(am33xx_mmc0_slaves),
 };
 
 /* mmc1 */
 static struct omap_hwmod_irq_info am33xx_mmc1_irqs[] = {
-	{ .irq = 28 },
+	{ .irq = AM33XX_IRQ_MMCHS1 },
 	{ .irq = -1 }
 };
 
+static struct omap_hwmod_dma_info am33xx_mmc1_edma_reqs[] = {
+	{ .name = "tx", .dma_req = AM33XX_DMA_MMCHS1_W, },
+	{ .name = "rx", .dma_req = AM33XX_DMA_MMCHS1_R, },
+	{ .dma_req = -1 }
+};
+
+static struct omap_hwmod_addr_space am33xx_mmc1_addr_space[] = {
+	{
+		.pa_start	= AM33XX_MMC1_BASE,
+		.pa_end		= AM33XX_MMC1_BASE + SZ_4K - 1,
+		.flags		= ADDR_MAP_ON_INIT | ADDR_TYPE_RT,
+	},
+};
+
+static struct omap_hwmod_ocp_if am33xx_l4ls__mmc1 = {
+	.master		= &am33xx_l4ls_hwmod,
+	.slave		= &am33xx_mmc1_hwmod,
+	.clk		= "mmc1_ick",
+	.addr		= am33xx_mmc1_addr_space,
+	.user		= OCP_USER_MPU,
+};
+
+static struct omap_hwmod_ocp_if *am33xx_mmc1_slaves[] = {
+	&am33xx_l4ls__mmc1,
+};
+
+static struct omap_mmc_dev_attr am33xx_mmc1_dev_attr = {
+       .flags = OMAP_HSMMC_SUPPORTS_DUAL_VOLT,
+};
+
 static struct omap_hwmod am33xx_mmc1_hwmod = {
-	.name		= "mmc1",
+	.name		= "mmc2",
 	.class		= &am33xx_mmc_hwmod_class,
 	.mpu_irqs       = am33xx_mmc1_irqs,
+	.sdma_reqs	= am33xx_mmc1_edma_reqs,
 	.main_clk	= "mmc1_fck",
 	.clkdm_name	= "l4ls_clkdm",
 	.prcm = {
@@ -1053,18 +1133,52 @@ static struct omap_hwmod am33xx_mmc1_hwmod = {
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
 	},
+	.dev_attr	= &am33xx_mmc1_dev_attr,
+	.slaves		= am33xx_mmc1_slaves,
+	.slaves_cnt	= ARRAY_SIZE(am33xx_mmc1_slaves),
 };
 
 /* mmc2 */
 static struct omap_hwmod_irq_info am33xx_mmc2_irqs[] = {
-	{ .irq = 29 },
+	{ .irq = AM33XX_IRQ_MMCHS2 },
 	{ .irq = -1 }
 };
 
+static struct omap_hwmod_dma_info am33xx_mmc2_edma_reqs[] = {
+	{ .name = "tx", .dma_req = AM33XX_DMA_MMCHS2_W, },
+	{ .name = "rx", .dma_req = AM33XX_DMA_MMCHS2_R, },
+	{ .dma_req = -1 }
+};
+
+static struct omap_hwmod_addr_space am33xx_mmc2_addr_space[] = {
+	{
+		.pa_start	= AM33XX_MMC2_BASE,
+		.pa_end		= AM33XX_MMC2_BASE + SZ_64K - 1,
+		.flags		= ADDR_MAP_ON_INIT | ADDR_TYPE_RT,
+	},
+};
+
+static struct omap_hwmod_ocp_if am33xx_l3_main__mmc2 = {
+	.master		= &am33xx_l3_main_hwmod,
+	.slave		= &am33xx_mmc2_hwmod,
+	.clk		= "mmc2_ick",
+	.addr		= am33xx_mmc2_addr_space,
+	.user		= OCP_USER_MPU,
+};
+
+static struct omap_hwmod_ocp_if *am33xx_mmc2_slaves[] = {
+       &am33xx_l3_main__mmc2,
+};
+
+static struct omap_mmc_dev_attr am33xx_mmc2_dev_attr = {
+       .flags = OMAP_HSMMC_SUPPORTS_DUAL_VOLT,
+};
+
 static struct omap_hwmod am33xx_mmc2_hwmod = {
-	.name		= "mmc2",
+	.name		= "mmc3",
 	.class		= &am33xx_mmc_hwmod_class,
 	.mpu_irqs       = am33xx_mmc2_irqs,
+	.sdma_reqs	= am33xx_mmc2_edma_reqs,
 	.main_clk	= "mmc2_fck",
 	.clkdm_name	= "l3s_clkdm",
 	.prcm = {
@@ -1073,6 +1187,9 @@ static struct omap_hwmod am33xx_mmc2_hwmod = {
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
 	},
+	.dev_attr	= &am33xx_mmc2_dev_attr,
+	.slaves		= am33xx_mmc2_slaves,
+	.slaves_cnt	= ARRAY_SIZE(am33xx_mmc2_slaves),
 };
 
 /* Master interfaces on the MPU interconnect */

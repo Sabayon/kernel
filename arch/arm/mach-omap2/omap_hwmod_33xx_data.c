@@ -21,6 +21,7 @@
 #include <plat/gpio.h>
 #include <plat/dma.h>
 #include <plat/mmc.h>
+#include <plat/mcspi.h>
 
 #include "omap_hwmod_common_data.h"
 #include "control.h"
@@ -62,6 +63,8 @@ static struct omap_hwmod am33xx_usbss_hwmod;
 static struct omap_hwmod am33xx_mmc0_hwmod;
 static struct omap_hwmod am33xx_mmc1_hwmod;
 static struct omap_hwmod am33xx_mmc2_hwmod;
+static struct omap_hwmod am33xx_spi0_hwmod;
+static struct omap_hwmod am33xx_spi1_hwmod;
 
 /*
  * Interconnects hwmod structures
@@ -1381,23 +1384,73 @@ static struct omap_hwmod am33xx_spare1_hwmod = {
 	},
 };
 
+static struct omap_hwmod_class_sysconfig am33xx_mcspi_sysc = {
+	.rev_offs	= 0x0000,
+	.sysc_offs	= 0x0110,
+	.syss_offs	= 0x0114,
+	.sysc_flags	= (SYSC_HAS_CLOCKACTIVITY | SYSC_HAS_SIDLEMODE |
+				SYSC_HAS_SOFTRESET |
+				SYSC_HAS_AUTOIDLE | SYSS_HAS_RESET_STATUS),
+	.idlemodes	= (SIDLE_FORCE | SIDLE_NO | SIDLE_SMART),
+	.sysc_fields	= &omap_hwmod_sysc_type1,
+};
+
 /* 'spi' class */
 static struct omap_hwmod_class am33xx_spi_hwmod_class = {
-	.name = "spi",
+	.name   = "mcspi",
+	.sysc	= &am33xx_mcspi_sysc,
+	.rev	= OMAP4_MCSPI_REV,
 };
 
 /* spi0 */
 static struct omap_hwmod_irq_info am33xx_spi0_irqs[] = {
-	{ .irq = 65 },
+	{ .irq = AM33XX_IRQ_MCSPIOCP0 },
 	{ .irq = -1 }
+};
+
+struct omap_hwmod_dma_info am33xx_mcspi0_sdma_reqs[] = {
+	{ .name = "rx0", .dma_req = AM33XX_DMA_SPIOCP0_CH0R },
+	{ .name = "tx0", .dma_req = AM33XX_DMA_SPIOCP0_CH0W },
+	{ .name = "rx1", .dma_req = AM33XX_DMA_SPIOCP0_CH1R },
+	{ .name = "tx1", .dma_req = AM33XX_DMA_SPIOCP0_CH1W },
+	{ .dma_req = -1 }
+};
+
+struct omap_hwmod_addr_space am33xx_mcspi0_addr_space[] = {
+	{
+		.pa_start	= AM33XX_SPI0_BASE,
+		.pa_end		= AM33XX_SPI0_BASE + SZ_1K - 1,
+		.flags		= ADDR_MAP_ON_INIT | ADDR_TYPE_RT,
+	},
+	{ }
+};
+
+struct omap_hwmod_ocp_if am33xx_l4_core__mcspi0 = {
+	.master		= &am33xx_l4per_hwmod,
+	.slave		= &am33xx_spi0_hwmod,
+	.clk		= "spi0_ick",
+	.addr		= am33xx_mcspi0_addr_space,
+	.user		= OCP_USER_MPU,
+};
+
+static struct omap_hwmod_ocp_if *am33xx_mcspi0_slaves[] = {
+	&am33xx_l4_core__mcspi0,
+};
+
+struct omap2_mcspi_dev_attr mcspi_attrib = {
+	.num_chipselect = 2,
 };
 
 static struct omap_hwmod am33xx_spi0_hwmod = {
 	.name		= "spi0",
 	.class		= &am33xx_spi_hwmod_class,
 	.mpu_irqs       = am33xx_spi0_irqs,
+	.sdma_reqs	= am33xx_mcspi0_sdma_reqs,
 	.main_clk	= "spi0_fck",
 	.clkdm_name	= "l4ls_clkdm",
+	.dev_attr       = &mcspi_attrib,
+	.slaves		= am33xx_mcspi0_slaves,
+	.slaves_cnt	= ARRAY_SIZE(am33xx_mcspi0_slaves),
 	.prcm = {
 		.omap4 = {
 			.clkctrl_offs	= AM33XX_CM_PER_SPI0_CLKCTRL_OFFSET,
@@ -1407,11 +1460,50 @@ static struct omap_hwmod am33xx_spi0_hwmod = {
 };
 
 /* spi1 */
+static struct omap_hwmod_irq_info am33xx_spi1_irqs[] = {
+	{ .irq = AM33XX_IRQ_SPI1 },
+	{ .irq = -1 }
+};
+
+struct omap_hwmod_dma_info am33xx_mcspi1_sdma_reqs[] = {
+	{ .name = "rx0", .dma_req = AM33XX_DMA_SPIOCP1_CH0R },
+	{ .name = "tx0", .dma_req = AM33XX_DMA_SPIOCP1_CH0W },
+	{ .name = "rx1", .dma_req = AM33XX_DMA_SPIOCP1_CH1R },
+	{ .name = "tx1", .dma_req = AM33XX_DMA_SPIOCP1_CH1W },
+	{ .dma_req = -1 }
+};
+
+struct omap_hwmod_addr_space am33xx_mcspi1_addr_space[] = {
+	{
+		.pa_start	= AM33XX_SPI1_BASE,
+		.pa_end		= AM33XX_SPI1_BASE + SZ_1K - 1,
+		.flags		= ADDR_MAP_ON_INIT | ADDR_TYPE_RT,
+	},
+	{ }
+};
+
+struct omap_hwmod_ocp_if am33xx_l4_core__mcspi1 = {
+	.master		= &am33xx_l4per_hwmod,
+	.slave		= &am33xx_spi1_hwmod,
+	.clk		= "spi1_ick",
+	.addr		= am33xx_mcspi1_addr_space,
+	.user		= OCP_USER_MPU,
+};
+
+static struct omap_hwmod_ocp_if *am33xx_mcspi1_slaves[] = {
+	&am33xx_l4_core__mcspi1,
+};
+
 static struct omap_hwmod am33xx_spi1_hwmod = {
 	.name           = "spi1",
 	.class          = &am33xx_spi_hwmod_class,
-	.main_clk       = "spi1_fck",
+	.mpu_irqs       = am33xx_spi1_irqs,
+	.sdma_reqs	= am33xx_mcspi1_sdma_reqs,
+	.main_clk	= "spi1_fck",
 	.clkdm_name	= "l4ls_clkdm",
+	.dev_attr       = &mcspi_attrib,
+	.slaves		= am33xx_mcspi1_slaves,
+	.slaves_cnt	= ARRAY_SIZE(am33xx_mcspi1_slaves),
 	.prcm = {
 		.omap4 = {
 			.clkctrl_offs	= AM33XX_CM_PER_SPI1_CLKCTRL_OFFSET,

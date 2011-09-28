@@ -20,6 +20,9 @@
 #include <linux/gpio.h>
 #include <linux/spi/spi.h>
 #include <linux/spi/flash.h>
+#ifdef CONFIG_KEYBOARD_GPIO
+#include <linux/gpio_keys.h>
+#endif
 #ifdef CONFIG_KEYBOARD_MATRIX
 #include <linux/input.h>
 #include <linux/input/matrix_keypad.h>
@@ -652,6 +655,59 @@ static void matrix_keypad_init(int evm_id, int profile)
 	if (err) {
 		pr_err("failed to register matrix keypad (2x3) device\n");
 	}
+}
+#endif
+
+
+#ifdef CONFIG_KEYBOARD_GPIO
+/* pinmux for keypad device */
+static struct pinmux_config volume_keys_pin_mux[] = {
+	{"spi0_sclk.gpio0_2",  OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"spi0_d0.gpio0_3",    OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{NULL, 0},
+};
+
+/* Configure GPIOs for Volume Keys */
+static struct gpio_keys_button am335x_evm_volume_gpio_buttons[] = {
+	{
+		.code                   = KEY_VOLUMEUP,
+		.gpio                   = GPIO_TO_PIN(0, 2),
+		.active_low             = true,
+		.desc                   = "volume-up",
+		.type                   = EV_KEY,
+		.wakeup                 = 1,
+	},
+	{
+		.code                   = KEY_VOLUMEDOWN,
+		.gpio                   = GPIO_TO_PIN(0, 3),
+		.active_low             = true,
+		.desc                   = "volume-down",
+		.type                   = EV_KEY,
+		.wakeup                 = 1,
+	},
+};
+
+static struct gpio_keys_platform_data am335x_evm_volume_gpio_key_info = {
+	.buttons        = am335x_evm_volume_gpio_buttons,
+	.nbuttons       = ARRAY_SIZE(am335x_evm_volume_gpio_buttons),
+};
+
+static struct platform_device am335x_evm_volume_keys = {
+	.name   = "gpio-keys",
+	.id     = -1,
+	.dev    = {
+		.platform_data  = &am335x_evm_volume_gpio_key_info,
+	},
+};
+
+static void volume_keys_init(int evm_id, int profile)
+{
+	int err;
+
+	setup_pin_mux(volume_keys_pin_mux);
+	err = platform_device_register(&am335x_evm_volume_keys);
+	if (err)
+		pr_err("failed to register matrix keypad (2x3) device\n");
 }
 #endif
 
@@ -1395,6 +1451,9 @@ static struct evm_dev_cfg gen_purp_evm_dev_cfg[] = {
 	{d_can1_init,	DEV_ON_BASEBOARD, PROFILE_4},
 #ifdef CONFIG_KEYBOARD_MATRIX
 	{matrix_keypad_init, DEV_ON_DGHTR_BRD, PROFILE_0},
+#endif
+#ifdef CONFIG_KEYBOARD_GPIO
+	{volume_keys_init,  DEV_ON_DGHTR_BRD, PROFILE_0},
 #endif
 	{NULL, 0, 0},
 };

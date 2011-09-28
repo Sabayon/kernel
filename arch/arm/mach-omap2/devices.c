@@ -445,6 +445,8 @@ static int omap_mcspi_init(struct omap_hwmod *oh, void *unused)
 			break;
 	case OMAP4_MCSPI_REV:
 			pdata->regs_offset = OMAP4_MCSPI_REG_OFFSET;
+			if (cpu_is_am33xx())
+				pdata->dma_not_enabled = true;
 			break;
 	default:
 			pr_err("Invalid McSPI Revision value\n");

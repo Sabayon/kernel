@@ -20,6 +20,10 @@
 #include <linux/gpio.h>
 #include <linux/spi/spi.h>
 #include <linux/spi/flash.h>
+#ifdef CONFIG_KEYBOARD_MATRIX
+#include <linux/input.h>
+#include <linux/input/matrix_keypad.h>
+#endif
 #include <linux/mtd/mtd.h>
 #include <linux/mtd/nand.h>
 #include <linux/mtd/partitions.h>
@@ -582,6 +586,74 @@ static void setup_pin_mux(struct pinmux_config *pin_mux)
 		omap_mux_init_signal(pin_mux->string_name, pin_mux->val);
 
 }
+
+/* Matrix GPIO Keypad Support for profile-0 only: TODO */
+#ifdef CONFIG_KEYBOARD_MATRIX
+
+/* pinmux for keypad device */
+static struct pinmux_config matrix_keypad_pin_mux[] = {
+	{"gpmc_a5.gpio1_21",  OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"gpmc_a8.gpio1_24",  OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"gpmc_a9.gpio1_25",  OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"gpmc_a10.gpio1_26", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{"gpmc_a11.gpio1_27", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
+	{NULL, 0},
+};
+
+/* Keys mapping */
+static const uint32_t am335x_evm_matrix_keys[] = {
+	KEY(0, 0, KEY_MENU),
+	KEY(1, 0, KEY_BACK),
+	KEY(2, 0, KEY_LEFT),
+
+	KEY(0, 1, KEY_RIGHT),
+	KEY(1, 1, KEY_ENTER),
+	KEY(2, 1, KEY_DOWN),
+};
+
+const struct matrix_keymap_data am335x_evm_keymap_data = {
+	.keymap      = am335x_evm_matrix_keys,
+	.keymap_size = ARRAY_SIZE(am335x_evm_matrix_keys),
+};
+
+static const unsigned int am335x_evm_keypad_row_gpios[] = {
+	GPIO_TO_PIN(1, 25), GPIO_TO_PIN(1, 26), GPIO_TO_PIN(1, 27)
+};
+
+static const unsigned int am335x_evm_keypad_col_gpios[] = {
+	GPIO_TO_PIN(1, 21), GPIO_TO_PIN(1, 24)
+};
+
+static struct matrix_keypad_platform_data am335x_evm_keypad_platform_data = {
+	.keymap_data       = &am335x_evm_keymap_data,
+	.row_gpios         = am335x_evm_keypad_row_gpios,
+	.num_row_gpios     = ARRAY_SIZE(am335x_evm_keypad_row_gpios),
+	.col_gpios         = am335x_evm_keypad_col_gpios,
+	.num_col_gpios     = ARRAY_SIZE(am335x_evm_keypad_col_gpios),
+	.active_low        = false,
+	.debounce_ms       = 5,
+	.col_scan_delay_us = 2,
+};
+
+static struct platform_device am335x_evm_keyboard = {
+	.name  = "matrix-keypad",
+	.id    = -1,
+	.dev   = {
+		.platform_data = &am335x_evm_keypad_platform_data,
+	},
+};
+
+static void matrix_keypad_init(int evm_id, int profile)
+{
+	int err;
+
+	setup_pin_mux(matrix_keypad_pin_mux);
+	err = platform_device_register(&am335x_evm_keyboard);
+	if (err) {
+		pr_err("failed to register matrix keypad (2x3) device\n");
+	}
+}
+#endif
 
 /*
 * @evm_id - evm id which needs to be configured
@@ -1321,6 +1393,9 @@ static struct evm_dev_cfg gen_purp_evm_dev_cfg[] = {
 	{wl12xx_init,	DEV_ON_BASEBOARD, (PROFILE_0 | PROFILE_3 | PROFILE_5)},
 	{d_can0_init,	DEV_ON_BASEBOARD, PROFILE_1},
 	{d_can1_init,	DEV_ON_BASEBOARD, PROFILE_4},
+#ifdef CONFIG_KEYBOARD_MATRIX
+	{matrix_keypad_init, DEV_ON_DGHTR_BRD, PROFILE_0},
+#endif
 	{NULL, 0, 0},
 };
 

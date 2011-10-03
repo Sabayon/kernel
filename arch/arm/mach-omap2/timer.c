@@ -512,4 +512,4 @@ static int __init omap2_dm_timer_init(void)
 
 	return 0;
 }
-arch_initcall(omap2_dm_timer_init);
+//arch_initcall(omap2_dm_timer_init);

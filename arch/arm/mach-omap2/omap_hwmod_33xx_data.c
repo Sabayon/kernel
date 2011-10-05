@@ -2300,8 +2300,8 @@ static struct omap_hwmod_addr_space am33xx_usbss_addr_space[] = {
 static struct omap_hwmod_class_sysconfig am33xx_usbhsotg_sysc = {
 	.rev_offs	= 0x0,
 	.sysc_offs	= 0x10,
-	.sysc_flags	= (SYSC_HAS_SIDLEMODE | SYSC_HAS_SOFTRESET),
-	.idlemodes	= (SIDLE_FORCE | SIDLE_NO | SIDLE_SMART),
+	/*.sysc_flags	= (SYSC_HAS_SIDLEMODE | SYSC_HAS_SOFTRESET),
+	.idlemodes	= (SIDLE_FORCE | SIDLE_NO | SIDLE_SMART), */
 	.sysc_fields	= &omap_hwmod_sysc_type2,
 };
 
@@ -2449,6 +2449,8 @@ static __initdata struct omap_hwmod *am33xx_hwmods[] = {
 	&am33xx_wkup_m3_hwmod,
 	/* wd_timer class */
 	&am33xx_wd_timer1_hwmod,
+	/* usbss hwmod */
+	&am33xx_usbss_hwmod,
 #if 0
 	&am33xx_wdt0_hwmod, /* Secure WDT */
 	/* lcdc class */
@@ -2460,7 +2462,6 @@ static __initdata struct omap_hwmod *am33xx_hwmods[] = {
 	&am33xx_tptc1_hwmod,
 	&am33xx_tptc2_hwmod,
 	/* usb class */
-	&am33xx_usbss_hwmod,
 	/* efuse class */
 	&am33xx_efuse_hwmod,
 	/* tpcc class */

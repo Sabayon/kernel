@@ -339,6 +339,7 @@ static struct omap_hwmod_irq_info am33xx_control_irqs[] = {
 static struct omap_hwmod am33xx_control_hwmod = {
 	.name		= "control",
 	.class		= &am33xx_control_hwmod_class,
+	.flags		= (HWMOD_INIT_NO_IDLE | HWMOD_INIT_NO_RESET),
 	.mpu_irqs       = am33xx_control_irqs,
 	.main_clk	= "control_fck",
 	.clkdm_name	= "l4_wkup_clkdm",

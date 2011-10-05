@@ -809,6 +809,8 @@ static struct omap_hwmod am33xx_i2c2_hwmod = {
 	.sdma_reqs      = i2c2_edma_reqs,
 	.main_clk       = "i2c2_fck",
 	.clkdm_name	= "l4ls_clkdm",
+	/* TODO: Need to revisit this */
+	.flags		= (HWMOD_INIT_NO_IDLE | HWMOD_INIT_NO_RESET),
 	.prcm           = {
 		.omap4 = {
 			.clkctrl_offs	= AM33XX_CM_PER_I2C1_CLKCTRL_OFFSET,

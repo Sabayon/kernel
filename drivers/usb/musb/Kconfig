@@ -139,8 +139,8 @@ config USB_TI_CPPI41_DMA_HW
 	select USB_TI_CPPI41_DMA
 	tristate
 	depends on USB_MUSB_HDRC && !MUSB_PIO_ONLY
-	default ARCH_DAVINCI_DA8XX || USB_MUSB_AM35X || SOC_OMAPTI81XX
-	default SOC_OMAPAM33XX
+	default ARCH_DAVINCI_DA8XX || USB_MUSB_AM35X || SOC_OMAPTI81XX \
+		|| SOC_OMAPAM33XX
 	select CPPI41
 	help
 	 Configure this option to include the CPPI 4.1 support,

@@ -2430,7 +2430,9 @@ static __initdata struct omap_hwmod *am33xx_hwmods[] = {
 	/* ocpwp class */
 	&am33xx_ocpwp_hwmod,
 	/* rtc class */
+#if 0
 	&am33xx_rtc_hwmod,
+#endif
 	/* sha0 class */
 	&am33xx_sha0_hwmod,
 	/* smartreflex class */

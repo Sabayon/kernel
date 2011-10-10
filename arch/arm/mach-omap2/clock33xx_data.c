@@ -1596,18 +1596,45 @@ static const struct clksel sysclkout_pre_sel[] = {
 
 static struct clk sysclkout_pre_ck = {
 	.name		= "sysclkout_pre_ck",
-	.parent		= &clk_32768_ck,
+	.init		= &omap2_init_clksel_parent,
 	.ops		= &clkops_null,
-	.recalc		= &followparent_recalc,
+	.clksel		= sysclkout_pre_sel,
+	.clksel_reg	= AM33XX_CM_CLKOUT_CTRL,
+	.clksel_mask	= AM33XX_CLKOUT2SOURCE_MASK,
+	.recalc		= &omap2_clksel_recalc,
 };
 
-static struct clk syclkoutdiv_ck = {
-	.name		= "syclkoutdiv_ck",
+/* Divide by 8 clock rates with default clock is 1/1*/
+static const struct clksel_rate div8_rates[] = {
+	{ .div = 1, .val = 0, .flags = RATE_IN_AM33XX },
+	{ .div = 2, .val = 1, .flags = RATE_IN_AM33XX },
+	{ .div = 3, .val = 2, .flags = RATE_IN_AM33XX },
+	{ .div = 4, .val = 3, .flags = RATE_IN_AM33XX },
+	{ .div = 5, .val = 4, .flags = RATE_IN_AM33XX },
+	{ .div = 6, .val = 5, .flags = RATE_IN_AM33XX },
+	{ .div = 7, .val = 6, .flags = RATE_IN_AM33XX },
+	{ .div = 8, .val = 7, .flags = RATE_IN_AM33XX },
+	{ .div = 0 },
+};
+
+static const struct clksel clkout2_div[] = {
+	{ .parent = &sysclkout_pre_ck, .rates = div8_rates },
+	{ .parent = NULL },
+};
+
+static struct clk clkout2_ck = {
+	.name		= "clkout2_ck",
 	.parent		= &sysclkout_pre_ck,
-	.ops		= &clkops_null,
-	.recalc		= &followparent_recalc,
+	.ops		= &clkops_omap2_dflt,
+	.clksel		= clkout2_div,
+	.clksel_reg	= AM33XX_CM_CLKOUT_CTRL,
+	.clksel_mask	= AM33XX_CLKOUT2DIV_MASK,
+	.enable_reg	= AM33XX_CM_CLKOUT_CTRL,
+	.enable_bit	= AM33XX_CLKOUT2EN_SHIFT,
+	.recalc		= &omap2_clksel_recalc,
+	.round_rate     = &omap2_clksel_round_rate,
+	.set_rate       = &omap2_clksel_set_rate,
 };
-
 
 static const struct clksel timer0_clkmux_sel[] = {
 	{ .parent = &clk_rc32k_ck, .rates = div_1_0_rates },
@@ -1869,7 +1896,7 @@ static struct omap_clk am33xx_clks[] = {
 	CLK(NULL,	"sgx_clksel_ck",	&sgx_clksel_ck,	CK_AM33XX),
 	CLK(NULL,	"sgx_ck",		&sgx_ck,	CK_AM33XX),
 	CLK(NULL,	"sysclkout_pre_ck",	&sysclkout_pre_ck,	CK_AM33XX),
-	CLK(NULL,	"syclkoutdiv_ck",	&syclkoutdiv_ck,	CK_AM33XX),
+	CLK(NULL,	"clkout2_ck",		&clkout2_ck,	CK_AM33XX),
 	CLK(NULL,	"timer0_clkmux_ck",	&timer0_clkmux_ck,	CK_AM33XX),
 	CLK(NULL,	"gpt0_ick",		&timer0_ick,	CK_AM33XX),
 	CLK(NULL,	"gpt1_ick",		&timer1_ick,	CK_AM33XX),

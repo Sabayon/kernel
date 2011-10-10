@@ -355,18 +355,8 @@ static struct omap_hwmod am33xx_control_hwmod = {
 };
 
 /* 'cpgmac0' class */
-static struct omap_hwmod_class_sysconfig am33xx_cpgmac0_sysc = {
-	.rev_offs       = 0x0000,
-	.sysc_offs      = 0x0010,
-	.syss_offs      = 0x0014,
-	.sysc_flags     = (SYSC_HAS_SIDLEMODE | SYSC_HAS_SOFTRESET),
-	.idlemodes      = (SIDLE_FORCE | SIDLE_NO | SIDLE_SMART),
-	.sysc_fields    = &omap_hwmod_sysc_type2,
-};
-
 static struct omap_hwmod_class am33xx_cpgmac0_hwmod_class = {
 	.name = "cpgmac0",
-	.sysc = &am33xx_cpgmac0_sysc,
 };
 
 /* cpgmac0 */
@@ -441,23 +431,6 @@ static struct omap_hwmod am33xx_debugss_hwmod = {
 	.prcm = {
 		.omap4 = {
 			.clkctrl_offs	= AM33XX_CM_WKUP_DEBUGSS_CLKCTRL_OFFSET,
-			.modulemode	= MODULEMODE_SWCTRL,
-		},
-	},
-};
-
-/* 'efuse' class */
-static struct omap_hwmod_class am33xx_efuse_hwmod_class = {
-	.name = "efuse",
-};
-
-/* efuse */
-static struct omap_hwmod am33xx_efuse_hwmod = {
-	.name		= "efuse",
-	.class		= &am33xx_efuse_hwmod_class,
-	.prcm = {
-		.omap4 = {
-			.clkctrl_offs	= AM33XX_CM_CEFUSE_CEFUSE_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
 	},
@@ -948,6 +921,7 @@ static struct omap_hwmod am33xx_l4ls_hwmod = {
 	},
 };
 
+#if 0
 /* 'lcdc' class */
 static struct omap_hwmod_class am33xx_lcdc_hwmod_class = {
 	.name = "lcdc",
@@ -972,6 +946,7 @@ static struct omap_hwmod am33xx_lcdc_hwmod = {
 		},
 	},
 };
+#endif
 
 /* 'mcasp' class */
 static struct omap_hwmod_class am33xx_mcasp_hwmod_class = {
@@ -993,25 +968,6 @@ static struct omap_hwmod am33xx_mcasp0_hwmod = {
 	.prcm = {
 		.omap4 = {
 			.clkctrl_offs	= AM33XX_CM_PER_MCASP0_CLKCTRL_OFFSET,
-			.modulemode	= MODULEMODE_SWCTRL,
-		},
-	},
-};
-
-/* 'mlb' class */
-static struct omap_hwmod_class am33xx_mlb_hwmod_class = {
-	.name = "mlb",
-};
-
-/* mlb */
-static struct omap_hwmod am33xx_mlb_hwmod = {
-	.name		= "mlb",
-	.class		= &am33xx_mlb_hwmod_class,
-	.main_clk	= "mlb_fck",
-	.clkdm_name	= "l3_clkdm",
-	.prcm = {
-		.omap4 = {
-			.clkctrl_offs	= AM33XX_CM_PER_MLB_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
 	},
@@ -1273,6 +1229,7 @@ static struct omap_hwmod am33xx_rtc_hwmod = {
 	.mpu_irqs       = am33xx_rtc_irqs,
 	.main_clk	= "rtc_fck",
 	.clkdm_name	= "l4_rtc_clkdm",
+	.flags		= HWMOD_INIT_NO_IDLE,
 	.prcm = {
 		.omap4 = {
 			.clkctrl_offs	= AM33XX_CM_RTC_RTC_CLKCTRL_OFFSET,
@@ -1346,39 +1303,6 @@ static struct omap_hwmod am33xx_smartreflex1_hwmod = {
 	.prcm = {
 		.omap4 = {
 			.clkctrl_offs	= AM33XX_CM_WKUP_SMARTREFLEX1_CLKCTRL_OFFSET,
-			.modulemode	= MODULEMODE_SWCTRL,
-		},
-	},
-};
-
-/* 'spare' class */
-static struct omap_hwmod_class am33xx_spare_hwmod_class = {
-	.name = "spare",
-};
-
-/* spare0 */
-static struct omap_hwmod am33xx_spare0_hwmod = {
-	.name		= "spare0",
-	.class		= &am33xx_spare_hwmod_class,
-	.main_clk	= "spare0_fck",
-	.clkdm_name	= "l4ls_clkdm",
-	.prcm = {
-		.omap4 = {
-			.clkctrl_offs	= AM33XX_CM_PER_SPARE0_CLKCTRL_OFFSET,
-			.modulemode	= MODULEMODE_SWCTRL,
-		},
-	},
-};
-
-/* spare1 */
-static struct omap_hwmod am33xx_spare1_hwmod = {
-	.name		= "spare1",
-	.class		= &am33xx_spare_hwmod_class,
-	.main_clk	= "spare1_fck",
-	.clkdm_name	= "l4ls_clkdm",
-	.prcm = {
-		.omap4 = {
-			.clkctrl_offs	= AM33XX_CM_PER_SPARE1_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
 	},
@@ -2270,17 +2194,8 @@ static struct omap_hwmod am33xx_uart6_hwmod = {
 };
 
 /* 'wd_timer' class */
-static struct omap_hwmod_class_sysconfig am33xx_wd_timer_sysc = {
-	.rev_offs	= 0x0000,
-	.sysc_offs	= 0x0010,
-	.syss_offs	= 0x0014,
-	.sysc_flags	= SYSC_HAS_SOFTRESET,
-	.sysc_fields	= &omap_hwmod_sysc_type2,
-};
-
 static struct omap_hwmod_class am33xx_wd_timer_hwmod_class = {
 	.name		= "wd_timer",
-	.sysc		= &am33xx_wd_timer_sysc,
 };
 
 static struct omap_hwmod_addr_space am33xx_wd_timer1_addrs[] = {
@@ -2392,8 +2307,8 @@ static struct omap_hwmod_addr_space am33xx_usbss_addr_space[] = {
 static struct omap_hwmod_class_sysconfig am33xx_usbhsotg_sysc = {
 	.rev_offs	= 0x0,
 	.sysc_offs	= 0x10,
-	/*.sysc_flags	= (SYSC_HAS_SIDLEMODE | SYSC_HAS_SOFTRESET),
-	.idlemodes	= (SIDLE_FORCE | SIDLE_NO | SIDLE_SMART), */
+	.sysc_flags	= (SYSC_HAS_SIDLEMODE | SYSC_HAS_SOFTRESET),
+	.idlemodes	= (SIDLE_FORCE | SIDLE_NO | SIDLE_SMART),
 	.sysc_fields	= &omap_hwmod_sysc_type2,
 };
 
@@ -2412,7 +2327,6 @@ static struct omap_hwmod_irq_info am33xx_usbss_mpu_irqs[] = {
 static struct omap_hwmod_ocp_if am33xx_l3_slow__usbss = {
 	.master		= &am33xx_l3slow_hwmod,
 	.slave		= &am33xx_usbss_hwmod,
-	.clk		= "usbotg_ick",
 	.addr		= am33xx_usbss_addr_space,
 	.user		= OCP_USER_MPU,
 	.flags		= OCPIF_SWSUP_IDLE,
@@ -2422,17 +2336,23 @@ static struct omap_hwmod_ocp_if *am33xx_usbss_slaves[] = {
 	&am33xx_l3_slow__usbss,
 };
 
+static struct omap_hwmod_opt_clk usbss_opt_clks[] = {
+	{ .role = "clkdcoldo", .clk = "usbotg_fck" },
+};
 static struct omap_hwmod am33xx_usbss_hwmod = {
 	.name		= "usb_otg_hs",
 	.mpu_irqs	= am33xx_usbss_mpu_irqs,
-	.main_clk	= "usbotg_fck",
-	.clkdm_name	= "wkup_usb_clkdm",
+	.main_clk	= "usbotg_ick",
+	.clkdm_name	= "l4ls_clkdm",
+	.flags		= HWMOD_CONTROL_OPT_CLKS_IN_RESET,
 	.prcm		= {
 		.omap4 = {
-			.clkctrl_offs	= AM33XX_CM_CLKDCOLDO_DPLL_PER_OFFSET,
+			.clkctrl_offs	= AM33XX_CM_PER_USB0_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
 	},
+	.opt_clks	= usbss_opt_clks,
+	.opt_clks_cnt	= ARRAY_SIZE(usbss_opt_clks),
 	.slaves		= am33xx_usbss_slaves,
 	.slaves_cnt	= ARRAY_SIZE(am33xx_usbss_slaves),
 	.class		= &am33xx_usbotg_class,
@@ -2496,8 +2416,6 @@ static __initdata struct omap_hwmod *am33xx_hwmods[] = {
 	&am33xx_ieee5000_hwmod,
 	/* mcasp class */
 	&am33xx_mcasp0_hwmod,
-	/* mlb class */
-	&am33xx_mlb_hwmod,
 	/* mmc class */
 	&am33xx_mmc0_hwmod,
 	&am33xx_mmc1_hwmod,
@@ -2513,9 +2431,6 @@ static __initdata struct omap_hwmod *am33xx_hwmods[] = {
 	/* smartreflex class */
 	&am33xx_smartreflex0_hwmod,
 	&am33xx_smartreflex1_hwmod,
-	/* spare class */
-	&am33xx_spare0_hwmod,
-	&am33xx_spare1_hwmod,
 	/* spi class */
 	&am33xx_spi0_hwmod,
 	&am33xx_spi1_hwmod,
@@ -2543,22 +2458,15 @@ static __initdata struct omap_hwmod *am33xx_hwmods[] = {
 	&am33xx_wd_timer1_hwmod,
 	/* usbss hwmod */
 	&am33xx_usbss_hwmod,
-#if 0
-	&am33xx_wdt0_hwmod, /* Secure WDT */
-	/* lcdc class */
-	&am33xx_lcdc_hwmod,
 	/* cpgmac0 class */
 	&am33xx_cpgmac0_hwmod,
+	&am33xx_wdt0_hwmod, /* Secure WDT */
 	/* tptc class */
 	&am33xx_tptc0_hwmod,
 	&am33xx_tptc1_hwmod,
 	&am33xx_tptc2_hwmod,
-	/* usb class */
-	/* efuse class */
-	&am33xx_efuse_hwmod,
 	/* tpcc class */
 	&am33xx_tpcc_hwmod,
-#endif
 	NULL,
 };
 

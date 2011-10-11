@@ -1334,6 +1334,7 @@ static int am335x_rtc_init(void)
 /* Enable clkout2 */
 static struct pinmux_config clkout2_pin_mux[] = {
 	{"xdma_event_intr1.clkout2", OMAP_MUX_MODE3 | AM33XX_PIN_OUTPUT},
+	{NULL, 0},
 };
 
 static void __init clkout2_enable(void)
@@ -1341,8 +1342,10 @@ static void __init clkout2_enable(void)
 	struct clk *ck_32;
 
 	ck_32 = clk_get(NULL, "clkout2_ck");
-	if (IS_ERR(ck_32))
+	if (IS_ERR(ck_32)) {
 		pr_err("Cannot clk_get ck_32\n");
+		return;
+	}
 
 	clk_enable(ck_32);
 

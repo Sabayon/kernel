@@ -35,6 +35,10 @@
 #define AM33XX_MODULEMODE_HWCTRL                      0
 #define AM33XX_MODULEMODE_SWCTRL                      1
 
+void am33xx_init_timer_parent(struct clk *clk)
+{
+	omap2_clksel_set_parent(clk, clk->parent);
+}
 
 /* Root clocks */
 
@@ -883,7 +887,7 @@ static struct clk timer2_fck = {
 static struct clk timer3_fck = {
 	.name		= "timer3_fck",
 	.parent		= &sys_clkin_ck,
-	.init		= &omap2_init_clksel_parent,
+	.init		= &am33xx_init_timer_parent,
 	.clksel		= timer2_to_7_clk_sel,
 	.ops		= &clkops_am33xx_dflt_wait,
 	.enable_reg	= AM33XX_CM_PER_TIMER3_CLKCTRL,
@@ -925,7 +929,7 @@ static struct clk timer5_fck = {
 static struct clk timer6_fck = {
 	.name		= "timer6_fck",
 	.parent		= &sys_clkin_ck,
-	.init		= &omap2_init_clksel_parent,
+	.init		= &am33xx_init_timer_parent,
 	.clksel		= timer2_to_7_clk_sel,
 	.ops		= &clkops_am33xx_dflt_wait,
 	.enable_reg	= AM33XX_CM_PER_TIMER6_CLKCTRL,

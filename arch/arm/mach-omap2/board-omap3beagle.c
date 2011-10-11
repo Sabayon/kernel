@@ -253,6 +253,7 @@ static void __init omap3_beagle_init_rev(void)
 }
 
 char expansionboard_name[16];
+char expansionboard2_name[16];
 
 #if defined(CONFIG_WL12XX) || defined(CONFIG_WL12XX_MODULE)
 #include <linux/regulator/fixed.h>
@@ -862,6 +863,15 @@ static int __init expansionboard_setup(char *str)
 	return 0;
 }
 
+static int __init expansionboard2_setup(char *str)
+{
+	if (!str)
+		return -EINVAL;
+	strncpy(expansionboard2_name, str, 16);
+	printk(KERN_INFO "Beagle second expansionboard: %s\n", expansionboard2_name);
+	return 0;
+}
+
 static void __init beagle_opp_init(void)
 {
 	int r = 0;
@@ -997,9 +1007,9 @@ static void __init omap3_beagle_init(void)
 		platform_device_register(&omap_vwlan_device);
 	}
 
-	if(!strcmp(expansionboard_name, "bbtoys-ulcd"))
+	if(!strcmp(expansionboard2_name, "bbtoys-ulcd"))
 	{
-		printk(KERN_INFO "Beagle expansionboard: registering bbtoys-ulcd\n");
+		printk(KERN_INFO "Beagle second expansionboard: registering bbtoys-ulcd\n");
 		omap_register_i2c_bus(2, 400,  beagle_i2c2_bbtoys_ulcd,
 							ARRAY_SIZE(beagle_i2c2_bbtoys_ulcd));
 	}
@@ -1021,6 +1031,7 @@ static void __init omap3_beagle_init(void)
 }
 
 early_param("buddy", expansionboard_setup);
+early_param("buddy2", expansionboard2_setup);
 
 MACHINE_START(OMAP3_BEAGLE, "OMAP3 Beagle Board")
 	/* Maintainer: Syed Mohammed Khasim - http://beagleboard.org */

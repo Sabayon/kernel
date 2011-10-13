@@ -101,6 +101,7 @@
 #define TI816XUART2		82
 #define TI816XUART3		83
 #define AM33XXUART1		84
+#define AM33XXUART4		85
 #define ZOOM_UART		95		/* Only on zoom2/3 */
 
 /* This is only used by 8250.c for omap1510 */

@@ -1418,7 +1418,7 @@ static struct clk gpio0_dbclk = {
 
 static struct clk gpio1_dbclk = {
 	.name           = "gpio1_dbclk",
-	.parent         = &clk_32khz_ck,
+	.parent         = &clkdiv32k_fck,
 	.ops		= &clkops_am33xx_dflt_wait,
 	.enable_reg     = AM33XX_CM_PER_GPIO1_CLKCTRL,
 	.enable_bit     = AM33XX_OPTFCLKEN_GPIO_1_GDBCLK_SHIFT,
@@ -1428,7 +1428,7 @@ static struct clk gpio1_dbclk = {
 
 static struct clk gpio2_dbclk = {
 	.name           = "gpio2_dbclk",
-	.parent         = &clk_32khz_ck,
+	.parent         = &clkdiv32k_fck,
 	.ops		= &clkops_am33xx_dflt_wait,
 	.enable_reg     = AM33XX_CM_PER_GPIO2_CLKCTRL,
 	.enable_bit     = AM33XX_OPTFCLKEN_GPIO_2_GDBCLK_SHIFT,
@@ -1438,7 +1438,7 @@ static struct clk gpio2_dbclk = {
 
 static struct clk gpio3_dbclk = {
 	.name           = "gpio3_dbclk",
-	.parent         = &clk_32khz_ck,
+	.parent         = &clkdiv32k_fck,
 	.ops		= &clkops_am33xx_dflt_wait,
 	.enable_reg     = AM33XX_CM_PER_GPIO3_CLKCTRL,
 	.enable_bit     = AM33XX_OPTFCLKEN_GPIO_3_GDBCLK_SHIFT,

@@ -743,35 +743,48 @@ static void uart3_init(int evm_id, int profile)
 static struct mtd_partition am335x_nand_partitions[] = {
 /* All the partition sizes are listed in terms of NAND block size */
 	{
-		.name           = "U-Boot-min",
-		.offset         = 0,                    /* Offset = 0x0 */
-		.size           = 4*SZ_128K,
+		.name           = "SPL",
+		.offset         = 0,			/* Offset = 0x0 */
+		.size           = SZ_128K,
+		.mask_flags     = MTD_WRITEABLE,	/* force read-only */
+	},
+	{
+		.name           = "SPL.backup1",
+		.offset         = MTDPART_OFS_APPEND,	/* Offset = 0x20000 */
+		.size           = SZ_128K,
+		.mask_flags     = MTD_WRITEABLE,        /* force read-only */
+	},
+	{
+		.name           = "SPL.backup2",
+		.offset         = MTDPART_OFS_APPEND,	/* Offset = 0x40000 */
+		.size           = SZ_128K,
+		.mask_flags     = MTD_WRITEABLE,        /* force read-only */
+	},
+	{
+		.name           = "SPL.backup3",
+		.offset         = MTDPART_OFS_APPEND,	/* Offset = 0x60000 */
+		.size           = SZ_128K,
 		.mask_flags     = MTD_WRITEABLE,        /* force read-only */
 	},
 	{
 		.name           = "U-Boot",
-		.offset         = MTDPART_OFS_APPEND,   /* Offset = 0x8000 */
-		.size           = 18 * SZ_128K,
+		.offset         = MTDPART_OFS_APPEND,   /* Offset = 0x80000 */
+		.size           = 15 * SZ_128K,
 		.mask_flags     = MTD_WRITEABLE,        /* force read-only */
 	},
 	{
 		.name           = "U-Boot Env",
-		.offset         = MTDPART_OFS_APPEND,   /* Offset = 0x2c0000 */
+		.offset         = MTDPART_OFS_APPEND,   /* Offset = 0x260000 */
 		.size           = 1 * SZ_128K,
 	},
 	{
 		.name           = "Kernel",
-		.offset         = MTDPART_OFS_APPEND,   /* Offset = 0x2E0000 */
-		.size           = 34 * SZ_128K,
+		.offset         = MTDPART_OFS_APPEND,   /* Offset = 0x280000 */
+		.size           = 40 * SZ_128K,
 	},
 	{
 		.name           = "File System",
-		.offset         = MTDPART_OFS_APPEND,   /* Offset = 0x720000 */
-		.size           = 1601 * SZ_128K,
-	},
-	{
-		.name           = "Reserved",
-		.offset         = MTDPART_OFS_APPEND,   /* Offset = 0xCf40000 */
+		.offset         = MTDPART_OFS_APPEND,   /* Offset = 0x780000 */
 		.size           = MTDPART_SIZ_FULL,
 	},
 };

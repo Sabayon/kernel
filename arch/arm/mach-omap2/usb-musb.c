@@ -62,6 +62,7 @@ static struct omap_device_pm_latency omap_musb_latency[] = {
 	},
 };
 
+/*
 static void usb_musb_mux_init(struct omap_musb_board_data *board_data)
 {
 	switch (board_data->interface_type) {
@@ -98,7 +99,7 @@ static void usb_musb_mux_init(struct omap_musb_board_data *board_data)
 	default:
 		break;
 	}
-}
+}*/
 
 static struct omap_musb_board_data musb_default_board_data = {
 	.interface_type		= MUSB_INTERFACE_ULPI,
@@ -109,7 +110,6 @@ static struct omap_musb_board_data musb_default_board_data = {
 void __init usb_musb_init(struct omap_musb_board_data *musb_board_data)
 {
 	struct omap_hwmod		*oh;
-	struct omap_device		*od;
 	struct platform_device		*pdev;
 	struct device			*dev;
 	int				bus_id = -1;
@@ -168,16 +168,15 @@ void __init usb_musb_init(struct omap_musb_board_data *musb_board_data)
 		return;
 	}
 
-	od = omap_device_build(name, bus_id, oh, &musb_plat,
+	pdev = omap_device_build(name, bus_id, oh, &musb_plat,
 			       sizeof(musb_plat), omap_musb_latency,
 			       ARRAY_SIZE(omap_musb_latency), false);
-	if (IS_ERR(od)) {
+	if (IS_ERR(pdev)) {
 		pr_err("Could not build omap_device for %s %s\n",
 						name, oh_name);
 		return;
 	}
 
-	pdev = &od->pdev;
 	dev = &pdev->dev;
 	get_device(dev);
 	dev->dma_mask = &musb_dmamask;

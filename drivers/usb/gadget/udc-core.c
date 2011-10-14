@@ -269,7 +269,11 @@ int usb_gadget_probe_driver(struct usb_gadget_driver *driver,
 		return -EINVAL;
 
 	mutex_lock(&udc_lock);
+#ifdef CONFIG_USB_GADGET_PORT_USB1
+	list_for_each_entry_reverse(udc, &udc_list, list) {
+#else
 	list_for_each_entry(udc, &udc_list, list) {
+#endif
 		/* For now we take the first one */
 		if (!udc->driver)
 			goto found;

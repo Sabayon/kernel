@@ -1057,12 +1057,14 @@ static struct evm_dev_cfg gen_purp_evm_dev_cfg[] = {
 	{mcasp1_init,	DEV_ON_DGHTR_BRD, (PROFILE_0 | PROFILE_3) },
 	{mmc1_init,	DEV_ON_DGHTR_BRD, PROFILE_2},
 	{mmc2_init,	DEV_ON_DGHTR_BRD, PROFILE_4},
-	{mmc2_wl12xx_init,	DEV_ON_BASEBOARD, (PROFILE_ALL & ~PROFILE_4)},
+	{mmc2_wl12xx_init,	DEV_ON_BASEBOARD, (PROFILE_0 | PROFILE_3 |
+								PROFILE_7)},
 	{mmc0_init,	DEV_ON_BASEBOARD, (PROFILE_ALL & ~PROFILE_5)},
 	{mmc0_no_cd_init,	DEV_ON_BASEBOARD, PROFILE_5},
 	{spi0_init,	DEV_ON_DGHTR_BRD, PROFILE_2},
-	{uart1_wl12xx_init,	DEV_ON_BASEBOARD, PROFILE_ALL},
-	{wl12xx_init,	DEV_ON_BASEBOARD, (PROFILE_ALL & ~PROFILE_4)},
+	{uart1_wl12xx_init,	DEV_ON_BASEBOARD, (PROFILE_0 | PROFILE_3 |
+								PROFILE_7)},
+	{wl12xx_init,	DEV_ON_BASEBOARD, (PROFILE_0 | PROFILE_3 | PROFILE_7)},
 	{NULL, 0, 0},
 };
 

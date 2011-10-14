@@ -112,6 +112,38 @@ config USB_GADGET_STORAGE_NUM_BUFFERS
 	   a module parameter as well.
 	   If unsure, say 2.
 
+
+choice
+	prompt "USB built-in Gadget port selection"
+	depends on USB_GADGET && USB_MUSB_TI81XX_GLUE && USB_GADGET_MUSB_HDRC
+	help
+	   A USB device uses a controller to talk to its host.
+	   Systems should have only one such upstream link.
+	   Many controller drivers are platform-specific; these
+	   often need board-specific hooks.
+
+config USB_GADGET_PORT_USB1
+	depends on USB_MUSB_HDRC
+	bool "USB-1"
+	help
+	  In the multi instances usb device controller
+	  configuration, this configuration selects the
+	  builtin gadget driver to be inserted for udc-0
+	  or udc-1. Select this configuration to bind the gadget
+	  driver to usb device controller-1 or usb1 port.
+
+config USB_GADGET_PORT_USB0
+	depends on USB_MUSB_HDRC
+	bool "USB-0"
+	help
+	  In the multi instances usb device controller
+	  configuration, this configuration selects the
+	  builtin gadget driver to be inserted for udc-0
+	  or udc-1. Select this configuration to bind the gadget
+	  driver to usb device controller-0 or usb0 port.
+
+endchoice
+
 #
 # USB Peripheral Controller Support
 #

@@ -120,6 +120,7 @@
 /* Clock registers available only on Version 2 */
 #define  LCD_CLK_ENABLE_REG			0x6c
 #define  LCD_CLK_RESET_REG			0x70
+#define  LCD_CLK_MAIN_RESET			BIT(3)
 
 #define LCD_NUM_BUFFERS	2
 
@@ -645,8 +646,12 @@ static void lcd_reset(struct da8xx_fb_par *par)
 	lcdc_write(0, LCD_DMA_CTRL_REG);
 	lcdc_write(0, LCD_RASTER_CTRL_REG);
 
-	if (lcd_revision == LCD_VERSION_2)
+	if (lcd_revision == LCD_VERSION_2) {
 		lcdc_write(0, LCD_INT_ENABLE_SET_REG);
+		/* Write 1 to reset */
+		lcdc_write(LCD_CLK_MAIN_RESET, LCD_CLK_RESET_REG);
+		lcdc_write(0, LCD_CLK_RESET_REG);
+	}
 }
 
 static void lcd_calc_clk_divider(struct da8xx_fb_par *par)

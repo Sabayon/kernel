@@ -95,6 +95,7 @@
 #define P4o_s(a)	(TF(a & NAND_Ecc_P4o)		<< 1)
 
 #define MAX_HWECC_BYTES_OOB_64     24
+#define JFFS2_CLEAN_MARKER_OFFSET  0x2
 
 static const char *part_probes[] = { "cmdlinepart", NULL };
 
@@ -1083,9 +1084,9 @@ static int __devinit omap_nand_probe(struct platform_device *pdev)
 	if (info->nand.ecc.mode != NAND_ECC_SOFT) {
 
 		if (info->nand.options & NAND_BUSWIDTH_16)
-			offset = 2;
+			offset = JFFS2_CLEAN_MARKER_OFFSET;
 		else {
-			offset = 1;
+			offset = JFFS2_CLEAN_MARKER_OFFSET;
 			info->nand.badblock_pattern = &bb_descrip_flashbased;
 		}
 

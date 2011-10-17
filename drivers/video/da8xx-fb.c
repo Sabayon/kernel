@@ -272,6 +272,10 @@ static inline void lcd_enable_raster(void)
 {
 	u32 reg;
 
+	/* Bring LCDC out of reset */
+	if (lcd_revision == LCD_VERSION_2)
+		lcdc_write(0, LCD_CLK_RESET_REG);
+
 	reg = lcdc_read(LCD_RASTER_CTRL_REG);
 	if (!(reg & LCD_RASTER_ENABLE))
 		lcdc_write(reg | LCD_RASTER_ENABLE, LCD_RASTER_CTRL_REG);
@@ -285,6 +289,10 @@ static inline void lcd_disable_raster(void)
 	reg = lcdc_read(LCD_RASTER_CTRL_REG);
 	if (reg & LCD_RASTER_ENABLE)
 		lcdc_write(reg & ~LCD_RASTER_ENABLE, LCD_RASTER_CTRL_REG);
+
+	if (lcd_revision == LCD_VERSION_2)
+		/* Write 1 to reset LCDC */
+		lcdc_write(LCD_CLK_MAIN_RESET, LCD_CLK_RESET_REG);
 }
 
 static void lcd_blit(int load_mode, struct da8xx_fb_par *par)

@@ -105,6 +105,9 @@
 #define am335x_tlk110_phy_init() do { } while (0);
 #endif
 
+/* Convert GPIO signal to GPIO pin number */
+#define GPIO_TO_PIN(bank, gpio) (32 * (bank) + (gpio))
+
 static const struct display_panel disp_panel = {
 	WVGA,
 	32,
@@ -189,8 +192,8 @@ static struct omap2_hsmmc_info am335x_mmc[] __initdata = {
 	{
 		.mmc            = 1,
 		.caps           = MMC_CAP_4_BIT_DATA,
-		.gpio_cd        = -EINVAL,/* Dedicated pins for CD and WP */
-		.gpio_wp        = -EINVAL,
+		.gpio_cd        = GPIO_TO_PIN(0, 6),
+		.gpio_wp        = GPIO_TO_PIN(3, 18),
 		.ocr_mask       = MMC_VDD_32_33 | MMC_VDD_33_34, /* 3V3 */
 	},
 	{
@@ -516,8 +519,8 @@ static struct pinmux_config mmc0_pin_mux[] = {
 	{"mmc0_dat0.mmc0_dat0",	OMAP_MUX_MODE0 | AM33XX_PIN_INPUT_PULLUP},
 	{"mmc0_clk.mmc0_clk",	OMAP_MUX_MODE0 | AM33XX_PIN_INPUT_PULLUP},
 	{"mmc0_cmd.mmc0_cmd",	OMAP_MUX_MODE0 | AM33XX_PIN_INPUT_PULLUP},
-	{"mcasp0_aclkr.mmc0_sdwp", OMAP_MUX_MODE4 | AM33XX_PIN_INPUT_PULLDOWN},
-	{"spi0_cs1.mmc0_sdcd",  OMAP_MUX_MODE5 | AM33XX_PIN_INPUT_PULLUP},
+	{"mcasp0_aclkr.mmc0_sdwp", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
+	{"spi0_cs1.mmc0_sdcd",  OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{NULL, 0},
 };
 
@@ -544,8 +547,8 @@ static struct pinmux_config mmc1_pin_mux[] = {
 	{"gpmc_ad0.mmc1_dat0",	OMAP_MUX_MODE1 | AM33XX_PIN_INPUT_PULLUP},
 	{"gpmc_csn1.mmc1_clk",	OMAP_MUX_MODE2 | AM33XX_PIN_INPUT_PULLUP},
 	{"gpmc_csn2.mmc1_cmd",	OMAP_MUX_MODE2 | AM33XX_PIN_INPUT_PULLUP},
-	{"uart1_rxd.mmc1_sdwp",	OMAP_MUX_MODE1 | AM33XX_PIN_INPUT_PULLUP},
-	{"mcasp0_fsx.mmc1_sdcd", OMAP_MUX_MODE4 | AM33XX_PIN_INPUT_PULLDOWN},
+	{"uart1_rxd.mmc1_sdwp",	OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
+	{"mcasp0_fsx.mmc1_sdcd", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{NULL, 0},
 };
 
@@ -561,8 +564,8 @@ static struct pinmux_config mmc2_pin_mux[] = {
 	{"gpmc_ad12.mmc2_dat0",	OMAP_MUX_MODE3 | AM33XX_PIN_INPUT_PULLUP},
 	{"gpmc_clk.mmc2_clk",	OMAP_MUX_MODE3 | AM33XX_PIN_INPUT_PULLUP},
 	{"gpmc_csn3.mmc2_cmd",	OMAP_MUX_MODE3 | AM33XX_PIN_INPUT_PULLUP},
-	{"spi0_cs0.mmc2_sdwp",	OMAP_MUX_MODE1 | AM33XX_PIN_INPUT_PULLDOWN},
-	{"mcasp0_axr0.mmc2_sdcd", OMAP_MUX_MODE4 | AM33XX_PIN_INPUT_PULLUP},
+	{"spi0_cs0.mmc2_sdwp",	OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
+	{"mcasp0_axr0.mmc2_sdcd", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{NULL, 0},
 };
 
@@ -626,9 +629,6 @@ static void _configure_device(int evm_id, struct evm_dev_cfg *dev_cfg,
 		}
 	}
 }
-
-/* Convert GPIO signal to GPIO pin number */
-#define GPIO_TO_PIN(bank, gpio) (32 * (bank) + (gpio))
 
 #define AM335X_LCD_BL_PIN	GPIO_TO_PIN(0, 7)
 
@@ -947,8 +947,8 @@ static void mmc1_init(int evm_id, int profile)
 
 	am335x_mmc[1].mmc = 2;
 	am335x_mmc[1].caps = MMC_CAP_4_BIT_DATA;
-	am335x_mmc[1].gpio_cd = -EINVAL;
-	am335x_mmc[1].gpio_wp = -EINVAL;
+	am335x_mmc[1].gpio_cd = GPIO_TO_PIN(3, 15);
+	am335x_mmc[1].gpio_wp = GPIO_TO_PIN(0, 14);
 	am335x_mmc[1].ocr_mask = MMC_VDD_32_33 | MMC_VDD_33_34; /* 3V3 */
 
 	/* mmc will be initialized when mmc0_init is called */
@@ -961,8 +961,8 @@ static void mmc2_init(int evm_id, int profile)
 
 	am335x_mmc[1].mmc = 3;
 	am335x_mmc[1].caps = MMC_CAP_4_BIT_DATA;
-	am335x_mmc[1].gpio_cd = -EINVAL;
-	am335x_mmc[1].gpio_wp = -EINVAL;
+	am335x_mmc[1].gpio_cd = GPIO_TO_PIN(3, 16);
+	am335x_mmc[1].gpio_wp = GPIO_TO_PIN(0, 5);
 	am335x_mmc[1].ocr_mask = MMC_VDD_32_33 | MMC_VDD_33_34; /* 3V3 */
 
 	/* mmc will be initialized when mmc0_init is called */

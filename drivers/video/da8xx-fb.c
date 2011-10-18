@@ -542,7 +542,9 @@ static int lcd_cfg_frame_buffer(struct da8xx_fb_par *par, u32 width, u32 height,
 	if (raster_order)
 		reg |= LCD_RASTER_ORDER;
 
-	if (bpp == 32)
+	if (bpp == 24)
+		reg |= (LCD_TFT_MODE | LCD_V2_TFT_24BPP_MODE);
+	else if (bpp == 32)
 		reg |= (LCD_TFT_MODE | LCD_V2_TFT_24BPP_MODE
 				| LCD_V2_TFT_24BPP_UNPACK);
 
@@ -553,6 +555,7 @@ static int lcd_cfg_frame_buffer(struct da8xx_fb_par *par, u32 width, u32 height,
 	case 2:
 	case 4:
 	case 16:
+	case 24:
 	case 32:
 		par->palette_sz = 16 * 2;
 		break;
@@ -612,7 +615,8 @@ static int fb_setcolreg(unsigned regno, unsigned red, unsigned green,
 			update_hw = 1;
 			palette[0] = 0x4000;
 		}
-	} else if ((info->var.bits_per_pixel == 32) && regno < 32) {
+	} else if (((info->var.bits_per_pixel == 32) && regno < 32) ||
+		    ((info->var.bits_per_pixel == 24) && regno < 24)) {
 		red >>= (24 - info->var.red.length);
 		red <<= info->var.red.offset;
 
@@ -912,6 +916,14 @@ static int fb_check_var(struct fb_var_screeninfo *var,
 		var->blue.length = 5;
 		var->transp.offset = 0;
 		var->transp.length = 0;
+		break;
+	case 24:
+		var->red.offset = 16;
+		var->red.length = 8;
+		var->green.offset = 8;
+		var->green.length = 8;
+		var->blue.offset = 0;
+		var->blue.length = 8;
 		break;
 	case 32:
 		var->transp.offset = 24;

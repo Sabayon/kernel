@@ -118,7 +118,9 @@ static u16 vendorID;
 #include "composite.c"
 #include "usbstring.c"
 #include "config.c"
+#ifdef CONFIG_USB_ETH_MODULE
 #include "epautoconf.c"
+#endif
 
 #include "f_ecm.c"
 #include "f_subset.c"

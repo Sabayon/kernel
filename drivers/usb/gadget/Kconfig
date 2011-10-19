@@ -113,37 +113,6 @@ config USB_GADGET_STORAGE_NUM_BUFFERS
 	   If unsure, say 2.
 
 
-choice
-	prompt "USB built-in Gadget port selection"
-	depends on USB_GADGET && USB_MUSB_TI81XX_GLUE && USB_GADGET_MUSB_HDRC
-	help
-	   A USB device uses a controller to talk to its host.
-	   Systems should have only one such upstream link.
-	   Many controller drivers are platform-specific; these
-	   often need board-specific hooks.
-
-config USB_GADGET_PORT_USB1
-	depends on USB_MUSB_HDRC
-	bool "USB-1"
-	help
-	  In the multi instances usb device controller
-	  configuration, this configuration selects the
-	  builtin gadget driver to be inserted for udc-0
-	  or udc-1. Select this configuration to bind the gadget
-	  driver to usb device controller-1 or usb1 port.
-
-config USB_GADGET_PORT_USB0
-	depends on USB_MUSB_HDRC
-	bool "USB-0"
-	help
-	  In the multi instances usb device controller
-	  configuration, this configuration selects the
-	  builtin gadget driver to be inserted for udc-0
-	  or udc-1. Select this configuration to bind the gadget
-	  driver to usb device controller-0 or usb0 port.
-
-endchoice
-
 #
 # USB Peripheral Controller Support
 #
@@ -572,6 +541,58 @@ config USB_GADGET_SUPERSPEED
 	depends on USB_GADGET
 	depends on USB_GADGET_DUALSPEED
 
+config USB_G_DBGP
+	tristate "Select one gadget as builtin for one port"
+	depends on USB_GADGET && USB_MUSB_TI81XX_GLUE && USB_GADGET_MUSB_HDRC
+	select USB_G_DBGP_PRINTK
+	help
+	  This option can be chosen to select one gadget as builtin for host only
+	  ports. Here we are selecting debug gadget as dummy gadget for this purpose.
+
+	  This gadget emulates an EHCI Debug device. This is useful when you want
+	  to interact with an EHCI Debug Port.
+
+	  Say "y" to link the driver statically, or "m" to build a
+	  dynamically linked module called "g_dbgp".
+
+config USB_G_DBGP_PRINTK
+	depends on USB_G_DBGP
+	bool
+	help
+	  Directly printk() received data. No interaction.
+choice
+	prompt "Select USB port to bind builtin gadget"
+	depends on USB_G_DBGP = y
+	help
+	  Select the MUSB port to which the builtin gadget gets associated.
+	  Printer gadget is chosen as only builtin gadget for host only ports
+	  of any board. Such host only ports need gadget driver due to musb
+	  driver limitation. choose USB0 or USB1 port based on what port is
+	  host only in your board.
+
+config USB_GADGET_PORT_USB1
+	depends on USB_MUSB_HDRC
+	bool "USB-1"
+	help
+	  In the multi instances usb device controller
+	  configuration, this configuration selects the
+	  builtin gadget driver to be inserted for udc-0
+	  or udc-1. Select this configuration to bind the gadget
+	  driver to usb device controller-1 or usb1 port.
+
+config USB_GADGET_PORT_USB0
+	depends on USB_MUSB_HDRC
+	bool "USB-0"
+	help
+	  In the multi instances usb device controller
+	  configuration, this configuration selects the
+	  builtin gadget driver to be inserted for udc-0
+	  or udc-1. Select this configuration to bind the gadget
+	  driver to usb device controller-0 or usb0 port.
+
+endchoice
+
+
 #
 # USB Gadget Drivers
 #
@@ -947,34 +968,6 @@ config USB_G_HID
 
 	  Say "y" to link the driver statically, or "m" to build a
 	  dynamically linked module called "g_hid".
-
-config USB_G_DBGP
-	tristate "EHCI Debug Device Gadget"
-	help
-	  This gadget emulates an EHCI Debug device. This is useful when you want
-	  to interact with an EHCI Debug Port.
-
-	  Say "y" to link the driver statically, or "m" to build a
-	  dynamically linked module called "g_dbgp".
-
-if USB_G_DBGP
-choice
-	prompt "EHCI Debug Device mode"
-	default USB_G_DBGP_SERIAL
-
-config USB_G_DBGP_PRINTK
-	depends on USB_G_DBGP
-	bool "printk"
-	help
-	  Directly printk() received data. No interaction.
-
-config USB_G_DBGP_SERIAL
-	depends on USB_G_DBGP
-	bool "serial"
-	help
-	  Userland can interact using /dev/ttyGSxxx.
-endchoice
-endif
 
 # put drivers that need isochronous transfer support (for audio
 # or video class gadget drivers), or specific hardware, here.

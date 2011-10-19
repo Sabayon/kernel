@@ -266,7 +266,9 @@
  */
 #include "usbstring.c"
 #include "config.c"
+#ifdef CONFIG_USB_FILE_STORAGE_MODULE
 #include "epautoconf.c"
+#endif
 
 /*-------------------------------------------------------------------------*/
 

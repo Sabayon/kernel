@@ -274,7 +274,7 @@ static struct omap2_hsmmc_info mmcbbt[] = {
  	{
  		.mmc		= 1,
  		.caps		= MMC_CAP_4_BIT_DATA | MMC_CAP_8_BIT_DATA,
- 		.gpio_wp	= 29,
+ 		.gpio_wp	= -EINVAL,
  	},
 	{
 		.name		= "wl1271",

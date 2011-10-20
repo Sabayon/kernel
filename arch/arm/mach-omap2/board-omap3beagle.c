@@ -796,6 +796,11 @@ static struct platform_device leds_gpio = {
 	},
 };
 
+static struct platform_device ws2801_leds = {
+	.name	= "ws2801-leds",
+	.id	= -1,
+};
+
 static struct gpio_keys_button gpio_buttons[] = {
 	{
 		.code			= BTN_EXTRA,
@@ -1012,6 +1017,12 @@ static void __init omap3_beagle_init(void)
 		printk(KERN_INFO "Beagle second expansionboard: registering bbtoys-ulcd\n");
 		omap_register_i2c_bus(2, 400,  beagle_i2c2_bbtoys_ulcd,
 							ARRAY_SIZE(beagle_i2c2_bbtoys_ulcd));
+	}
+
+	if(!strcmp(expansionboard_name, "beacon"))
+	{
+		printk(KERN_INFO "Beagle expansionboard: registering TinCanTools Beacon LED driver\n");
+		platform_device_register(&ws2801_leds);
 	}
 
 	usb_musb_init(NULL);

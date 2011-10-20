@@ -203,13 +203,7 @@ static struct regulator_consumer_supply beagle_vmmc2_supply =
 
 static struct regulator_init_data beagle_vmmc2 = {
 	.constraints = {
-		.min_uV			= 1850000,
-		.max_uV			= 1850000,
-		.apply_uV		= true,
-		.valid_modes_mask	= REGULATOR_MODE_NORMAL
-					| REGULATOR_MODE_STANDBY,
-		.valid_ops_mask		= REGULATOR_CHANGE_MODE
-					| REGULATOR_CHANGE_STATUS,
+		.valid_ops_mask = REGULATOR_CHANGE_STATUS,
 	},
 	.num_consumer_supplies = 1,
 	.consumer_supplies = &beagle_vmmc2_supply,

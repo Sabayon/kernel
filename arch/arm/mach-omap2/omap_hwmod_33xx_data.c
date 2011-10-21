@@ -322,10 +322,11 @@ static struct omap_hwmod am33xx_clkdiv32k_hwmod = {
 	.clkdm_name	= "clk_24mhz_clkdm",
 	.prcm = {
 		.omap4 = {
-			.clkctrl_offs	= AM33XX_CM_PER_CLK_24MHZ_CLKSTCTRL_OFFSET,
+			.clkctrl_offs	= AM33XX_CM_PER_CLKDIV32K_CLKCTRL,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
 	},
+	.flags		= (HWMOD_INIT_NO_IDLE | HWMOD_INIT_NO_RESET),
 };
 
 /* 'control' class */

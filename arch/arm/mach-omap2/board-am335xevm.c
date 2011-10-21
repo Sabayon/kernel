@@ -659,7 +659,7 @@ static struct pinmux_config ecap0_pin_mux[] = {
 #define AM335XEVM_WLAN_IRQ_GPIO		GPIO_TO_PIN(3, 17)
 #define AM335XEVM_BT_ENABLE_GPIO	GPIO_TO_PIN(1, 31)
 
-struct wl12xx_platform_data am335xevm_wlan_data __initdata = {
+struct wl12xx_platform_data am335xevm_wlan_data = {
 	.irq = OMAP_GPIO_IRQ(AM335XEVM_WLAN_IRQ_GPIO),
 	.board_ref_clock = WL12XX_REFCLOCK_26, /* 26 MHz */
 	.board_tcxo_clock = WL12XX_REFCLOCK_26, /* 26 MHz */
@@ -923,10 +923,10 @@ static void evm_nand_init(int evm_id, int profile)
 		ARRAY_SIZE(am335x_nand_partitions), 0, 0);
 }
 
-static struct i2c_board_info __initdata am335x_i2c_boardinfo1[] = {
+static struct i2c_board_info am335x_i2c_boardinfo1[] = {
 	{
 		I2C_BOARD_INFO("tlv320aic3x", 0x1b),
-	}
+	},
 };
 
 static void i2c1_init(int evm_id, int profile)

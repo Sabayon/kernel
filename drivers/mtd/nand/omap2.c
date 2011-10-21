@@ -1077,8 +1077,8 @@ static int __devinit omap_nand_probe(struct platform_device *pdev)
 		}
 	}
 
-	/* rom code layout */
-	if (pdata->ecc_opt == OMAP_ECC_HAMMING_CODE_HW_ROMCODE) {
+	/* select ecc lyout */
+	if (info->nand.ecc.mode != NAND_ECC_SOFT) {
 
 		if (info->nand.options & NAND_BUSWIDTH_16)
 			offset = 2;
@@ -1086,13 +1086,27 @@ static int __devinit omap_nand_probe(struct platform_device *pdev)
 			offset = 1;
 			info->nand.badblock_pattern = &bb_descrip_flashbased;
 		}
-		omap_oobinfo.eccbytes = 3 * (info->mtd.oobsize/16);
+
+		if (info->mtd.oobsize == 64)
+			omap_oobinfo.eccbytes = info->nand.ecc.bytes *
+						2048/info->nand.ecc.size;
+		else
+			omap_oobinfo.eccbytes = info->nand.ecc.bytes;
+
+		if (pdata->ecc_opt == OMAP_ECC_HAMMING_CODE_HW_ROMCODE) {
+			omap_oobinfo.oobfree->offset =
+						offset + omap_oobinfo.eccbytes;
+			omap_oobinfo.oobfree->length = info->mtd.oobsize -
+				(offset + omap_oobinfo.eccbytes);
+		} else {
+			omap_oobinfo.oobfree->offset = offset;
+			omap_oobinfo.oobfree->length = info->mtd.oobsize -
+						offset - omap_oobinfo.eccbytes;
+			offset = info->mtd.oobsize - omap_oobinfo.eccbytes;
+		}
+
 		for (i = 0; i < omap_oobinfo.eccbytes; i++)
 			omap_oobinfo.eccpos[i] = i+offset;
-
-		omap_oobinfo.oobfree->offset = offset + omap_oobinfo.eccbytes;
-		omap_oobinfo.oobfree->length = info->mtd.oobsize -
-					(offset + omap_oobinfo.eccbytes);
 
 		info->nand.ecc.layout = &omap_oobinfo;
 	}

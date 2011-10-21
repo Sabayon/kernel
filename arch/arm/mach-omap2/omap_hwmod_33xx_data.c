@@ -1460,7 +1460,7 @@ static struct omap_hwmod am33xx_spinlock_hwmod = {
 };
 
 
-/* Timers common */
+/* 'timer 0 & 2-7' class */
 static struct omap_hwmod_class_sysconfig am33xx_timer_sysc = {
 	.rev_offs       = 0x0000,
 	.sysc_offs      = 0x0010,
@@ -1471,7 +1471,7 @@ static struct omap_hwmod_class_sysconfig am33xx_timer_sysc = {
 	.sysc_fields    = &omap_hwmod_sysc_type2,
 };
 
-/* 'timer' class */
+/* 'timer 0 & 2-7' class */
 static struct omap_hwmod_class am33xx_timer_hwmod_class = {
 	.name = "timer",
 	.sysc = &am33xx_timer_sysc,
@@ -1521,7 +1521,23 @@ static struct omap_hwmod am33xx_timer0_hwmod = {
 	.slaves_cnt	= ARRAY_SIZE(am33xx_timer0_slaves),
 };
 
-/* timer1 */
+/* timer 1ms */
+static struct omap_hwmod_class_sysconfig am33xx_timer1ms_sysc = {
+	.rev_offs       = 0x0000,
+	.sysc_offs      = 0x0010,
+	.syss_offs      = 0x0014,
+	.sysc_flags	= (SYSC_HAS_CLOCKACTIVITY | SYSC_HAS_SIDLEMODE
+				| SYSC_HAS_SOFTRESET | SYSC_HAS_AUTOIDLE
+				| SYSS_HAS_RESET_STATUS),
+	.idlemodes      = (SIDLE_FORCE | SIDLE_NO | SIDLE_SMART),
+	.sysc_fields    = &omap_hwmod_sysc_type1,
+};
+
+static struct omap_hwmod_class am33xx_timer1ms_hwmod_class = {
+	.name = "timer",
+	.sysc = &am33xx_timer1ms_sysc,
+};
+
 /* l4 wkup -> timer1 interface */
 static struct omap_hwmod_addr_space am33xx_timer1_addr_space[] = {
 	{
@@ -1551,7 +1567,7 @@ static struct omap_hwmod_irq_info am33xx_timer1_irqs[] = {
 
 static struct omap_hwmod am33xx_timer1_hwmod = {
 	.name		= "timer1",
-	.class		= &am33xx_timer_hwmod_class,
+	.class		= &am33xx_timer1ms_hwmod_class,
 	.mpu_irqs       = am33xx_timer1_irqs,
 	.main_clk	= "timer1_fck",
 	.clkdm_name	= "l4_wkup_clkdm",

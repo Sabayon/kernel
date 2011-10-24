@@ -1136,14 +1136,15 @@ static int __init omap2_mcspi_probe(struct platform_device *pdev)
 		status = -ENODEV;
 		goto err1;
 	}
+
+	r->start += pdata->regs_offset;
+	r->end += pdata->regs_offset;
 	if (!request_mem_region(r->start, resource_size(r),
 				dev_name(&pdev->dev))) {
 		status = -EBUSY;
 		goto err1;
 	}
 
-	r->start += pdata->regs_offset;
-	r->end += pdata->regs_offset;
 	mcspi->phys = r->start;
 	mcspi->base = ioremap(r->start, resource_size(r));
 	if (!mcspi->base) {

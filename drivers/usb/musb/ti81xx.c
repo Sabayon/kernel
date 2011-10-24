@@ -570,24 +570,6 @@ void ti81xx_musb_disable(struct musb *musb)
 	musb_writel(reg_base, USB_IRQ_EOI, 0);
 }
 
-static int vbus_state = -1;
-
-static void ti81xx_source_power(struct musb *musb, int is_on, int immediate)
-{
-	if (is_on)
-		is_on = 1;
-
-	if (vbus_state == is_on)
-		return;
-	vbus_state = is_on;		/* 0/1 vs "-1 == unknown/init" */
-}
-
-static void ti81xx_musb_set_vbus(struct musb *musb, int is_on)
-{
-	WARN_ON(is_on && is_peripheral_active(musb));
-	ti81xx_source_power(musb, is_on, 0);
-}
-
 #define	POLL_SECONDS	2
 
 static void otg_timer(unsigned long _musb)
@@ -795,10 +777,6 @@ void musb_babble_workaround(struct musb *musb)
 	struct musb_hdrc_platform_data *plat = dev->platform_data;
 	struct omap_musb_board_data *data = plat->board_data;
 
-	/* turn off the vbus */
-	ti81xx_source_power(musb, 0, 1);
-	mdelay(100);
-
 	/* Reset the controller */
 	musb_writel(reg_base, USB_CTRL_REG, USB_SOFT_RESET_MASK);
 	udelay(100);
@@ -810,10 +788,6 @@ void musb_babble_workaround(struct musb *musb)
 
 	musb_platform_set_mode(musb, MUSB_HOST);
 	udelay(100);
-
-	/* turn on the vbus */
-	ti81xx_source_power(musb, 1, 1);
-	mdelay(100);
 
 	/* enable the usbphy */
 	if (data->set_phy_power)
@@ -929,7 +903,6 @@ static irqreturn_t ti81xx_interrupt(int irq, void *hci)
 		}
 
 		/* NOTE: this must complete power-on within 100 ms. */
-		ti81xx_source_power(musb, drvvbus, 0);
 		dev_dbg(musb->controller, "VBUS %s (%s)%s, devctl %02x\n",
 				drvvbus ? "on" : "off",
 				otg_state_string(musb->xceiv->state),
@@ -1047,8 +1020,6 @@ int ti81xx_musb_init(struct musb *musb)
 		setup_timer(&musb->otg_workaround, otg_timer,
 					(unsigned long) musb);
 
-	ti81xx_source_power(musb, 0, 1);
-
 	/* Reset the controller */
 	musb_writel(reg_base, USB_CTRL_REG, USB_SOFT_RESET_MASK);
 
@@ -1130,8 +1101,6 @@ int ti81xx_musb_exit(struct musb *musb)
 	if (is_host_enabled(musb))
 		del_timer_sync(&musb->otg_workaround);
 
-	ti81xx_source_power(musb, 0, 1);
-
 	/* Shutdown the on-chip PHY and its PLL. */
 	if (data->set_phy_power)
 		data->set_phy_power(musb->id, 0);
@@ -1153,8 +1122,6 @@ static struct musb_platform_ops ti81xx_ops = {
 
 	.try_idle	= ti81xx_musb_try_idle,
 	.set_mode	= ti81xx_musb_set_mode,
-
-	.set_vbus	= ti81xx_musb_set_vbus,
 
 	.read_fifo      = ti81xx_musb_read_fifo,
 	.write_fifo     = musb_write_fifo,

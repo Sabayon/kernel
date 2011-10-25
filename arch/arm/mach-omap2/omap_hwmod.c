@@ -1540,8 +1540,8 @@ static int _idle(struct omap_hwmod *oh)
 	_disable_module(oh);
 	ret = _wait_target_disable(oh);
 	if (ret)
-		pr_warn("omap_hwmod: %s: _wait_target_disable failed\n",
-			oh->name);
+		;//pr_warn("omap_hwmod: %s: _wait_target_disable failed\n",
+		//	oh->name);
 	/*
 	 * The module must be in idle mode before disabling any parents
 	 * clocks. Otherwise, the parent clock might be disabled before
@@ -1645,8 +1645,8 @@ static int _shutdown(struct omap_hwmod *oh)
 		_disable_module(oh);
 		ret = _wait_target_disable(oh);
 		if (ret)
-			pr_warn("omap_hwmod: %s: _wait_target_disable failed\n",
-				oh->name);
+			;//pr_warn("omap_hwmod: %s: _wait_target_disable failed\n",
+			//	oh->name);
 		_disable_clocks(oh);
 		if (oh->clkdm)
 			clkdm_hwmod_disable(oh->clkdm, oh);

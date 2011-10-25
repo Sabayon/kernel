@@ -32,7 +32,6 @@ struct iommu {
 	struct module	*owner;
 	void __iomem	*regbase;
 	struct device	*dev;
-	void		*isr_priv;
 
 	unsigned int	refcount;
 	struct mutex	iommu_lock;	/* global for this whole object */
@@ -190,10 +189,6 @@ extern void iopgtable_clear_entry_all(struct iommu *obj);
 extern int iommu_set_da_range(struct iommu *obj, u32 start, u32 end);
 extern struct iommu *iommu_get(const char *name);
 extern void iommu_put(struct iommu *obj);
-extern int iommu_set_isr(const char *name,
-			 int (*isr)(struct iommu *obj, u32 da, u32 iommu_errs,
-				    void *priv),
-			 void *isr_priv);
 
 u32 iommu_save_ctx(struct iommu *obj);
 u32 iommu_restore_ctx(struct iommu *obj);

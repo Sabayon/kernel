@@ -464,7 +464,6 @@ static struct platform_device omap_vwlan_device = {
 	.dev = {
 		.platform_data = &sdp4430_vwlan,
 	},
-	REGULATOR_SUPPLY("vmmc", "omap_hsmmc.1"),
 };
 
 static int omap4_twl6030_hsmmc_late_init(struct device *dev)

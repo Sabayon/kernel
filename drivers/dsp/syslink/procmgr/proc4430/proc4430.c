@@ -312,6 +312,7 @@ void *proc4430_create(u16 proc_id, const struct proc4430_params *params)
 				 params->num_mem_entries));
 		}
 		handle->boot_mode = PROC_MGR_BOOTMODE_NOLOAD;
+		atomic_set(&object->attach_count, 0);
 		/* Set the handle in the state object. */
 		proc4430_state.proc_handles[proc_id] = handle;
 	}

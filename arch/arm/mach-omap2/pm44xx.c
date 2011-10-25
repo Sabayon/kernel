@@ -18,6 +18,7 @@
 
 #include "powerdomain.h"
 #include "clockdomain.h"
+#include "pm.h"
 #include <mach/omap4-common.h>
 
 struct power_state {

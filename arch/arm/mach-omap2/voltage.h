@@ -210,11 +210,37 @@ struct omap_vdd_dep_info {
  *
  * @volt_data		: voltage table having the distinct voltages supported
  *			  by the domain and other associated per voltage data.
+ * @pmic_info		: pmic specific parameters which should be populted by
+ *			  the pmic drivers.
+ * @vp_data		: the register values, shifts, masks for various
+ *			  vp registers
+ * @vp_rt_data          : VP data derived at runtime, not predefined
+ * @vc_data		: structure containing various various vc registers,
+ *			  shifts, masks etc.
+ * @vfsm                : voltage manager FSM data
+ * @voltdm		: pointer to the voltage domain structure
+ * @debug_dir		: debug directory for this voltage domain.
+ * @curr_volt		: current voltage for this vdd.
+ * @vp_enabled		: flag to keep track of whether vp is enabled or not
+ * @volt_scale		: API to scale the voltage of the vdd.
  * @dep_vdd_info	: Array ending with a 0 terminator for dependency
  *			  voltage information.
  */
 struct omap_vdd_info {
 	struct omap_volt_data *volt_data;
+	struct omap_volt_pmic_info *pmic_info;
+	struct omap_vp_instance_data *vp_data;
+	struct omap_vp_runtime_data vp_rt_data;
+	struct omap_vc_instance_data *vc_data;
+	const struct omap_vfsm_instance_data *vfsm;
+	struct voltagedomain voltdm;
+	struct dentry *debug_dir;
+	u32 curr_volt;
+	bool vp_enabled;
+	u32 (*read_reg) (u16 mod, u8 offset);
+	void (*write_reg) (u32 val, u16 mod, u8 offset);
+	int (*volt_scale) (struct omap_vdd_info *vdd,
+		unsigned long target_volt);
 	struct omap_vdd_dep_info *dep_vdd_info;
 };
 

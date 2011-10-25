@@ -1066,7 +1066,7 @@ static s32 map_block(enum tiler_fmt fmt, u32 width, u32 height,
 	tmp = mi->usr;
 	for (i = 0; i < mi->num_pg; i++) {
 		if (get_user_pages(curr_task, mm, tmp, 1, write, 1, &page,
-									NULL)) {
+								NULL) && page) {
 			if (page_count(page) < 1) {
 				printk(KERN_ERR "Bad page count from"
 							"get_user_pages()\n");

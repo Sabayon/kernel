@@ -152,4 +152,6 @@ source "drivers/staging/nvec/Kconfig"
 
 source "drivers/staging/thermal_framework/Kconfig"
 
+source "drivers/staging/omapdrm/Kconfig"
+
 endif # STAGING

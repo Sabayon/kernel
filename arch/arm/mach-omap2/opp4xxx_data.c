@@ -260,6 +260,7 @@ static struct omap_opp_def __initdata omap446x_opp_def_list[] = {
 	                               "opp_enable() failed for mpu@%ld", freq);
 	                       goto err;
 	               }
+			dev_info(&pdev->dev, "Enabled %ldHz OPP\n");
 	       }
 	err:
 		return r;
@@ -280,10 +281,10 @@ int __init omap4_opp_init(void)
 	} else if (cpu_is_omap446x()) {
 		r = omap_init_opp_table(omap446x_opp_def_list,
 			ARRAY_SIZE(omap446x_opp_def_list));
-		if (omap4_has_mpu_1_5ghz())
-			omap4_opp_enable(1500000000);
-		if (omap4_has_mpu_1_2ghz())
-			omap4_opp_enable(1200000000);
+//		if (omap4_has_mpu_1_5ghz())
+//			omap4_opp_enable(1500000000);
+//		if (omap4_has_mpu_1_2ghz())
+//			omap4_opp_enable(1200000000);
 	}
 	return r;
 }

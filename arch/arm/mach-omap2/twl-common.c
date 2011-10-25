@@ -306,3 +306,4 @@ void __init omap4_pmic_get_config(struct twl4030_platform_data *pmic_data,
 		pmic_data->clk32kg = &omap4_clk32kg_idata;
 }
 #endif /* CONFIG_ARCH_OMAP4 */
+

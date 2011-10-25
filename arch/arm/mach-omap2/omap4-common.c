@@ -23,6 +23,8 @@
 
 #include <plat/irqs.h>
 
+#include <plat/irqs.h>
+
 #include <mach/hardware.h>
 #include <mach/omap4-common.h>
 #include <mach/omap-wakeupgen.h>

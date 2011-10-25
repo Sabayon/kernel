@@ -893,6 +893,7 @@ static struct twl4030_platform_data rx51_twldata __initdata = {
 	.vpll1			= &rx51_vpll1,
 	.vpll2			= &rx51_vpll2,
 	.vsim			= &rx51_vsim,
+
 	.vintana1		= &rx51_vintana1,
 	.vintana2		= &rx51_vintana2,
 	.vintdig		= &rx51_vintdig,

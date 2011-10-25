@@ -130,4 +130,5 @@ source "drivers/iommu/Kconfig"
 
 source "drivers/virt/Kconfig"
 
+source "drivers/dsp/syslink/Kconfig"
 endmenu

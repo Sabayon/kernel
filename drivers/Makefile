@@ -128,5 +128,12 @@ obj-$(CONFIG_IOMMU_SUPPORT)	+= iommu/
 # Virtualization drivers
 obj-$(CONFIG_VIRT_DRIVERS)	+= virt/
 
+obj-$(CONFIG_SYSLINK_DUCATI_PM) += dsp/syslink/multicore_ipc/
+obj-$(CONFIG_MPU_SYSLINK_PLATFORM)   += dsp/syslink/multicore_ipc/
+obj-$(CONFIG_MPU_SYSLINK_IPC)   += dsp/syslink/multicore_ipc/
+obj-$(CONFIG_SYSLINK_PROC)      += dsp/syslink/procmgr/
+obj-$(CONFIG_SYSLINK_PROC4430)  += dsp/syslink/procmgr/proc4430/
+obj-$(CONFIG_OMAP_DEVICE_HANDLER)	+= dsp/syslink/devh/
+obj-$(CONFIG_OMAP_DEVICE_HANDLER)	+= dsp/syslink/devh/44xx/
 obj-$(CONFIG_DMM_OMAP)		+= media/
 obj-$(CONFIG_TILER_OMAP)		+= media/

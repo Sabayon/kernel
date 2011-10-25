@@ -556,6 +556,7 @@ int proc4430_detach(void *handle)
 			unmap_info.addr =
 				object->params.mem_entries[i].master_virt_addr;
 			unmap_info.size = object->params.mem_entries[i].size;
+			unmap_info.is_cached = false;
 			platform_mem_unmap(&unmap_info);
 			object->params.mem_entries[i].master_virt_addr =
 				(u32)-1;

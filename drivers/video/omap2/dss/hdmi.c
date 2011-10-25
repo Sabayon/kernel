@@ -1808,7 +1808,7 @@ static struct snd_soc_dai_ops hdmi_audio_codec_ops = {
 };
 
 static struct snd_soc_dai_driver hdmi_codec_dai_drv = {
-		.name = "hdmi-audio-codec",
+		.name = "omap4-hdmi-audio-codec",
 		.playback = {
 			.channels_min = 2,
 			.channels_max = 2,

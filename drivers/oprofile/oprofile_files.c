@@ -19,11 +19,13 @@
 #define CPU_BUFFER_SIZE_DEFAULT		8192
 #define BUFFER_WATERSHED_DEFAULT	32768	/* FIXME: tune */
 #define TIME_SLICE_DEFAULT		1
+#define	TIMER_INTERVAL_DEFAULT		TICK_NSEC
 
 unsigned long oprofile_buffer_size;
 unsigned long oprofile_cpu_buffer_size;
 unsigned long oprofile_buffer_watershed;
 unsigned long oprofile_time_slice;
+unsigned long oprofile_timer_interval;
 
 #ifdef CONFIG_OPROFILE_EVENT_MULTIPLEX
 
@@ -181,6 +183,7 @@ void oprofile_create_files(struct super_block *sb, struct dentry *root)
 	oprofile_cpu_buffer_size =	CPU_BUFFER_SIZE_DEFAULT;
 	oprofile_buffer_watershed =	BUFFER_WATERSHED_DEFAULT;
 	oprofile_time_slice =		msecs_to_jiffies(TIME_SLICE_DEFAULT);
+	oprofile_timer_interval =	TIMER_INTERVAL_DEFAULT;
 
 	oprofilefs_create_file(sb, root, "enable", &enable_fops);
 	oprofilefs_create_file_perm(sb, root, "dump", &dump_fops, 0666);
@@ -194,6 +197,7 @@ void oprofile_create_files(struct super_block *sb, struct dentry *root)
 #ifdef CONFIG_OPROFILE_EVENT_MULTIPLEX
 	oprofilefs_create_file(sb, root, "time_slice", &timeout_fops);
 #endif
+	oprofilefs_create_ulong(sb, root, "timer_interval", &oprofile_timer_interval);
 	oprofile_create_stats_files(sb, root);
 	if (oprofile_ops.create_files)
 		oprofile_ops.create_files(sb, root);

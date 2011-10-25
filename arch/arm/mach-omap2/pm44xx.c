@@ -187,7 +187,6 @@ static void omap_default_idle(void)
 
 	local_fiq_enable();
 	local_irq_enable();
-	return omap_set_pwrdm_state(pwrst->pwrdm, pwrst->next_state);
 }
 
 static void __init prcm_setup_regs(void)

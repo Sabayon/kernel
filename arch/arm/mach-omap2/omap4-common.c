@@ -165,7 +165,7 @@ static int __init omap_l2_cache_init(void)
 
 	/* Setup POR Control register */
 	por_ctrl = readl_relaxed(l2cache_base + L2X0_PREFETCH_CTRL);
-
+#if 0
 	/*
 	 * Double linefill is available only on OMAP4460 L2X0.
 	 * Undocumented bit 25 is set for better performance.
@@ -174,7 +174,7 @@ static int __init omap_l2_cache_init(void)
 		por_ctrl |= ((1 << L2X0_PREFETCH_DATA_PREFETCH_SHIFT) |
 			(1 << L2X0_PREFETCH_DOUBLE_LINEFILL_SHIFT) |
 			(1 << 25));
-
+#endif
 	if (cpu_is_omap446x() || (omap_rev() >= OMAP4430_REV_ES2_2)) {
 		por_ctrl |= L2X0_POR_OFFSET_VALUE;
 		omap_smc1(0x113, por_ctrl);

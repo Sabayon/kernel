@@ -96,4 +96,5 @@ NOTES:
        - paravirtualization support
        - IO scheduler changes
        - Server-oriented preemption support
-       - anything else?
+       - timer frequency: 300Hz
+       - x86: non-standard 32-bit SMP arch support

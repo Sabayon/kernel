@@ -49,6 +49,7 @@
 #include "control.h"
 #include "mux.h"
 #include "common-board-devices.h"
+#include "pm.h"
 
 #define GPIO_HUB_POWER		1
 #define GPIO_HUB_NRESET		62
@@ -56,6 +57,7 @@
 #define GPIO_WIFI_IRQ		53
 #define HDMI_GPIO_HPD 60 /* Hot plug pin for HDMI */
 #define HDMI_GPIO_LS_OE 41 /* Level shifter for HDMI */
+#define TPS62361_GPIO   7
 
 static int
 panda_kim_suspend(struct platform_device *pdev, pm_message_t msg)
@@ -579,6 +581,7 @@ void omap4_panda_display_init(void)
 
 static void __init omap4_panda_init(void)
 {
+	int status;
 	int package = OMAP_PACKAGE_CBS;
 
 	if (omap_rev() == OMAP4430_REV_ES1_0)
@@ -596,6 +599,14 @@ static void __init omap4_panda_init(void)
 	omap4_ehci_init();
 	usb_musb_init(&musb_board_data);
 	omap4_panda_display_init();
+
+	if (cpu_is_omap446x()) {
+		/* Vsel0 = gpio, vsel1 = gnd */
+		status = omap_tps6236x_board_setup(true, TPS62361_GPIO, -1,
+				OMAP_PIN_OFF_OUTPUT_HIGH, -1);
+		if (status)
+			pr_err("TPS62361 initialization failed: %d\n", status);
+	}
 }
 
 static void __init omap4_panda_map_io(void)

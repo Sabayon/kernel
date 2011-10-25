@@ -73,19 +73,21 @@ struct neighbour_stats {
 	u16 bottom_occupied;
 };
 
-struct slot {
-	u8 busy;		/* is slot occupied */
-	struct tcm_area parent; /* parent area */
-	u32 reserved;
+struct score {
+	struct nearness_factor f;
+	struct neighbour_stats n;
+	struct tcm_area        a;
+	u16    neighs;
 };
+
 
 struct sita_pvt {
 	u16 width;
 	u16 height;
-	struct list_head res;	/* all allocations */
 	struct mutex mtx;
 	struct tcm_pt div_pt;	/* divider point splitting container */
-	struct slot **map;	/* container slots */
+	/* container slots - simply pointers to parent area */
+	struct tcm_area ***map;
 };
 
 #endif /* _TCM_SITA_H_ */

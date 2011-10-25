@@ -49,6 +49,7 @@
 #include <asm/system.h>
 #include <asm/pgalloc.h>
 #include <asm/suspend.h>
+#include <asm/hardware/cache-l2x0.h>
 
 #include <plat/omap44xx.h>
 #include <mach/omap4-common.h>
@@ -67,9 +68,12 @@ struct omap4_cpu_pm_info {
 	struct powerdomain *pwrdm;
 	void __iomem *scu_sar_addr;
 	void __iomem *wkup_sar_addr;
+	void __iomem *l2x0_sar_addr;
 };
 
 static DEFINE_PER_CPU(struct omap4_cpu_pm_info, omap4_pm_info);
+static struct powerdomain *mpuss_pd;
+static void __iomem *sar_base;
 
 /*
  * Program the wakeup routine address for the CPU0 and CPU1
@@ -257,6 +261,7 @@ int omap4_enter_lowpower(unsigned int cpu, unsigned int power_state)
 	set_cpu_next_pwrst(cpu, power_state);
 	set_cpu_wakeup_addr(cpu, virt_to_phys(omap4_cpu_resume));
 	scu_pwrst_prepare(cpu, power_state);
+	l2x0_pwrst_prepare(cpu, save_state);
 
 	/*
 	 * Call low level function  with targeted CPU id
@@ -316,17 +321,19 @@ int omap4_hotplug_cpu(unsigned int cpu, unsigned int power_state)
 int __init omap4_mpuss_init(void)
 {
 	struct omap4_cpu_pm_info *pm_info;
-	void __iomem *sar_base = omap4_get_sar_ram_base();
 
 	if (omap_rev() == OMAP4430_REV_ES1_0) {
 		WARN(1, "Power Management not supported on OMAP4430 ES1.0\n");
 		return -ENODEV;
 	}
 
+	sar_base = omap4_get_sar_ram_base();
+
 	/* Initilaise per CPU PM information */
 	pm_info = &per_cpu(omap4_pm_info, 0x0);
 	pm_info->scu_sar_addr = sar_base + SCU_OFFSET0;
 	pm_info->wkup_sar_addr = sar_base + CPU0_WAKEUP_NS_PA_ADDR_OFFSET;
+	pm_info->l2x0_sar_addr = sar_base + L2X0_SAVE_OFFSET0;
 	pm_info->pwrdm = pwrdm_lookup("cpu0_pwrdm");
 	if (!pm_info->pwrdm) {
 		pr_err("Lookup failed for CPU0 pwrdm\n");
@@ -343,6 +350,7 @@ int __init omap4_mpuss_init(void)
 	pm_info = &per_cpu(omap4_pm_info, 0x1);
 	pm_info->scu_sar_addr = sar_base + SCU_OFFSET1;
 	pm_info->wkup_sar_addr = sar_base + CPU1_WAKEUP_NS_PA_ADDR_OFFSET;
+	pm_info->l2x0_sar_addr = sar_base + L2X0_SAVE_OFFSET1;
 	pm_info->pwrdm = pwrdm_lookup("cpu1_pwrdm");
 	if (!pm_info->pwrdm) {
 		pr_err("Lookup failed for CPU1 pwrdm\n");
@@ -369,6 +377,8 @@ int __init omap4_mpuss_init(void)
 		__raw_writel(1, sar_base + OMAP_TYPE_OFFSET);
 	else
 		__raw_writel(0, sar_base + OMAP_TYPE_OFFSET);
+
+	save_l2x0_context();
 
 	return 0;
 }

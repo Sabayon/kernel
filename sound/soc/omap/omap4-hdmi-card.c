@@ -61,6 +61,8 @@ static struct snd_soc_ops omap4_hdmi_dai_ops = {
 	.hw_params = omap4_hdmi_dai_hw_params,
 };
 
+#define OMAP4_HDMI_SND_DEV_ID 1
+
 static struct snd_soc_dai_link omap4_hdmi_dai = {
 	.name = "HDMI",
 	.stream_name = "HDMI",

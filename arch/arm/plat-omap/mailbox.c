@@ -351,9 +351,12 @@ struct omap_mbox *omap_mbox_get(const char *name, struct notifier_block *nb)
 		return ERR_PTR(-EINVAL);
 
 	mutex_lock(&mboxes_lock);
-	for (mbox = *mboxes; mbox; mbox++)
-		if (!strcmp(mbox->name, name))
+	for (i = 0; (_mbox = mboxes[i]); i++) {
+		if (!strcmp(_mbox->name, name)) {
+			mbox = _mbox;
 			break;
+		}
+	}
 
 	if (!mbox) {
 		mutex_unlock(&mboxes_lock);

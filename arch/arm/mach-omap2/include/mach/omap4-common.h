@@ -36,6 +36,7 @@ extern void omap_smc1(u32 fn, u32 arg);
 extern void omap_bus_sync(void);
 extern unsigned long omap_get_dram_barrier_base(void);
 extern void omap_do_wfi(void);
+extern void __iomem *omap4_get_sar_ram_base(void);
 
 #ifdef CONFIG_SMP
 /* Needed for secondary core boot */

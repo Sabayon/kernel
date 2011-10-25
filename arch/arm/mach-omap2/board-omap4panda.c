@@ -28,6 +28,9 @@
 #include <linux/regulator/machine.h>
 #include <linux/regulator/fixed.h>
 #include <linux/wl12xx.h>
+#include <linux/netdevice.h>
+#include <linux/if_ether.h>
+#include <linux/ti_wilink_st.h>
 
 #include <mach/hardware.h>
 #include <mach/omap4-common.h>
@@ -54,13 +57,19 @@
 #define HDMI_GPIO_HPD 60 /* Hot plug pin for HDMI */
 #define HDMI_GPIO_LS_OE 41 /* Level shifter for HDMI */
 
-/* wl127x BT, FM, GPS connectivity chip */
-static int wl1271_gpios[] = {46, -1, -1};
+
+struct ti_st_plat_data panda_bt_platform_data = {
+        .nshutdown_gpio = 46,
+        .dev_name = "/dev/ttyO1",
+        .flow_cntrl = 1,
+        .baud_rate = 3000000,
+};
+
 static struct platform_device wl1271_device = {
 	.name	= "kim",
 	.id	= -1,
 	.dev	= {
-		.platform_data	= &wl1271_gpios,
+		.platform_data	= &panda_bt_platform_data,
 	},
 };
 

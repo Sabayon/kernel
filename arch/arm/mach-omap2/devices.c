@@ -29,6 +29,7 @@
 #include <mach/gpio.h>
 #include <plat/mmc.h>
 #include <plat/dma.h>
+#include <plat/gpu.h>
 #include <plat/omap_hwmod.h>
 #include <plat/omap_device.h>
 #include <plat/omap4-keypad.h>
@@ -715,8 +716,6 @@ static struct omap_device_pm_latency omap_drm_latency[] = {
 	},
 };
 
-#if 0
-
 static struct platform_device omap_omaplfb_device = {
 	.name		= "omaplfb",
 	.id		= -1,
@@ -766,8 +765,6 @@ static void omap_init_gpu(void)
 	platform_device_register(&omap_omaplfb_device);
 }
 
-#endif
-
 /*-------------------------------------------------------------------------*/
 
 static int __init omap2_init_devices(void)
@@ -787,6 +784,7 @@ static int __init omap2_init_devices(void)
 	omap_init_sham();
 	omap_init_aes();
 	omap_init_vout();
+	omap_init_gpu();
 
 	return 0;
 }

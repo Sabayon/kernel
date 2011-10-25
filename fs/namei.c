@@ -1748,10 +1748,11 @@ static struct dentry *__lookup_hash(struct qstr *name,
  * needs parent already locked. Doesn't follow mounts.
  * SMP-safe.
  */
-static struct dentry *lookup_hash(struct nameidata *nd)
+struct dentry *lookup_hash(struct nameidata *nd)
 {
 	return __lookup_hash(&nd->last, nd->path.dentry, nd);
 }
+EXPORT_SYMBOL(lookup_hash);
 
 /**
  * lookup_one_len - filesystem helper to lookup single pathname component

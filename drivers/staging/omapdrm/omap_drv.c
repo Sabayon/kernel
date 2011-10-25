@@ -170,7 +170,8 @@ static int omap_modeset_init(struct drm_device *dev)
 				get_connector_type(dssdev), dssdev);
 
 		if (!connector) {
-			dev_err(dev->dev, "could not create connector\n");
+			dev_err(dev->dev, "could not create %s connector\n",
+								 dssdev->name);
 			return -ENOMEM;
 		}
 

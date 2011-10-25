@@ -198,6 +198,7 @@ static int __init omap_l2_cache_init(void)
 		writel_relaxed(lockdown, l2cache_base + L2X0_LOCKDOWN_WAY_D1);
 		writel_relaxed(lockdown, l2cache_base + L2X0_LOCKDOWN_WAY_I0);
 		writel_relaxed(lockdown, l2cache_base + L2X0_LOCKDOWN_WAY_I1);
+		goto skip_aux_por_api;
 	}
 
 skip_aux_por_api:

@@ -44,7 +44,7 @@
 #include "dss_features.h"
 
 #include <plat/edid.h>
-#define HDMI_DEFAULT_REGN 15
+#define HDMI_DEFAULT_REGN 16
 #define HDMI_DEFAULT_REGM2 1
 
 static struct {
@@ -212,7 +212,7 @@ static int hdmi_pll_init(enum hdmi_clk_refsel refsel, int dcofreq,
 
 	r = hdmi_read_reg(PLLCTRL_CFG1);
 	r = FLD_MOD(r, fmt->regm, 20, 9); /* CFG1_PLL_REGM */
-	r = FLD_MOD(r, fmt->regn, 8, 1);  /* CFG1_PLL_REGN */
+	r = FLD_MOD(r, fmt->regn - 1, 8, 1);  /* CFG1_PLL_REGN */
 
 	hdmi_write_reg(PLLCTRL_CFG1, r);
 
@@ -983,7 +983,7 @@ static void hdmi_compute_pll(struct omap_dss_device *dssdev, int phy,
 	else
 		pi->regn = dssdev->clocks.hdmi.regn;
 
-	refclk = clkin / (pi->regn + 1);
+	refclk = clkin / pi->regn;
 
 	/*
 	 * multiplier is pixel_clk/ref_clk
@@ -1009,7 +1009,7 @@ static void hdmi_compute_pll(struct omap_dss_device *dssdev, int phy,
 	 * is greater than 1000MHz
 	 */
 	pi->dcofreq = phy > 1000 * 100;
-	pi->regsd = ((pi->regm * clkin / 10) / ((pi->regn + 1) * 250) + 5) / 10;
+	pi->regsd = ((pi->regm * clkin / 10) / (pi->regn * 250) + 5) / 10;
 
 	DSSDBG("M = %d Mf = %d\n", pi->regm, pi->regmf);
 	DSSDBG("range = %d sd = %d\n", pi->dcofreq, pi->regsd);

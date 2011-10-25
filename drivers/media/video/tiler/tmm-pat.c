@@ -100,6 +100,7 @@ static void free_fast(struct fast *f)
 			/* otherwise, free */
 			total_mem -= PAGE_SIZE;
 			__free_page(f->mem[i]->pg);
+			kfree(f->mem[i]);
 		}
 	}
 	kfree(f->pa);

@@ -48,7 +48,7 @@ struct iommu {
 	struct list_head	mmap;
 	struct mutex		mmap_lock; /* protect mmap */
 
-	struct blocking_notifier_head	notifier;
+	struct raw_notifier_head	notifier;
 
 	u32 da_start;
 	u32 da_end;

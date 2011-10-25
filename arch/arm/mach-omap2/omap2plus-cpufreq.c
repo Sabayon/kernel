@@ -108,18 +108,37 @@ static int omap_target(struct cpufreq_policy *policy,
 	if (freqs.old == freqs.new && policy->cur == freqs.new)
 		return ret;
 
+	if (!is_smp()) {
+		cpufreq_notify_transition(&freqs, CPUFREQ_PRECHANGE);
+		goto set_freq;
+	}
+
 	/* notifiers */
 	for_each_cpu(i, policy->cpus) {
 		freqs.cpu = i;
 		cpufreq_notify_transition(&freqs, CPUFREQ_PRECHANGE);
 	}
 
+set_freq:
 #ifdef CONFIG_CPU_FREQ_DEBUG
 	pr_info("cpufreq-omap: transition: %u --> %u\n", freqs.old, freqs.new);
 #endif
 
-	ret = omap_device_scale(mpu_dev, mpu_dev, freqs.new * 1000);
+	ret = clk_set_rate(mpu_clk, freqs.new * 1000);
+
+	/*
+	 * Generic CPUFREQ driver jiffy update is under !SMP. So jiffies
+	 * won't get updated when UP machine cpufreq build with
+	 * CONFIG_SMP enabled. Below code is added only to manage that
+	 * scenario
+	 */
 	freqs.new = omap_getspeed(policy->cpu);
+	if (!is_smp()) {
+		loops_per_jiffy =
+			 cpufreq_scale(loops_per_jiffy, freqs.old, freqs.new);
+		cpufreq_notify_transition(&freqs, CPUFREQ_POSTCHANGE);
+		goto skip_lpj;
+	}
 
 #ifdef CONFIG_SMP
 	/*
@@ -153,6 +172,7 @@ static int omap_target(struct cpufreq_policy *policy,
 		cpufreq_notify_transition(&freqs, CPUFREQ_POSTCHANGE);
 	}
 
+skip_lpj:
 	return ret;
 }
 
@@ -275,5 +295,5 @@ static void __exit omap_cpufreq_exit(void)
 
 MODULE_DESCRIPTION("cpufreq driver for OMAP2PLUS SOCs");
 MODULE_LICENSE("GPL");
-module_init(omap_cpufreq_init);
+late_initcall(omap_cpufreq_init);
 module_exit(omap_cpufreq_exit);

@@ -17,6 +17,7 @@
 #include <linux/slab.h>
 
 #include "powerdomain.h"
+#include "clockdomain.h"
 #include <mach/omap4-common.h>
 
 struct power_state {
@@ -72,6 +73,22 @@ static const struct platform_suspend_ops omap_pm_ops = {
 	.valid		= suspend_valid_only_mem,
 };
 #endif /* CONFIG_SUSPEND */
+
+/*
+ * Enable hardware supervised mode for all clockdomains if it's
+ * supported. Initiate sleep transition for other clockdomains, if
+ * they are not used
+ */
+static int __init clkdms_setup(struct clockdomain *clkdm, void *unused)
+{
+	if (clkdm->flags & CLKDM_CAN_ENABLE_AUTO)
+		clkdm_allow_idle(clkdm);
+	else if (clkdm->flags & CLKDM_CAN_FORCE_SLEEP &&
+			atomic_read(&clkdm->usecount) == 0)
+		clkdm_sleep(clkdm);
+	return 0;
+}
+
 
 static int __init pwrdms_setup(struct powerdomain *pwrdm, void *unused)
 {
@@ -160,6 +177,8 @@ static int __init omap4_pm_init(void)
 				"wakeup dependency\n");
 		goto err2;
 	}
+
+	(void) clkdm_for_each(clkdms_setup, NULL);
 
 #ifdef CONFIG_SUSPEND
 	suspend_set_ops(&omap_pm_ops);

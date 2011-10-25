@@ -153,6 +153,42 @@ static struct clkdm_dep ivahd_wkup_sleep_deps[] = {
 	{ NULL },
 };
 
+static struct clkdm_dep l3_d2d_wkup_sleep_deps[] = {
+        {
+                .clkdm_name      = "abe_clkdm",
+                .omap_chip       = OMAP_CHIP_INIT(CHIP_IS_OMAP44XX)
+        },
+        {
+                .clkdm_name      = "ivahd_clkdm",
+                .omap_chip       = OMAP_CHIP_INIT(CHIP_IS_OMAP44XX)
+        },
+        {
+                .clkdm_name      = "l3_1_clkdm",
+                .omap_chip       = OMAP_CHIP_INIT(CHIP_IS_OMAP44XX)
+        },
+        {
+                .clkdm_name      = "l3_2_clkdm",
+                .omap_chip       = OMAP_CHIP_INIT(CHIP_IS_OMAP44XX)
+        },
+        {
+                .clkdm_name      = "l3_emif_clkdm",
+                .omap_chip       = OMAP_CHIP_INIT(CHIP_IS_OMAP44XX)
+        },
+        {
+                .clkdm_name      = "l3_init_clkdm",
+                .omap_chip       = OMAP_CHIP_INIT(CHIP_IS_OMAP44XX)
+        },
+        {
+                .clkdm_name      = "l4_cfg_clkdm",
+                .omap_chip       = OMAP_CHIP_INIT(CHIP_IS_OMAP44XX)
+        },
+        {
+                .clkdm_name      = "l4_per_clkdm",
+                .omap_chip       = OMAP_CHIP_INIT(CHIP_IS_OMAP44XX)
+        },
+        { NULL },
+};
+
 static struct clkdm_dep l3_dma_wkup_sleep_deps[] = {
 	{
 		.clkdm_name	 = "abe_clkdm",
@@ -573,7 +609,7 @@ static struct clockdomain mpu_44xx_clkdm = {
 	.wkdep_srcs	  = mpu_wkup_sleep_deps,
 	.sleepdep_srcs	  = mpu_wkup_sleep_deps,
 	.flags		  = CLKDM_CAN_FORCE_WAKEUP | CLKDM_CAN_HWSUP,
-	.omap_chip	  = OMAP_CHIP_INIT(CHIP_IS_OMAP4430),
+	.omap_chip	  = OMAP_CHIP_INIT(CHIP_IS_OMAP44XX),
 };
 
 static struct clockdomain l3_2_44xx_clkdm = {

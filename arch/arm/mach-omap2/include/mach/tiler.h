@@ -103,6 +103,15 @@ s32 tiler_reg_notifier(struct notifier_block *nb);
 s32 tiler_unreg_notifier(struct notifier_block *nb);
 
 /**
+ * Get the physical address for a given user va.
+ *
+ * @param usr	user virtual address
+ *
+ * @return valid pa or 0 for error
+ */
+u32 tiler_virt2phys(u32 usr);
+
+/**
  * Reserves a 1D or 2D TILER block area and memory for the
  * current process with group ID 0.
  *

@@ -651,6 +651,27 @@ s32 tiler_unreg_notifier(struct notifier_block *nb)
 }
 EXPORT_SYMBOL(tiler_unreg_notifier);
 
+u32 tiler_virt2phys(u32 usr)
+{
+	pmd_t *pmd;
+	pte_t *ptep;
+	pgd_t *pgd = pgd_offset(current->mm, usr);
+
+	if (pgd_none(*pgd) || pgd_bad(*pgd))
+		return 0;
+
+	pmd = pmd_offset(pgd, usr);
+	if (pmd_none(*pmd) || pmd_bad(*pmd))
+		return 0;
+
+	ptep = pte_offset_map(pmd, usr);
+	if (ptep && pte_present(*ptep))
+		return (*ptep & PAGE_MASK) | (~PAGE_MASK & usr);
+
+	return 0;
+}
+EXPORT_SYMBOL(tiler_virt2phys);
+
 void tiler_reservex(u32 n, enum tiler_fmt fmt, u32 width, u32 height,
 		   u32 align, u32 offs, u32 gid, pid_t pid)
 {

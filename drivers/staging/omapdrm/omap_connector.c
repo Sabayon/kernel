@@ -381,7 +381,7 @@ void omap_connector_mode_set(struct drm_connector *connector,
 
 	dssdrv->set_timings(dssdev, &timings);
 }
-
+#if 0
 enum omap_dss_update_mode omap_connector_get_update_mode(
 		struct drm_connector *connector)
 {
@@ -415,7 +415,7 @@ int omap_connector_set_update_mode(struct drm_connector *connector,
 	return -EINVAL;
 }
 EXPORT_SYMBOL(omap_connector_set_update_mode);
-
+#endif
 int omap_connector_sync(struct drm_connector *connector)
 {
 	struct omap_connector *omap_connector = to_omap_connector(connector);

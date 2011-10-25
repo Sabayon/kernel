@@ -116,6 +116,8 @@ static void omap_default_idle(void)
 static int __init omap4_pm_init(void)
 {
 	int ret;
+	struct clockdomain *emif_clkdm, *mpuss_clkdm, *l3_1_clkdm;
+	struct clockdomain *ducati_clkdm, *l3_2_clkdm;
 
 	if (!cpu_is_omap44xx())
 		return -ENODEV;
@@ -125,6 +127,32 @@ static int __init omap4_pm_init(void)
 	ret = pwrdm_for_each(pwrdms_setup, NULL);
 	if (ret) {
 		pr_err("Failed to setup powerdomains\n");
+		goto err2;
+	}
+
+	/*
+	 * The dynamic dependency between MPUSS -> MEMIF and
+	 * MPUSS -> L3_* and DUCATI -> doesn't work as expected.
+	 * The hardware recommendation is to keep above dependencies.
+	 * Without this system locks up or randomly crashesh.
+	 */
+	mpuss_clkdm = clkdm_lookup("mpuss_clkdm");
+	emif_clkdm = clkdm_lookup("l3_emif_clkdm");
+	l3_1_clkdm = clkdm_lookup("l3_1_clkdm");
+	l3_2_clkdm = clkdm_lookup("l3_2_clkdm");
+	ducati_clkdm = clkdm_lookup("ducati_clkdm");
+	if ((!mpuss_clkdm) || (!emif_clkdm) || (!l3_1_clkdm) ||
+			(!l3_2_clkdm) || (!ducati_clkdm))
+		goto err2;
+
+	ret = clkdm_add_wkdep(mpuss_clkdm, emif_clkdm);
+	ret |= clkdm_add_wkdep(mpuss_clkdm, l3_1_clkdm);
+	ret |= clkdm_add_wkdep(mpuss_clkdm, l3_2_clkdm);
+	ret |= clkdm_add_wkdep(ducati_clkdm, l3_1_clkdm);
+	ret |= clkdm_add_wkdep(ducati_clkdm, l3_2_clkdm);
+	if (ret) {
+		pr_err("Failed to add MPUSS -> L3/EMIF, DUCATI -> L3 "
+				"wakeup dependency\n");
 		goto err2;
 	}
 

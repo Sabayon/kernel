@@ -98,7 +98,7 @@ static struct voltagedomain *voltagedomains_omap4[] __initdata = {
 
 static const char *sys_clk_name __initdata = "sys_clkin_ck";
 
-void __init omap44xx_voltagedomains_init(void)
+int __init omap44xx_voltagedomains_init(void)
 {
 	struct voltagedomain *voltdm;
 	int i;
@@ -107,6 +107,9 @@ void __init omap44xx_voltagedomains_init(void)
 	 * XXX Will depend on the process, validation, and binning
 	 * for the currently-running IC
 	 */
+
+	omap4_vdd_mpu_info.dep_vdd_info = omap443x_vddmpu_dep_info;
+
 	if (cpu_is_omap443x()) {
 		omap4_voltdm_mpu.volt_data = omap443x_vdd_mpu_volt_data;
 		omap4_voltdm_iva.volt_data = omap443x_vdd_iva_volt_data;
@@ -125,6 +128,8 @@ void __init omap44xx_voltagedomains_init(void)
 		omap4_vdd_core_info.volt_data = omap446x_vdd_core_volt_data;
 	} else return;
 	
+	omap4_vdd_iva_info.dep_vdd_info = omap443x_vddiva_dep_info;
+
 	for (i = 0; voltdm = voltagedomains_omap4[i], voltdm; i++)
 		voltdm->sys_clk.name = sys_clk_name;
 
@@ -148,5 +153,6 @@ void __init omap44xx_voltagedomains_init(void)
 				       omap4_vdd_info,
 				       ARRAY_SIZE(omap4_vdd_info));
 */
+	return 0;
 };
 

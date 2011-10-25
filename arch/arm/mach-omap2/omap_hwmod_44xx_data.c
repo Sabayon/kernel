@@ -765,7 +765,7 @@ static struct omap_hwmod omap44xx_mpu_hwmod = {
 	},
 	.masters	= omap44xx_mpu_masters,
 	.masters_cnt	= ARRAY_SIZE(omap44xx_mpu_masters),
-	.omap_chip	= OMAP_CHIP_INIT(CHIP_IS_OMAP4430),
+	.omap_chip	= OMAP_CHIP_INIT(CHIP_IS_OMAP44XX),
 };
 
 /*
@@ -845,7 +845,7 @@ static struct omap_hwmod omap44xx_smartreflex_core_hwmod = {
 	.slaves		= omap44xx_smartreflex_core_slaves,
 	.slaves_cnt	= ARRAY_SIZE(omap44xx_smartreflex_core_slaves),
 	.dev_attr	= &smartreflex_core_dev_attr,
-	.omap_chip	= OMAP_CHIP_INIT(CHIP_IS_OMAP4430),
+	.omap_chip	= OMAP_CHIP_INIT(CHIP_IS_OMAP44XX),
 };
 
 /* smartreflex_iva */
@@ -897,7 +897,7 @@ static struct omap_hwmod omap44xx_smartreflex_iva_hwmod = {
 	.slaves		= omap44xx_smartreflex_iva_slaves,
 	.slaves_cnt	= ARRAY_SIZE(omap44xx_smartreflex_iva_slaves),
 	.dev_attr	= &smartreflex_iva_dev_attr,
-	.omap_chip	= OMAP_CHIP_INIT(CHIP_IS_OMAP4430),
+	.omap_chip	= OMAP_CHIP_INIT(CHIP_IS_OMAP44XX),
 };
 
 /* smartreflex_mpu */
@@ -949,7 +949,7 @@ static struct omap_hwmod omap44xx_smartreflex_mpu_hwmod = {
 	.slaves		= omap44xx_smartreflex_mpu_slaves,
 	.slaves_cnt	= ARRAY_SIZE(omap44xx_smartreflex_mpu_slaves),
 	.dev_attr       = &smartreflex_mpu_dev_attr,
-	.omap_chip	= OMAP_CHIP_INIT(CHIP_IS_OMAP4430),
+	.omap_chip	= OMAP_CHIP_INIT(CHIP_IS_OMAP44XX),
 };
 
 /*
@@ -1056,6 +1056,72 @@ static struct omap_hwmod omap44xx_aess_hwmod = {
 	.masters	= omap44xx_aess_masters,
 	.masters_cnt	= ARRAY_SIZE(omap44xx_aess_masters),
 	.omap_chip	= OMAP_CHIP_INIT(CHIP_IS_OMAP44XX),
+};
+
+/*
+ * 'ctrl_module' class
+ * attila core control module
+ */
+
+static struct omap_hwmod_class_sysconfig omap44xx_ctrl_module_sysc = {
+	.rev_offs       = 0x0000,
+	.sysc_offs      = 0x0010,
+	.sysc_flags     = SYSC_HAS_SIDLEMODE,
+	.idlemodes      = (SIDLE_FORCE | SIDLE_NO | SIDLE_SMART |
+				SIDLE_SMART_WKUP),
+	.sysc_fields    = &omap_hwmod_sysc_type2,
+};
+
+static struct omap_hwmod_class omap44xx_ctrl_module_hwmod_class = {
+	.name   = "ctrl_module",
+	.sysc   = &omap44xx_ctrl_module_sysc,
+};
+
+/* ctrl_module_core */
+static struct omap_hwmod omap44xx_ctrl_module_core_hwmod;
+static struct omap_hwmod_irq_info omap44xx_ctrl_module_core_irqs[] = {
+	{ .name = "sec_evts", .irq = 8 + OMAP44XX_IRQ_GIC_START },
+	{ .name = "thermal_alert", .irq = 126 + OMAP44XX_IRQ_GIC_START },
+};
+
+static struct omap_hwmod_addr_space omap44xx_ctrl_module_core_addrs[] = {
+	{
+		.pa_start       = 0x4a002000,
+		.pa_end         = 0x4a0027ff,
+		.flags          = ADDR_TYPE_RT
+	},
+};
+
+/* l4_cfg -> ctrl_module_core */
+static struct omap_hwmod_ocp_if omap44xx_l4_cfg__ctrl_module_core = {
+	.master         = &omap44xx_l4_cfg_hwmod,
+	.slave          = &omap44xx_ctrl_module_core_hwmod,
+	.clk            = "l4_div_ck",
+	.addr           = omap44xx_ctrl_module_core_addrs,
+	.user           = OCP_USER_MPU | OCP_USER_SDMA,
+};
+
+/* ctrl_module_core slave ports */
+static struct omap_hwmod_ocp_if *omap44xx_ctrl_module_core_slaves[] = {
+	&omap44xx_l4_cfg__ctrl_module_core,
+};
+
+/* scm dev_attr */
+static struct omap4plus_scm_dev_attr scm_dev_attr = {
+	.rev		= 1,
+	.cnt		= 1,
+};
+
+static struct omap_hwmod omap44xx_ctrl_module_core_hwmod = {
+	.name           = "ctrl_module_core",
+	.class          = &omap44xx_ctrl_module_hwmod_class,
+	.mpu_irqs       = omap44xx_ctrl_module_core_irqs,
+	.main_clk       = "l4_div_ck",
+	.slaves         = omap44xx_ctrl_module_core_slaves,
+	.slaves_cnt     = ARRAY_SIZE(omap44xx_ctrl_module_core_slaves),
+	.dev_attr	= &scm_dev_attr,
+	.clkdm_name     = "l4_wkup_clkdm",
+	.omap_chip      = OMAP_CHIP_INIT(CHIP_IS_OMAP44XX),
 };
 
 /*
@@ -2608,7 +2674,6 @@ static struct omap_hwmod omap44xx_i2c1_hwmod = {
 	.slaves		= omap44xx_i2c1_slaves,
 	.slaves_cnt	= ARRAY_SIZE(omap44xx_i2c1_slaves),
 	.dev_attr	= &i2c_dev_attr,
-	.omap_chip	= OMAP_CHIP_INIT(CHIP_IS_OMAP4430),
 	.omap_chip	= OMAP_CHIP_INIT(CHIP_IS_OMAP44XX),
 };
 

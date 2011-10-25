@@ -374,8 +374,14 @@ void __init omap_vc_init_channel(struct voltagedomain *voltdm)
 	u8 on_vsel, onlp_vsel, ret_vsel, off_vsel;
 	u32 val;
 
-	if (!voltdm->pmic || !voltdm->pmic->uv_to_vsel) {
-		pr_err("%s: PMIC info requried to configure vc for"
+	if (!voltdm->pmic) {
+		pr_err("%s: voltdm->pmic is NULL at vdd %d init, can't init\n",
+			 __func__, voltdm->name);
+		return;
+	}
+
+	if (!voltdm->pmic->uv_to_vsel) {
+		pr_err("%s: voltdm->pmic->uv_to_vsel is NULL, vc for"
 			"vdd_%s not populated.Hence cannot initialize vc\n",
 			__func__, voltdm->name);
 		return;

@@ -166,8 +166,6 @@ static int omap_modeset_init(struct drm_device *dev)
 			return 0;
 		}
 
-		omap_dss_get_device(dssdev);
-
 		connector = omap_connector_init(dev,
 				get_connector_type(dssdev), dssdev);
 
@@ -354,6 +352,11 @@ static int omap_modeset_init(struct drm_device *dev)
 	return 0;
 }
 
+static void omap_modeset_free(struct drm_device *dev)
+{
+	drm_mode_config_cleanup(dev);
+}
+
 /*
  * drm driver funcs
  */
@@ -428,8 +431,15 @@ static int dev_unload(struct drm_device *dev)
 		ret = plugin->unload(dev);
 	}
 
-	drm_kms_helper_poll_fini(dev);
 	drm_vblank_cleanup(dev);
+	drm_kms_helper_poll_fini(dev);
+
+	omap_fbdev_free(dev);
+
+	omap_modeset_free(dev);
+
+	kfree(dev->dev_private);
+	dev->dev_private = NULL;
 
 	loaded = false;
 

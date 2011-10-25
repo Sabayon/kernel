@@ -33,6 +33,7 @@
 #include <linux/platform_device.h>
 #include <linux/clk.h>
 #include <linux/err.h>
+#include <linux/interrupt.h>
 
 #include <linux/regulator/machine.h>
 
@@ -1295,12 +1296,40 @@ static const struct i2c_device_id twl_ids[] = {
 };
 MODULE_DEVICE_TABLE(i2c, twl_ids);
 
+#ifdef CONFIG_PM
+
+/*
+ * we need to enforce that interrupts are only handled after i2c device
+ * has resumed, otherwise we will blow chunks
+ */
+
+static int twl_suspend(struct i2c_client *client, pm_message_t mesg)
+{
+	if (client->irq)
+		disable_irq(client->irq);
+
+	return 0;
+}
+
+static int twl_resume(struct i2c_client *client)
+{
+	if (client->irq)
+		enable_irq(client->irq);
+
+	return 0;
+}
+#endif
+
 /* One Client Driver , 4 Clients */
 static struct i2c_driver twl_driver = {
 	.driver.name	= DRIVER_NAME,
 	.id_table	= twl_ids,
 	.probe		= twl_probe,
 	.remove		= twl_remove,
+#ifdef CONFIG_PM
+	.suspend	= twl_suspend,
+	.resume		= twl_resume,
+#endif
 };
 
 static int __init twl_init(void)

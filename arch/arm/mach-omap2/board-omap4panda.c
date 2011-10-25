@@ -44,6 +44,7 @@
 #include <plat/common.h>
 #include <plat/usb.h>
 #include <plat/mmc.h>
+#include <plat/dma-44xx.h>
 #include <video/omap-panel-generic-dpi.h>
 
 #include "hsmmc.h"
@@ -132,9 +133,24 @@ static void __init panda_leds_init(void)
 	platform_device_register(&leds_gpio);
 }
 
+static struct resource omap4panda_hdmi_resources[] = {
+        [0] = {                                                                 
+                .start = OMAP44XX_DSS_HDMI_L3_BASE,                                        
+                .end   = OMAP44XX_DSS_HDMI_L3_BASE + SZ_4M - 1,                           
+                .flags = IORESOURCE_MEM,                                        
+        },                                                                      
+        [1] = {                                                                 
+                .start = OMAP44XX_DMA_DSS_HDMI_REQ,                                                
+                .end   = OMAP44XX_DMA_DSS_HDMI_REQ,                              
+                .flags = IORESOURCE_DMA,                                        
+        }, 
+};
+
 static struct platform_device omap4panda_hdmi_audio_device = {
 	.name	= "hdmi-audio-dai",
 	.id	= -1,
+	.num_resources = ARRAY_SIZE(omap4panda_hdmi_resources),
+	.resource = omap4panda_hdmi_resources,
 };
 
 static struct platform_device *panda_devices[] __initdata = {

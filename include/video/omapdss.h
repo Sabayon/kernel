@@ -571,7 +571,7 @@ struct omap_dss_driver {
 	 * For displays like LCD panels, this means is the display present
 	 * on the board.
 	 */
-	bool (*is_detected)(struct omap_dss_device *dssdev);
+	bool (*is_detected)(struct omap_dss_device *dssdev, bool force);
 };
 
 int omap_dss_register_driver(struct omap_dss_driver *);
@@ -609,7 +609,7 @@ void omapdss_default_get_timings(struct omap_dss_device *dssdev,
 		struct omap_video_timings *timings);
 int omapdss_default_check_timings(struct omap_dss_device *dssdev,
 		struct omap_video_timings *timings);
-bool omapdss_default_is_detected(struct omap_dss_device *dssdev);
+bool omapdss_default_is_detected(struct omap_dss_device *dssdev, bool force);
 void omapdss_default_get_resolution(struct omap_dss_device *dssdev,
 		u16 *xres, u16 *yres);
 int omapdss_default_get_recommended_bpp(struct omap_dss_device *dssdev);

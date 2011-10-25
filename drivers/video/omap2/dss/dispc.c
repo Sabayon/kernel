@@ -2513,7 +2513,7 @@ static void dispc_set_lcd_divisor(enum omap_channel channel, u16 lck_div,
 		u16 pck_div)
 {
 	BUG_ON(lck_div < 1);
-	BUG_ON(pck_div < 2);
+	BUG_ON(pck_div < 1);
 
 	dispc_write_reg(DISPC_DIVISORo(channel),
 			FLD_VAL(lck_div, 23, 16) | FLD_VAL(pck_div, 7, 0));
@@ -2995,10 +2995,16 @@ void dispc_set_pol_freq(enum omap_channel channel,
 void dispc_find_clk_divs(bool is_tft, unsigned long req_pck, unsigned long fck,
 		struct dispc_clock_info *cinfo)
 {
-	u16 pcd_min = is_tft ? 2 : 3;
+	u16 pcd_min, pcd_max;
 	unsigned long best_pck;
 	u16 best_ld, cur_ld;
 	u16 best_pd, cur_pd;
+
+	pcd_min = dss_feat_get_param_min(FEAT_PARAM_DSS_PCD);
+	pcd_max = dss_feat_get_param_max(FEAT_PARAM_DSS_PCD);
+
+	if (!is_tft)
+		pcd_min = 3;
 
 	best_pck = 0;
 	best_ld = 0;
@@ -3007,7 +3013,7 @@ void dispc_find_clk_divs(bool is_tft, unsigned long req_pck, unsigned long fck,
 	for (cur_ld = 1; cur_ld <= 255; ++cur_ld) {
 		unsigned long lck = fck / cur_ld;
 
-		for (cur_pd = pcd_min; cur_pd <= 255; ++cur_pd) {
+		for (cur_pd = pcd_min; cur_pd <= pcd_max; ++cur_pd) {
 			unsigned long pck = lck / cur_pd;
 			long old_delta = abs(best_pck - req_pck);
 			long new_delta = abs(pck - req_pck);
@@ -3042,7 +3048,7 @@ int dispc_calc_clock_rates(unsigned long dispc_fclk_rate,
 {
 	if (cinfo->lck_div > 255 || cinfo->lck_div == 0)
 		return -EINVAL;
-	if (cinfo->pck_div < 2 || cinfo->pck_div > 255)
+	if (cinfo->pck_div < 1 || cinfo->pck_div > 255)
 		return -EINVAL;
 
 	cinfo->lck = dispc_fclk_rate / cinfo->lck_div;

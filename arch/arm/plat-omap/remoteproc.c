@@ -166,15 +166,10 @@ EXPORT_SYMBOL_GPL(rproc_wakeup);
 
 static inline int rproc_get_state(struct omap_rproc *rproc)
 {
-	struct omap_rproc_platform_data *pdata;
-	if (!rproc->dev)
+	if (WARN_ON(rproc == NULL))
 		return -EINVAL;
 
-	pdata = rproc->dev->platform_data;
-	if (!pdata->ops)
-		return -EINVAL;
-
-	return pdata->ops->get_state(rproc->dev);
+	return rproc->state;
 }
 
 static int rproc_reg_user_event(struct omap_rproc *rproc,

@@ -53,13 +53,15 @@ static struct {
 	int code;
 	int mode;
 	u8 edid[HDMI_EDID_MAX_LENGTH];
-	u8 edid_set;
-	bool custom_set;
+	bool edid_set;
 	struct hdmi_config cfg;
 
 	struct clk *sys_clk;
 	struct clk *hdmi_clk;
-} hdmi;
+} hdmi = {
+		.code = 4, /* setting default value of 640 480 VGA */
+		.mode = 0,
+};
 
 /*
  * Logic for the below structure :
@@ -558,222 +560,22 @@ static struct hdmi_cm hdmi_get_code(struct omap_video_timings *timing)
 	return cm;
 }
 
-/*
- * An amalgamation of work from
- * Mythri P K <mythripk@ti.com>
- * With EDID parsing for DVI Monitor from Rob Clark <rob@ti.com>
- * See d96ea7bff990a2bce52b1087a446f15625993b21
- */
-static void get_horz_vert_timing_info(int current_descriptor_addrs, u8 *edid ,
-		struct omap_video_timings *timings)
+static void hdmi_read_edid(void)
 {
-	union HDMI_EDID_DTD *edid_dtd =
-		(union HDMI_EDID_DTD *) &edid[current_descriptor_addrs];
+	int ret = 0;
 
-	if (edid_dtd->video.pixel_clock) {
-		struct HDMI_EDID_DTD_VIDEO *vid = &edid_dtd->video;
-
-		timings->pixel_clock = 10 * vid->pixel_clock;
-		timings->x_res = vid->horiz_active |
-				(((u16)vid->horiz_high & 0xf0) << 4);
-		timings->y_res = vid->vert_active |
-				(((u16)vid->vert_high & 0xf0) << 4);
-
-		/* HORIZONTAL FRONT PORCH */
-		timings->hfp = vid->horiz_sync_offset |
-				(((u16)vid->sync_pulse_high & 0xc0) << 2);
-		/* HORIZONTAL SYNC WIDTH */
-		timings->hsw = vid->horiz_sync_pulse |
-				(((u16)vid->sync_pulse_high & 0x30) << 4);
-		/* HORIZONTAL BACK PORCH */
-		timings->hbp = (vid->horiz_blanking |
-				(((u16)vid->horiz_high & 0x0f) << 8)) -
-				(timings->hfp + timings->hsw);
-		/* VERTICAL FRONT PORCH */
-		timings->vfp = ((vid->vert_sync_pulse & 0xf0) >> 4) |
-				((vid->sync_pulse_high & 0x0f) << 2);
-		/* VERTICAL SYNC WIDTH */
-		timings->vsw = (vid->vert_sync_pulse & 0x0f) |
-				((vid->sync_pulse_high & 0x03) << 4);
-		/* VERTICAL BACK PORCH */
-		timings->vbp = (vid->vert_blanking |
-				(((u16)vid->vert_high & 0x0f) << 8)) -
-				(timings->vfp + timings->vsw);
-		return;
-	}
-
-	switch (edid_dtd->monitor_name.block_type) {
-	case HDMI_EDID_DTD_TAG_STANDARD_TIMING_DATA:
-		printk(KERN_INFO "standard timing data\n");
-		return;
-	case HDMI_EDID_DTD_TAG_COLOR_POINT_DATA:
-		printk(KERN_INFO "color point data\n");
-		return;
-	case HDMI_EDID_DTD_TAG_MONITOR_NAME:
-		printk(KERN_INFO "monitor name: %s\n",
-						edid_dtd->monitor_name.text);
-		return;
-	case HDMI_EDID_DTD_TAG_MONITOR_LIMITS:
-	{
-		int i, max_area = 0;
-		struct HDMI_EDID_DTD_MONITOR *limits =
-						&edid_dtd->monitor_limits;
-
-		printk(KERN_INFO "monitor limits\n");
-		printk(KERN_INFO "  min_vert_freq=%d\n", limits->min_vert_freq);
-		printk(KERN_INFO "  max_vert_freq=%d\n", limits->max_vert_freq);
-		printk(KERN_INFO "  min_horiz_freq=%d\n",
-						limits->min_horiz_freq);
-		printk(KERN_INFO "  max_horiz_freq=%d\n",
-						limits->max_horiz_freq);
-		printk(KERN_INFO "  pixel_clock_mhz=%d\n",
-						limits->pixel_clock_mhz * 10);
-
-		/* find the highest matching resolution (w*h) */
-
-		/*
-		 * XXX since this is mainly for DVI monitors, should we only
-		 * support VESA timings?  My monitor at home would pick
-		 * 1920x1080 otherwise, but that seems to not work well (monitor
-		 * blanks out and comes back, and picture doesn't fill full
-		 * screen, but leaves a black bar on left (native res is
-		 * 2048x1152). However if I only consider VESA timings, it picks
-		 * 1680x1050 and the picture is stable and fills whole screen
-		 */
-		for (i = OMAP_HDMI_TIMINGS_VESA_START;
-					i < OMAP_HDMI_TIMINGS_NB; i++) {
-			const struct omap_video_timings *t =
-				&cea_vesa_timings[i].timings;
-			int hz, hscan, pixclock;
-			int vtotal, htotal;
-			htotal = t->hbp + t->hfp + t->hsw + t->x_res;
-			vtotal = t->vbp + t->vfp + t->vsw + t->y_res;
-
-			/* NOTE: We don't support interlaced mode for VESA */
-			pixclock = t->pixel_clock * 1000;
-			hscan = (pixclock + htotal / 2) / htotal;
-			hscan = (hscan + 500) / 1000 * 1000;
-			hz = (hscan + vtotal / 2) / vtotal;
-			hscan /= 1000;
-			pixclock /= 1000000;
-			printk(KERN_DEBUG "debug only pixclock=%d, hscan=%d, hz=%d\n",
-					pixclock, hscan, hz);
-			if ((pixclock < (limits->pixel_clock_mhz * 10)) &&
-			    (limits->min_horiz_freq <= hscan) &&
-			    (hscan <= limits->max_horiz_freq) &&
-			    (limits->min_vert_freq <= hz) &&
-			    (hz <= limits->max_vert_freq)) {
-				int area = t->x_res * t->y_res;
-				printk(KERN_INFO " -> %d: %dx%d\n", i,
-					t->x_res, t->y_res);
-				if (area > max_area) {
-					max_area = area;
-					*timings = *t;
-				}
-			}
-		}
-		if (max_area)
-			printk(KERN_INFO "found best resolution: %dx%d\n",
-				timings->x_res, timings->y_res);
-		return;
-	}
-	case HDMI_EDID_DTD_TAG_ASCII_STRING:
-		printk(KERN_INFO "ascii string: %s\n", edid_dtd->ascii.text);
-		return;
-	case HDMI_EDID_DTD_TAG_MONITOR_SERIALNUM:
-		printk(KERN_INFO "monitor serialnum: %s\n",
-			edid_dtd->monitor_serial_number.text);
-		return;
-	default:
-		printk(KERN_INFO "unsupported EDID descriptor block format\n");
-		return;
-	}
-}
-
-/* Description : This function gets the resolution information from EDID */
-static void get_edid_timing_data(u8 *edid)
-{
-	u8 count;
-	u16 current_descriptor_addrs;
-	struct hdmi_cm cm;
-	struct omap_video_timings edid_timings;
-
-	/* search block 0, there are 4 DTDs arranged in priority order */
-	for (count = 0; count < EDID_SIZE_BLOCK0_TIMING_DESCRIPTOR; count++) {
-		current_descriptor_addrs =
-			EDID_DESCRIPTOR_BLOCK0_ADDRESS +
-			count * EDID_TIMING_DESCRIPTOR_SIZE;
-		get_horz_vert_timing_info(current_descriptor_addrs,
-				edid, &edid_timings);
-		cm = hdmi_get_code(&edid_timings);
-		DSSDBG("Block0[%d] value matches code = %d , mode = %d\n",
-			count, cm.code, cm.mode);
-		if (cm.code == -1) {
-			continue;
-		} else {
-			hdmi.code = cm.code;
-			hdmi.mode = cm.mode;
-			DSSDBG("code = %d , mode = %d\n",
-				hdmi.code, hdmi.mode);
-			return;
-		}
-	}
-	if (edid[0x7e] != 0x00) {
-		for (count = 0; count < EDID_SIZE_BLOCK1_TIMING_DESCRIPTOR;
-			count++) {
-			current_descriptor_addrs =
-			EDID_DESCRIPTOR_BLOCK1_ADDRESS +
-			count * EDID_TIMING_DESCRIPTOR_SIZE;
-			get_horz_vert_timing_info(current_descriptor_addrs,
-						edid, &edid_timings);
-			cm = hdmi_get_code(&edid_timings);
-			DSSDBG("Block1[%d] value matches code = %d, mode = %d",
-				count, cm.code, cm.mode);
-			if (cm.code == -1) {
-				continue;
-			} else {
-				hdmi.code = cm.code;
-				hdmi.mode = cm.mode;
-				DSSDBG("code = %d , mode = %d\n",
-					hdmi.code, hdmi.mode);
-				return;
-			}
-		}
-	}
-
-	DSSINFO("no valid timing found , falling back to VGA\n");
-	hdmi.code = 4; /* setting default value of 640 480 VGA */
-	hdmi.mode = HDMI_DVI;
-}
-
-static void hdmi_read_edid(struct omap_video_timings *dp)
-{
-	int ret = 0, code;
-
-	memset(hdmi.edid, 0, HDMI_EDID_MAX_LENGTH);
-
-	if (!hdmi.edid_set)
+	if (!hdmi.edid_set) {
+		memset(hdmi.edid, 0, HDMI_EDID_MAX_LENGTH);
 		ret = read_edid(hdmi.edid, HDMI_EDID_MAX_LENGTH);
+	}
 
 	if (!ret) {
 		if (!memcmp(hdmi.edid, edid_header, sizeof(edid_header))) {
-			/* search for timings of default resolution */
-			get_edid_timing_data(hdmi.edid);
 			hdmi.edid_set = true;
 		}
 	} else {
 		DSSWARN("failed to read E-EDID\n");
 	}
-
-	if (!hdmi.edid_set) {
-		DSSINFO("fallback to VGA\n");
-		hdmi.code = 4; /* setting default value of 640 480 VGA */
-		hdmi.mode = HDMI_DVI;
-	}
-
-	code = get_timings_index();
-
-	*dp = cea_vesa_timings[code].timings;
 }
 
 static void hdmi_core_init(struct hdmi_core_video_config *video_cfg,
@@ -1223,9 +1025,9 @@ static int hdmi_power_on(struct omap_dss_device *dssdev)
 		dssdev->panel.timings.x_res,
 		dssdev->panel.timings.y_res);
 
-	if (!hdmi.custom_set) {
+	if (!hdmi.edid_set) {
 		DSSDBG("Read EDID as no EDID is not set on poweron\n");
-		hdmi_read_edid(p);
+		hdmi_read_edid();
 		dirty = get_timings_index() != code;
 	}
 	code = get_timings_index();
@@ -1284,6 +1086,8 @@ static int hdmi_power_on(struct omap_dss_device *dssdev)
 	return 0;
 err:
 	hdmi_runtime_put();
+	hdmi_enable_clocks(0);
+	hdmi.edid_set = false;
 	return -EIO;
 }
 
@@ -1296,7 +1100,7 @@ static void hdmi_power_off(struct omap_dss_device *dssdev)
 	hdmi_set_pll_pwr(HDMI_PLLPWRCMD_ALLOFF);
 	hdmi_runtime_put();
 
-	hdmi.edid_set = 0;
+	hdmi.edid_set = false;
 }
 
 bool omapdss_hdmi_is_detected(struct omap_dss_device *dssdev, bool force)
@@ -1325,7 +1129,7 @@ bool omapdss_hdmi_is_detected(struct omap_dss_device *dssdev, bool force)
 int omapdss_hdmi_get_edid(struct omap_dss_device *dssdev, u8 *buf, int len)
 {
 	if (!hdmi.edid_set)
-		hdmi_read_edid(NULL);
+		hdmi_read_edid();
 	if (!hdmi.edid_set)
 		return -EINVAL;
 	memcpy(buf, hdmi.edid, min(len, HDMI_EDID_MAX_LENGTH));
@@ -1350,12 +1154,10 @@ void omapdss_hdmi_display_set_timing(struct omap_dss_device *dssdev)
 {
 	struct hdmi_cm cm;
 
-	hdmi.custom_set = 1;
 	cm = hdmi_get_code(&dssdev->panel.timings);
 	hdmi.code = cm.code;
 	hdmi.mode = cm.mode;
 	omapdss_hdmi_display_enable(dssdev);
-	hdmi.custom_set = 0;
 }
 
 int omapdss_hdmi_display_enable(struct omap_dss_device *dssdev)

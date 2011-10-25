@@ -2171,7 +2171,7 @@ static struct omap_hwmod omap44xx_sl2if_hwmod = {
 	.clkdm_name     = "ivahd_clkdm",
 	.prcm = {
 		.omap4 = {
-			.clkctrl_reg = OMAP4430_CM_IVAHD_SL2_CLKCTRL,
+			.clkctrl_offs = OMAP4_CM_IVAHD_SL2_CLKCTRL_OFFSET,
 		},
 	},
 	.slaves		= omap44xx_sl2if_slaves,
@@ -2873,7 +2873,6 @@ static struct omap_hwmod_ocp_if omap44xx_l4_cfg__fdif = {
 	.slave		= &omap44xx_fdif_hwmod,
 	.clk		= "l4_div_ck",
 	.addr		= omap44xx_fdif_addrs,
-	.addr_cnt	= ARRAY_SIZE(omap44xx_fdif_addrs),
 	.user		= OCP_USER_MPU | OCP_USER_SDMA,
 };
 
@@ -2887,12 +2886,11 @@ static struct omap_hwmod omap44xx_fdif_hwmod = {
 	.class		= &omap44xx_fdif_hwmod_class,
 	.flags		= HWMOD_INIT_NO_RESET,
 	.mpu_irqs	= omap44xx_fdif_irqs,
-	.mpu_irqs_cnt	= ARRAY_SIZE(omap44xx_fdif_irqs),
 	.main_clk	= "fdif_fck",
-	.vdd_name       = "core",
+/*	.vdd_name       = "core", */
 	.prcm = {
 		.omap4 = {
-			.clkctrl_reg = OMAP4430_CM_CAM_FDIF_CLKCTRL,
+			.clkctrl_offs = OMAP4_CM_CAM_FDIF_CLKCTRL_OFFSET,
 		},
 	},
 	.slaves		= omap44xx_fdif_slaves,
@@ -3165,7 +3163,6 @@ static struct omap_hwmod_ocp_if omap44xx_l3_main_2__ipu = {
 	.slave		= &omap44xx_ipu_hwmod,
 	.clk		= "l3_div_ck",
 	.addr		= omap44xx_ipummu_addrs,
-	.addr_cnt	= ARRAY_SIZE(omap44xx_ipummu_addrs),
 	.user		= OCP_USER_MPU | OCP_USER_SDMA,
 };
 

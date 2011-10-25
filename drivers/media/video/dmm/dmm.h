@@ -54,11 +54,17 @@
 #define DMM_PEG_PRIO          0x620
 #define DMM_PEG_PRIO_PAT      0x640
 
+/**
+ * PAT refill programming mode.
+ */
 enum pat_mode {
 	MANUAL,
 	AUTO
 };
 
+/**
+ * Area definition for DMM physical address translator.
+ */
 struct pat_area {
 	s32 x0:8;
 	s32 y0:8;
@@ -66,6 +72,9 @@ struct pat_area {
 	s32 y1:8;
 };
 
+/**
+ * DMM physical address translator control.
+ */
 struct pat_ctrl {
 	s32 start:4;
 	s32 dir:4;
@@ -74,6 +83,9 @@ struct pat_ctrl {
 	s32 ini:4;
 };
 
+/**
+ * PAT descriptor.
+ */
 struct pat {
 	struct pat *next;
 	struct pat_area area;
@@ -81,35 +93,24 @@ struct pat {
 	u32 data;
 };
 
-/** @enum dmmPATStatusErrT
-* Defining enumarated identifiers for PAT area status error field. */
-enum dmmPATStatusErrT {
-	NO_ERROR = 0x0,
-	INVALID_DESCR = 0x1,
-	INVALID_DATA_PTR = 0x2,
-	UNEXP_AREA_UPDATE = 0x4,
-	UNEXP_CONTROL_UPDATE = 0x8,
-	UNEXP_DATA_UPDATE = 0x10,
-	UNEXP_ACCESS = 0x20
-};
-
-/** @struc dmmPATStatusT
-* Structure defining PAT area status. */
-struct dmmPATStatusT {
-	enum dmmPATStatusErrT error;
-	u8 ready;
-	u8 validDescriptor;
-	u8 engineRunning;
-	u8 done;
-	u8 linkedReconfig;
-	u8 remainingLinesCounter;
-};
-
-u32 dmm_get_phys_page(void);
-void dmm_free_phys_page(u32 page_addr);
+/**
+ * Program the physical address translator.
+ * @param desc
+ * @param mode
+ * @return an error status.
+ */
 s32 dmm_pat_refill(struct pat *desc, enum pat_mode mode);
 
+/**
+ * Request a page from the DMM free page stack.
+ * @return a physical page address.
+ */
 u32 dmm_get_page(void);
+
+/**
+ * Return a used page to the DMM free page stack.
+ * @param page_addr a physical page address.
+ */
 void dmm_free_page(u32 page_addr);
 
 #endif

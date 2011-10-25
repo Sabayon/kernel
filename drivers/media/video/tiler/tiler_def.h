@@ -17,6 +17,11 @@
 #ifndef TILER_DEF_H
 #define TILER_DEF_H
 
+#define TILER_ACC_MODE_SHIFT  (27)
+#define TILER_ACC_MODE_MASK   (3)
+#define TILER_GET_ACC_MODE(x) ((enum tiler_fmt)\
+(((u32)x & (TILER_ACC_MODE_MASK<<TILER_ACC_MODE_SHIFT))>>TILER_ACC_MODE_SHIFT))
+
 #define TILER_ALIAS_BASE    (0x60000000)
 #define TILER_ACC_MODE_SHIFT  (27)
 #define DMM_ACC_MODE_SHIFT  (27)
@@ -39,15 +44,6 @@
 #define DMM_ROTATION_SHIFT        (31)
 #define DMM_GET_ROTATED(x)\
 ((((u32)x & ((u32)1<<DMM_ROTATION_SHIFT)) > 0) ? 1 : 0)
-
-/* -- redefine */
-enum errorCodeT {
-	DMM_NO_ERROR,
-	DMM_WRONG_PARAM,
-	DMM_HRDW_CONFIG_FAILED,
-	DMM_HRDW_NOT_READY,
-	DMM_SYS_ERROR
-};
 
 #define DMM_ALIAS_VIEW_CLEAR    (~0xE0000000)
 

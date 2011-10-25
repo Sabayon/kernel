@@ -47,11 +47,6 @@ enum tiler_fmt {
 	TILFMT_MAX     = 4
 };
 
-#define TILER_ACC_MODE_SHIFT  (27)
-#define TILER_ACC_MODE_MASK   (3)
-#define TILER_GET_ACC_MODE(x) ((enum tiler_fmt)\
-(((u32)x & (TILER_ACC_MODE_MASK<<TILER_ACC_MODE_SHIFT))>>TILER_ACC_MODE_SHIFT))
-
 struct area {
 	u16 width;
 	u16 height;
@@ -80,11 +75,26 @@ struct tiler_view_orient {
 	u8 y_invert;
 };
 
+/**
+ * Request a 1-D or 2-D TILER buffer.
+ *
+ * @param fmt TILER bit mode.
+ * @param width buffer width.
+ * @param height buffer height.
+ * @param sys_addr system space (L3) address.
+ *
+ * @return an error status.
+ */
 s32 tiler_alloc(enum tiler_fmt fmt, u32 width, u32 height, u32 *sys_addr);
 
+/**
+ * Free TILER memory.
+ * @param sys_addr system space (L3) address.
+ * @return an error status.
+ */
 s32 tiler_free(u32 sys_addr);
 
-u32 tiler_get_natural_addr(void *sysPtr);
+u32 tiler_get_natural_addr(void *sys_ptr);
 
 void tiler_rotate_view(struct tiler_view_orient *orient, u32 rotation);
 

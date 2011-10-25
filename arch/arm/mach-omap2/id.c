@@ -382,6 +382,8 @@ static void __init omap4_check_revision(void)
 		rev = (idcode & 0xf) - 1;
 	}
 
+//	pr_err("******* hawkeye=0x%x, rev=0x%x\n", hawkeye, rev);
+
 	switch (hawkeye) {
 	case 0xb852:
 		switch (rev) {
@@ -409,7 +411,10 @@ static void __init omap4_check_revision(void)
 		break;
 	case 0xb94e:
 		switch (rev) {
-		case 0:
+		case 2:
+			omap_revision = OMAP4460_REV_ES1_1;                     
+			omap_chip.oc |= CHIP_IS_OMAP4460ES1_1;                  
+			break;
 		default:
 			omap_revision = OMAP4460_REV_ES1_0;
 			omap_chip.oc |= CHIP_IS_OMAP4460ES1_0;

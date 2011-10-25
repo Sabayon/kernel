@@ -207,7 +207,7 @@ static void omap_dm_timer_reset(struct omap_dm_timer *timer)
 		omap_dm_timer_write_reg(timer, OMAP_TIMER_IF_CTRL_REG, 0x06);
 		omap_dm_timer_wait_for_reset(timer);
 	}
-	omap_dm_timer_set_source(timer, OMAP_TIMER_SRC_32_KHZ);
+	omap_dm_timer_set_source(timer, OMAP_TIMER_SRC_SYS_CLK);
 
 	/* Enable autoidle on OMAP2+ */
 	if (cpu_class_is_omap2())

@@ -91,6 +91,7 @@ struct voltagedomain {
 
 	u32 nominal_volt;
 	struct omap_volt_data *volt_data;
+	struct omap_vdd_info *vdd;
 };
 
 /**

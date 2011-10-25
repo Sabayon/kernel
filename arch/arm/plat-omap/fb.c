@@ -419,3 +419,34 @@ unsigned long __init omapfb_reserve_sram(unsigned long sram_pstart,
 }
 
 #endif
+
+/* DRM/GPU stuff should maybe move to different file? */
+
+#include <linux/omap_drm.h>
+
+#if defined(CONFIG_DRM_OMAP) || (CONFIG_DRM_OMAP_MODULE)
+
+static struct platform_device omap_drm_device = {
+		.name = "omapdrm",
+		.id = 0,
+};
+
+static int __init omap_init_gpu(void)
+{
+	return platform_device_register(&omap_drm_device);
+}
+
+arch_initcall(omap_init_gpu);
+
+void omapdrm_set_platform_data(struct omap_drm_platform_data *data)
+{
+	omap_drm_device.dev.platform_data = data;
+}
+
+#else
+
+void omapdrm_set_platform_data(struct omap_drm_platform_data *data)
+{
+}
+
+#endif

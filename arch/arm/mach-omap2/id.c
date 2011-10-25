@@ -356,8 +356,13 @@ static void __init omap3_check_revision(void)
 static void __init omap4_check_revision(void)
 {
 	u32 idcode;
-	u16 hawkeye;
 	u8 rev;
+	/*
+	 * NOTE: OMAP4460+ uses ramp system for identification and hawkeye
+	 * variable is reused for the same. Since the values are unique
+	 * we continue to use the current system
+	 */
+	u16 hawkeye;
 
 	/*
 	 * The IC rev detection is done with hawkeye and rev.

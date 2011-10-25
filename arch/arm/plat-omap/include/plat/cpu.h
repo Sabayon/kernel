@@ -457,6 +457,10 @@ IS_OMAP_TYPE(3517, 0x3517)
 					 CHIP_IS_OMAP4430ES2_2 |	\
 					 CHIP_IS_OMAP4460ES1_0)
 
+#define CHIP_IS_OMAP446X		CHIP_IS_OMAP4460ES1_0
+
+#define CHIP_IS_OMAP44XX		(CHIP_IS_OMAP4430 | CHIP_IS_OMAP446X)
+
 /*
  * "GE" here represents "greater than or equal to" in terms of ES
  * levels.  So CHIP_GE_OMAP3430ES2 is intended to match all OMAP3430

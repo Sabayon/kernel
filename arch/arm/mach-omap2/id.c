@@ -411,13 +411,14 @@ static void __init omap4_check_revision(void)
 		break;
 	case 0xb94e:
 		switch (rev) {
-		case 2:
-			omap_revision = OMAP4460_REV_ES1_1;                     
-			omap_chip.oc |= CHIP_IS_OMAP4460ES1_1;                  
-			break;
-		default:
+		case 0:
 			omap_revision = OMAP4460_REV_ES1_0;
 			omap_chip.oc |= CHIP_IS_OMAP4460ES1_0;
+			break;
+		case 2:
+		default:
+			omap_revision = OMAP4460_REV_ES1_1;
+			omap_chip.oc |= CHIP_IS_OMAP4460ES1_1;
 			break;
 		}
 		break;

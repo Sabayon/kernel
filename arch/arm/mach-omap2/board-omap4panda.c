@@ -90,6 +90,11 @@ static struct platform_device wl1271_device = {
 	},
 };
 
+static struct platform_device btwilink_device = {
+	.name = "btwilink",
+	.id = -1,
+};
+
 static struct gpio_led gpio_leds[] = {
 	{
 		.name			= "pandaboard::status1",
@@ -129,6 +134,7 @@ static void __init panda_leds_init(void)
 
 static struct platform_device *panda_devices[] __initdata = {
 	&wl1271_device,
+	&btwilink_device,
 };
 
 static void __init omap4_panda_init_early(void)

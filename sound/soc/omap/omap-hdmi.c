@@ -25,13 +25,16 @@
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/device.h>
+#include <linux/display.h>
 #include <sound/core.h>
 #include <sound/pcm.h>
 #include <sound/pcm_params.h>
 #include <sound/initval.h>
 #include <sound/soc.h>
+#include <video/omapdss.h>
 
 #include <plat/dma.h>
+#include <plat/omap44xx.h>
 #include "omap-pcm.h"
 #include "omap-hdmi.h"
 
@@ -110,7 +113,7 @@ static __devinit int omap_hdmi_probe(struct platform_device *pdev)
 	}
 
 	omap_hdmi_dai_dma_params.port_addr =  hdmi_rsrc->start
-		+ OMAP_HDMI_AUDIO_DMA_PORT;
+		+ OMAP44XX_HDMI_AUDIO_DMA_PORT;
 
 	hdmi_rsrc = platform_get_resource(pdev, IORESOURCE_DMA, 0);
 	if (!hdmi_rsrc) {

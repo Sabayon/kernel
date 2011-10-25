@@ -791,8 +791,9 @@ static struct snd_soc_dai_link sdp4430_dai[] = {
 		.be_hw_params_fixup = dmic_be_hw_params_fixup,
 		.be_id = OMAP_ABE_DAI_DMIC2,
 	},
-=======
+};
 
+#if 0
 static struct snd_soc_dai_link sdp4430_dai = {
 	.name = "TWL6040",
 	.stream_name = "TWL6040",
@@ -803,7 +804,7 @@ static struct snd_soc_dai_link sdp4430_dai = {
 	.init = sdp4430_twl6040_init,
 	.ops = &sdp4430_ops,
 };
-
+#endif
 #if 0
 static struct snd_soc_dai_link sdp4430_dai[] = {
 

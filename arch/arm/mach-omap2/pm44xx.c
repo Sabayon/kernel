@@ -25,6 +25,7 @@ struct power_state {
 	u32 next_state;
 #ifdef CONFIG_SUSPEND
 	u32 saved_state;
+	u32 saved_logic_state;
 #endif
 	struct list_head node;
 };

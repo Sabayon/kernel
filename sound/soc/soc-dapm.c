@@ -52,6 +52,8 @@
 
 #define PATH_MAX_HOPS 16
 
+int soc_dsp_runtime_update(struct snd_soc_dapm_widget *);
+
 /* dapm power sequences - make this per codec in the future */
 static int dapm_up_seq[] = {
 	[snd_soc_dapm_pre] = 0,
@@ -218,7 +220,7 @@ static void dapm_clear_paths(struct snd_soc_dapm_context *dapm)
 	struct snd_soc_dapm_widget *w;
 	struct list_head *l;
 
-	list_for_each(l, &dapm->paths) {
+	list_for_each(l, &dapm->card->paths) {
 		p = list_entry(l, struct snd_soc_dapm_path, list);
 		p->length = 0;
 	}
@@ -1694,7 +1696,7 @@ static inline void dapm_debugfs_cleanup(struct snd_soc_dapm_context *dapm)
 #endif
 
 /* test and update the power status of a mux widget */
-static int dapm_mux_update_power(struct snd_soc_dapm_widget *widget,
+int snd_soc_dapm_mux_update_power(struct snd_soc_dapm_widget *widget,
 				 struct snd_kcontrol *kcontrol, int change,
 				 int mux, struct soc_enum *e)
 {
@@ -1711,6 +1713,7 @@ static int dapm_mux_update_power(struct snd_soc_dapm_widget *widget,
 
 	/* find dapm widget path assoc with kcontrol */
 	list_for_each_entry(path, &widget->dapm->card->paths, list) {
+
 		if (path->kcontrol != kcontrol)
 			continue;
 
@@ -1725,15 +1728,18 @@ static int dapm_mux_update_power(struct snd_soc_dapm_widget *widget,
 			path->connect = 0; /* old connection must be powered down */
 	}
 
-	if (found)
+	if (found) {
 		dapm_power_widgets(widget->dapm, SND_SOC_DAPM_STREAM_NOP);
+		soc_dsp_runtime_update(widget);
+	}
 
 	return 0;
 }
+EXPORT_SYMBOL_GPL(snd_soc_dapm_mux_update_power);
 
 /* test and update the power status of a mixer or switch widget */
-static int dapm_mixer_update_power(struct snd_soc_dapm_widget *widget,
-				   struct snd_kcontrol *kcontrol, int connect)
+int snd_soc_dapm_mixer_update_power(struct snd_soc_dapm_widget *widget,
+		struct snd_kcontrol *kcontrol, int connect)
 {
 	struct snd_soc_dapm_path *path;
 	int found = 0;
@@ -1754,11 +1760,14 @@ static int dapm_mixer_update_power(struct snd_soc_dapm_widget *widget,
 		break;
 	}
 
-	if (found)
+	if (found) {
 		dapm_power_widgets(widget->dapm, SND_SOC_DAPM_STREAM_NOP);
+		soc_dsp_runtime_update(widget);
+	}
 
 	return 0;
 }
+EXPORT_SYMBOL_GPL(snd_soc_dapm_mixer_update_power);
 
 /* show dapm widget status in sys fs */
 static ssize_t widget_show(struct snd_soc_dapm_context *dapm,
@@ -2385,7 +2394,7 @@ int snd_soc_dapm_put_volsw(struct snd_kcontrol *kcontrol,
 			update.val = val;
 			widget->dapm->update = &update;
 
-			dapm_mixer_update_power(widget, kcontrol, connect);
+			snd_soc_dapm_mixer_update_power(widget, kcontrol, connect);
 
 			widget->dapm->update = NULL;
 		}
@@ -2476,7 +2485,7 @@ int snd_soc_dapm_put_enum_double(struct snd_kcontrol *kcontrol,
 			update.val = val;
 			widget->dapm->update = &update;
 
-			dapm_mux_update_power(widget, kcontrol, change, mux, e);
+			snd_soc_dapm_mux_update_power(widget, kcontrol, change, mux, e);
 
 			widget->dapm->update = NULL;
 		}
@@ -2537,8 +2546,8 @@ int snd_soc_dapm_put_enum_virt(struct snd_kcontrol *kcontrol,
 
 			widget->value = ucontrol->value.enumerated.item[0];
 
-			dapm_mux_update_power(widget, kcontrol, change,
-					      widget->value, e);
+			snd_soc_dapm_mux_update_power(widget, kcontrol, change,
+					widget->value, e);
 		}
 	}
 
@@ -2641,7 +2650,7 @@ int snd_soc_dapm_put_value_enum_double(struct snd_kcontrol *kcontrol,
 			update.val = val;
 			widget->dapm->update = &update;
 
-			dapm_mux_update_power(widget, kcontrol, change, mux, e);
+			snd_soc_dapm_mux_update_power(widget, kcontrol, change, mux, e);
 
 			widget->dapm->update = NULL;
 		}

@@ -52,17 +52,26 @@ static struct platform_device *omap3_iommu_pdev[NR_OMAP3_IOMMU_DEVICES];
 #endif
 
 #ifdef CONFIG_ARCH_OMAP4
+
+/*
+struct iommu_platform_data {                                                    
+        const char *name;                                                       
+        const char *oh_name;                                                    
+        const int nr_tlb_entries;                                               
+        u32 da_start;                                                           
+        u32 da_end;                                                             
+        int irq;                                                                
+        void __iomem *io_base;                                                  
+}; 
+*/
+
 static struct iommu_platform_data omap4_devices_data[] = {
 	{
-		.base = OMAP4_MMU1_BASE,
+		.io_base = OMAP4_MMU1_BASE,
 		.irq = OMAP44XX_IRQ_DUCATI_MMU,
-		.pdata = {
-			.name = "ducati",
-			.nr_tlb_entries = 32,
-			.clk_name = "ipu_fck",
-			.da_start = 0x0,
-			.da_end = 0xFFFFF000,
-		},
+			/* .clk_name = "ipu_fck", */
+		.da_start = 0x0,
+		.da_end = 0xFFFFF000,
 		.name = "ducati",
 		.oh_name = "ipu",
 		.nr_tlb_entries = 32,

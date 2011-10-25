@@ -57,6 +57,11 @@ module_param_named(debug, dss_debug, bool, 0644);
 static int omap_dss_register_device(struct omap_dss_device *);
 static void omap_dss_unregister_device(struct omap_dss_device *);
 
+const char* omap_dss_get_def_disp()
+{
+	return def_disp_name;
+}
+
 /* REGULATORS */
 
 struct regulator *dss_get_vdds_dsi(void)

@@ -230,7 +230,6 @@ struct omap_vdd_info {
 	struct omap_volt_data *volt_data;
 	struct omap_volt_pmic_info *pmic_info;
 	struct omap_vp_instance_data *vp_data;
-	struct omap_vp_runtime_data vp_rt_data;
 	struct omap_vc_instance_data *vc_data;
 	const struct omap_vfsm_instance_data *vfsm;
 	struct voltagedomain voltdm;

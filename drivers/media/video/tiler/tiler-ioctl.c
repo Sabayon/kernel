@@ -181,7 +181,7 @@ static s32 tiler_mmap(struct file *filp, struct vm_area_struct *vma)
 	u32 offs = vma->vm_pgoff << PAGE_SHIFT;
 	u32 size = vma->vm_end - vma->vm_start;
 
-	vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
+	vma->vm_page_prot = pgprot_writecombine(vma->vm_page_prot);
 
 	/* find tiler buffer to mmap */
 	mutex_lock(&ops->mtx);

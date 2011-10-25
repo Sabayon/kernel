@@ -1096,7 +1096,6 @@ static int hdmi_power_on(struct omap_dss_device *dssdev)
 	return 0;
 err:
 	hdmi_runtime_put();
-	hdmi_enable_clocks(0);
 	hdmi.edid_set = false;
 	return -EIO;
 }

@@ -129,3 +129,4 @@ obj-$(CONFIG_IOMMU_SUPPORT)	+= iommu/
 obj-$(CONFIG_VIRT_DRIVERS)	+= virt/
 
 obj-$(CONFIG_DMM_OMAP)		+= media/
+obj-$(CONFIG_TILER_OMAP)		+= media/

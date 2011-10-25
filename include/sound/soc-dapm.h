@@ -356,6 +356,8 @@ int snd_soc_dapm_add_routes(struct snd_soc_dapm_context *dapm,
 			    const struct snd_soc_dapm_route *route, int num);
 int snd_soc_dapm_weak_routes(struct snd_soc_dapm_context *dapm,
 			     const struct snd_soc_dapm_route *route, int num);
+int snd_soc_dapm_query_path(struct snd_soc_dapm_context *dapm,
+	const char *source_name, const char *sink_name, int stream);
 const char *snd_soc_dapm_get_aif(struct snd_soc_dapm_context *dapm,
 		const char *stream_name, enum snd_soc_dapm_type type);
 
@@ -440,6 +442,7 @@ struct snd_soc_dapm_path {
 	u32 connect:1;	/* source and sink widgets are connected */
 	u32 walked:1;	/* path has been walked */
 	u32 weak:1;	/* path ignored for power management */
+	u32 length:6;	/* path length - used by route mapper */
 
 	int (*connected)(struct snd_soc_dapm_widget *source,
 			 struct snd_soc_dapm_widget *sink);
@@ -464,6 +467,8 @@ struct snd_soc_dapm_widget {
 	unsigned char shift;			/* bits to shift */
 	unsigned int saved_value;		/* widget saved value */
 	unsigned int value;				/* widget current value */
+	unsigned int path_idx;
+	unsigned int hops;
 	unsigned int mask;			/* non-shifted mask */
 	unsigned int on_val;			/* on state value */
 	unsigned int off_val;			/* off state value */
@@ -525,6 +530,8 @@ struct snd_soc_dapm_context {
 	/* used during DAPM updates */
 	enum snd_soc_bias_level target_bias_level;
 	struct list_head list;
+
+	int num_valid_paths;
 
 	int (*stream_event)(struct snd_soc_dapm_context *dapm);
 

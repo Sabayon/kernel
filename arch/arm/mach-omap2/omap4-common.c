@@ -27,7 +27,7 @@
 #include <mach/omap4-common.h>
 
 #ifdef CONFIG_CACHE_L2X0
-void __iomem *l2cache_base;
+static void __iomem *l2cache_base;
 #endif
 
 void __iomem *gic_dist_base_addr;
@@ -95,6 +95,11 @@ void __init gic_init_irq(void)
 }
 
 #ifdef CONFIG_CACHE_L2X0
+
+void __iomem *omap4_get_l2cache_base(void)
+{
+	return l2cache_base;
+}
 
 static void omap4_l2x0_disable(void)
 {

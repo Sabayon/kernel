@@ -290,12 +290,12 @@ static __initdata struct omap_pmic_map omap_twl_map[] = {
 	},
 	{
 		.name = "core",
-		.omap_chip = OMAP_CHIP_INIT(CHIP_IS_OMAP4430),
+		.omap_chip = OMAP_CHIP_INIT(CHIP_IS_OMAP44XX),
 		.pmic_data = &omap443x_core_pmic,
 	},
 	{
 		.name = "iva",
-		.omap_chip = OMAP_CHIP_INIT(CHIP_IS_OMAP4430),
+		.omap_chip = OMAP_CHIP_INIT(CHIP_IS_OMAP44XX),
 		.pmic_data = &omap4_iva_pmic,
 	},
 	/* Terminator */

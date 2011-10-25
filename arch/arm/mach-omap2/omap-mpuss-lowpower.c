@@ -209,7 +209,7 @@ int omap4_hotplug_cpu(unsigned int cpu, unsigned int power_state)
 		cpu_state = 1;
 
 	clear_cpu_prev_pwrst(cpu);
-	cpu_clear_prev_logic_pwrst(cpu);
+//	cpu_clear_prev_logic_pwrst(cpu);
 	set_cpu_next_pwrst(cpu, power_state);
 	set_cpu_wakeup_addr(cpu, virt_to_phys(omap_secondary_startup));
 	scu_pwrst_prepare(cpu, power_state);

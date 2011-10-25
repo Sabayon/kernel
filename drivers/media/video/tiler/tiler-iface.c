@@ -469,7 +469,7 @@ static s32 tiler_ioctl(struct inode *ip, struct file *filp, u32 cmd,
 			return -EACCES;
 		}
 
-		/* undu registration on failure */
+		/* undo registration on failure */
 		if (copy_to_user(data, &_b->buf_info, sizeof(_b->buf_info))) {
 			mutex_lock(&mtx);
 			_m_unregister_buf(_b);
@@ -500,7 +500,7 @@ static s32 tiler_ioctl(struct inode *ip, struct file *filp, u32 cmd,
 		if (r)
 			return r;
 
-		if (copy_to_user(data, &buf_info, sizeof(_b->buf_info)))
+		if (copy_to_user(data, &buf_info, sizeof(buf_info)))
 			return -EFAULT;
 		break;
 	/* prereserv blocks */
@@ -718,9 +718,6 @@ s32 tiler_mmap_blk(struct tiler_block_t *blk, u32 offs, u32 size,
 				struct vm_area_struct *vma, u32 voffs)
 {
 	u32 v, p, len;
-
-	/* don't allow mremap */
-	vma->vm_flags |= VM_DONTEXPAND | VM_RESERVED;
 
 	/* mapping must fit into vma */
 	BUG_ON(vma->vm_start > vma->vm_start + voffs ||

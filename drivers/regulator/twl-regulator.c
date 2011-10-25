@@ -591,10 +591,18 @@ static int twlfixed_get_voltage(struct regulator_dev *rdev)
 	return info->min_mV * 1000;
 }
 
+static int twlfixed_set_voltage(struct regulator_dev *rdev,
+	int min_uV, int max_uV, unsigned *selector)
+{
+	*selector = min_uV / 1000;
+	return 0;
+}
+
 static struct regulator_ops twl4030fixed_ops = {
 	.list_voltage	= twlfixed_list_voltage,
 
 	.get_voltage	= twlfixed_get_voltage,
+	.set_voltage	= twlfixed_set_voltage,
 
 	.enable		= twl4030reg_enable,
 	.disable	= twl4030reg_disable,
@@ -609,6 +617,7 @@ static struct regulator_ops twl6030fixed_ops = {
 	.list_voltage	= twlfixed_list_voltage,
 
 	.get_voltage	= twlfixed_get_voltage,
+	.set_voltage	= twlfixed_set_voltage,
 
 	.enable		= twl6030reg_enable,
 	.disable	= twl6030reg_disable,

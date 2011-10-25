@@ -737,7 +737,7 @@ static struct snd_soc_dai_link sdp4430_dai[] = {
 	},
 	{
 		.name = OMAP_ABE_BE_DMIC0,
-		.stream_name = "DMIC0",
+		.stream_name = "DMIC0 Capture",
 
 		/* ABE components - DMIC UL 1 */
 		.cpu_dai_name = "omap-dmic-abe-dai-0",
@@ -754,7 +754,7 @@ static struct snd_soc_dai_link sdp4430_dai[] = {
 	},
 	{
 		.name = OMAP_ABE_BE_DMIC1,
-		.stream_name = "DMIC1",
+		.stream_name = "DMIC1 Capture",
 
 		/* ABE components - DMIC UL 1 */
 		.cpu_dai_name = "omap-dmic-abe-dai-1",
@@ -771,7 +771,7 @@ static struct snd_soc_dai_link sdp4430_dai[] = {
 	},
 	{
 		.name = OMAP_ABE_BE_DMIC2,
-		.stream_name = "DMIC2",
+		.stream_name = "DMIC2 Capture",
 
 		/* ABE components - DMIC UL 2 */
 		.cpu_dai_name = "omap-dmic-abe-dai-2",

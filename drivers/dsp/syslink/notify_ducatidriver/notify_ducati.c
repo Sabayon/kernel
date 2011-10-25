@@ -1301,13 +1301,31 @@ static int notify_shmdrv_isr(struct notifier_block *nb, unsigned long val,
 {
 	/* Decode the msg to identify the processor that has sent the message */
 	u32 proc_id = (u32)ntfy_msg;
+	u16 sysm3_id = multiproc_get_id("SysM3");
+	u16 appm3_id = multiproc_get_id("AppM3");
 	struct notify_ducatidrv_object *obj;
 
+	if (WARN_ON((MULTIPROC_MAXPROCESSORS <= sysm3_id) ||
+		(MULTIPROC_MAXPROCESSORS <= appm3_id) ||
+		(MULTIPROC_MAXPROCESSORS <= proc_id))) {
+		return NOTIFY_E_INVALIDARG;
+	}
+
 	mutex_lock_killable(&notify_ducatidriver_state.dh_lock);
-	/* Call the corresponding prpc_id callback */
-	obj = notify_ducatidriver_state.driver_handles[proc_id][0];
-	if (obj)
-		notify_shmdrv_isr_callback(obj, ntfy_msg);
+	/* process both cores ipc stack for each notification event since
+	 ducati won't be sending notifcation if one is already pending*/
+	if (proc_id == sysm3_id || proc_id == appm3_id) {
+		obj = notify_ducatidriver_state.driver_handles[appm3_id][0];
+		if (obj)
+			notify_shmdrv_isr_callback(obj, ntfy_msg);
+		obj = notify_ducatidriver_state.driver_handles[sysm3_id][0];
+		if (obj)
+			notify_shmdrv_isr_callback(obj, ntfy_msg);
+	} else if (proc_id == multiproc_get_id("Tesla")) {
+		obj = notify_ducatidriver_state.driver_handles[proc_id][0];
+		if (obj)
+			notify_shmdrv_isr_callback(obj, ntfy_msg);
+	}
 	mutex_unlock(&notify_ducatidriver_state.dh_lock);
 
 	return 0;

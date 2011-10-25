@@ -45,7 +45,7 @@ void platform_cpu_die(unsigned int cpu)
 		/*
 		 * Execute WFI
 		 */
-		do_wfi();
+		omap_do_wfi();
 
 		if (omap_read_auxcoreboot0() == cpu) {
 			/*

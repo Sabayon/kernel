@@ -33,7 +33,7 @@ static LIST_HEAD(pwrst_list);
 #ifdef CONFIG_SUSPEND
 static int omap4_pm_suspend(void)
 {
-	do_wfi();
+	omap_do_wfi();
 	return 0;
 }
 
@@ -91,6 +91,23 @@ static int __init pwrdms_setup(struct powerdomain *pwrdm, void *unused)
 }
 
 /**
+ * omap_default_idle -
+ * Implements OMAP4 memory, IO ordering requirements which can't be addressed
+ * with default arch_idle() hook. Used by all CPUs with !CONFIG_CPUIDLE and
+ * by secondary CPU with CONFIG_CPUIDLE.
+ */
+static void omap_default_idle(void)
+{
+	local_irq_disable();
+	local_fiq_disable();
+
+	omap_do_wfi();
+
+	local_fiq_enable();
+	local_irq_enable();
+}
+
+/**
  * omap4_pm_init - Init routine for OMAP4 PM
  *
  * Initializes all powerdomain and clockdomain target states
@@ -114,6 +131,9 @@ static int __init omap4_pm_init(void)
 #ifdef CONFIG_SUSPEND
 	suspend_set_ops(&omap_pm_ops);
 #endif /* CONFIG_SUSPEND */
+
+	/* Overwrite the default arch_idle() */
+	pm_idle = omap_default_idle;
 
 err2:
 	return ret;

@@ -29,6 +29,8 @@
  *    o Support for reduced codec bias currents.
  */
 
+#define DEBUG
+
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/init.h>
@@ -1566,19 +1568,15 @@ static int dapm_mixer_update_power(struct snd_soc_dapm_widget *widget,
 }
 
 /* show dapm widget status in sys fs */
-static ssize_t dapm_widget_show(struct device *dev,
-	struct device_attribute *attr, char *buf)
+static ssize_t widget_show(struct snd_soc_dapm_context *dapm,
+	const char *name, char *buf, ssize_t count)
 {
-	struct snd_soc_pcm_runtime *rtd =
-			container_of(dev, struct snd_soc_pcm_runtime, dev);
-	struct snd_soc_codec *codec =rtd->codec;
 	struct snd_soc_dapm_widget *w;
-	int count = 0;
 	char *state = "not set";
 
-	list_for_each_entry(w, &codec->card->widgets, list) {
-		if (w->dapm != &codec->dapm)
-			continue;
+	count += sprintf(buf + count, "\n%s\n", name);
+
+	list_for_each_entry(w, &dapm->widgets, list) {
 
 		/* only display widgets that burnm power */
 		switch (w->id) {
@@ -1603,7 +1601,7 @@ static ssize_t dapm_widget_show(struct device *dev,
 		}
 	}
 
-	switch (codec->dapm.bias_level) {
+	switch (dapm->bias_level) {
 	case SND_SOC_BIAS_ON:
 		state = "On";
 		break;
@@ -1619,6 +1617,21 @@ static ssize_t dapm_widget_show(struct device *dev,
 	}
 	count += sprintf(buf + count, "PM State: %s\n", state);
 
+	return count;
+}
+
+/* show dapm widget status in sys fs */
+static ssize_t dapm_widget_show(struct device *dev,
+	struct device_attribute *attr, char *buf)
+{
+	struct snd_soc_pcm_runtime *rtd =
+			container_of(dev, struct snd_soc_pcm_runtime, dev);
+	struct snd_soc_codec *codec = rtd->codec;
+	struct snd_soc_platform *platform = rtd->platform;
+	ssize_t count = 0;
+
+	count += widget_show(&codec->dapm, codec->name, buf, count);
+	count += widget_show(&platform->dapm, platform->name, buf, count);
 	return count;
 }
 
@@ -2640,11 +2653,8 @@ static void soc_dapm_stream_event(struct snd_soc_dapm_context *dapm,
 int snd_soc_dapm_stream_event(struct snd_soc_pcm_runtime *rtd,
 	const char *stream, int event)
 {
-	struct snd_soc_codec *codec = rtd->codec;
-
 	if (stream == NULL)
 		return 0;
-
 	mutex_lock(&rtd->card->dapm_mutex);
 
 	soc_dapm_stream_event(&rtd->platform->dapm, stream, event);
@@ -2831,10 +2841,16 @@ static void soc_dapm_shutdown_codec(struct snd_soc_dapm_context *dapm)
 void snd_soc_dapm_shutdown(struct snd_soc_card *card)
 {
 	struct snd_soc_codec *codec;
+	struct snd_soc_platform *platform;
 
 	list_for_each_entry(codec, &card->codec_dev_list, list) {
 		soc_dapm_shutdown_codec(&codec->dapm);
 		snd_soc_dapm_set_bias_level(&codec->dapm, SND_SOC_BIAS_OFF);
+	}
+
+	list_for_each_entry(platform, &card->platform_dev_list, list) {
+		soc_dapm_shutdown_codec(&platform->dapm);
+		snd_soc_dapm_set_bias_level(&platform->dapm, SND_SOC_BIAS_OFF);
 	}
 }
 

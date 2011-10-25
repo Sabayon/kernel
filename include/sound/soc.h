@@ -690,6 +690,7 @@ struct snd_soc_platform {
 	unsigned int suspended:1; /* platform is suspended */
 	unsigned int probed:1;
 
+	struct snd_card *snd_card;
 	struct snd_soc_card *card;
 	struct list_head list;
 	struct list_head card_list;

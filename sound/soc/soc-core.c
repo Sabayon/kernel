@@ -1122,6 +1122,7 @@ static int soc_probe_dai_link(struct snd_soc_card *card, int num, int order)
 	cpu_dai->platform = platform;
 	codec_dai->card = card;
 	cpu_dai->card = card;
+	codec->dapm.card = platform->dapm.card = card;
 
 	/* set default power off timeout */
 	rtd->pmdown_time = pmdown_time;
@@ -1157,6 +1158,7 @@ static int soc_probe_dai_link(struct snd_soc_card *card, int num, int order)
 	/* probe the platform */
 	if (!platform->probed &&
 			platform->driver->probe_order == order) {
+		platform->card = card;
 		ret = soc_probe_platform(card, platform);
 		if (ret < 0)
 			return ret;
@@ -3150,6 +3152,7 @@ int snd_soc_register_platform(struct device *dev,
 	}
 
 	platform->dev = dev;
+	platform->dapm.platform = platform;
 	platform->driver = platform_drv;
 	platform->dapm.dev = dev;
 	platform->dapm.platform = platform;

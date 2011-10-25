@@ -677,6 +677,8 @@ struct snd_soc_pcm_runtime *snd_soc_get_pcm_runtime(struct snd_soc_card *card,
 }
 EXPORT_SYMBOL_GPL(snd_soc_get_pcm_runtime);
 
+
+
 /* create a new pcm */
 int soc_new_pcm(struct snd_soc_pcm_runtime *rtd, int num)
 {
@@ -748,8 +750,6 @@ int soc_new_pcm(struct snd_soc_pcm_runtime *rtd, int num)
 		rtd->ops.trigger	= soc_dsp_fe_dai_trigger;
 		rtd->ops.hw_free	= soc_dsp_fe_dai_hw_free;
 		rtd->ops.close		= soc_dsp_fe_dai_close;
-		rtd->ops.pointer	= soc_pcm_pointer;
-		rtd->ops.ioctl		= soc_pcm_ioctl;
 	} else {
 		rtd->ops.open		= soc_pcm_open;
 		rtd->ops.hw_params	= soc_pcm_hw_params;
@@ -757,9 +757,9 @@ int soc_new_pcm(struct snd_soc_pcm_runtime *rtd, int num)
 		rtd->ops.trigger	= soc_pcm_trigger;
 		rtd->ops.hw_free	= soc_pcm_hw_free;
 		rtd->ops.close		= soc_pcm_close;
-		rtd->ops.pointer	= soc_pcm_pointer;
-		rtd->ops.ioctl		= soc_pcm_ioctl;
 	}
+	rtd->ops.pointer	= soc_pcm_pointer;
+	rtd->ops.ioctl		= soc_pcm_ioctl;
 
 	if (platform->driver->ops) {
 		rtd->ops.ack		= platform->driver->ops->ack;

@@ -931,6 +931,7 @@ static void soc_remove_dai_link(struct snd_soc_card *card, int num, int order)
 		}
 		codec_dai->probed = 0;
 		list_del(&codec_dai->card_list);
+		module_put(codec_dai->dev->driver->owner);
 	}
 
 	/* remove the platform */
@@ -1237,11 +1238,14 @@ static int soc_probe_dai_link(struct snd_soc_card *card, int num, int order)
 
 	/* probe the CODEC DAI */
 	if (!codec_dai->probed && codec_dai->driver->probe_order == order) {
+		if (!try_module_get(codec_dai->dev->driver->owner))
+			return -ENODEV;
 		if (codec_dai->driver->probe) {
 			ret = codec_dai->driver->probe(codec_dai);
 			if (ret < 0) {
 				printk(KERN_ERR "asoc: failed to probe CODEC DAI %s\n",
 						codec_dai->name);
+				module_put(codec_dai->dev->driver->owner);
 				return ret;
 			}
 		}

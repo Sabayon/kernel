@@ -497,7 +497,7 @@ static struct clockdomain l4_per_44xx_clkdm = {
 	.cm_inst	  = OMAP4430_CM2_L4PER_INST,
 	.clkdm_offs	  = OMAP4430_CM2_L4PER_L4PER_CDOFFS,
 	.dep_bit	  = OMAP4430_L4PER_STATDEP_SHIFT,
-	.flags		  = CLKDM_CAN_HWSUP_SWSUP,
+	.flags		  = CLKDM_CAN_SWSUP,
 	.omap_chip	  = OMAP_CHIP_INIT(CHIP_IS_OMAP44XX),
 };
 

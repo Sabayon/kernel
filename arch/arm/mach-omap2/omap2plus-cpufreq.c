@@ -48,6 +48,8 @@ static DEFINE_PER_CPU(struct lpj_info, lpj_ref);
 static struct lpj_info global_lpj_ref;
 #endif
 
+#include "dvfs.h"
+
 static struct cpufreq_frequency_table *freq_table;
 static atomic_t freq_table_users = ATOMIC_INIT(0);
 static struct clk *mpu_clk;
@@ -116,7 +118,7 @@ static int omap_target(struct cpufreq_policy *policy,
 	pr_info("cpufreq-omap: transition: %u --> %u\n", freqs.old, freqs.new);
 #endif
 
-	ret = clk_set_rate(mpu_clk, freqs.new * 1000);
+	ret = omap_device_scale(mpu_dev, mpu_dev, freqs.new * 1000);
 	freqs.new = omap_getspeed(policy->cpu);
 
 #ifdef CONFIG_SMP

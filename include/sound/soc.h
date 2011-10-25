@@ -637,6 +637,8 @@ struct snd_soc_codec_driver {
 	/* probe ordering - for components with runtime dependencies */
 	int probe_order;
 	int remove_order;
+	/* codec stream completion event */
+	int (*stream_event)(struct snd_soc_dapm_context *dapm);
 };
 
 /* SoC platform interface */
@@ -676,6 +678,7 @@ struct snd_soc_platform_driver {
 	/* platform IO - used for platform DAPM */
 	unsigned int (*read)(struct snd_soc_platform *, unsigned int);
 	int (*write)(struct snd_soc_platform *, unsigned int, unsigned int);
+	int (*stream_event)(struct snd_soc_dapm_context *dapm);
 };
 
 struct snd_soc_platform {

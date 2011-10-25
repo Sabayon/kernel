@@ -16,6 +16,7 @@
 #include <plat/iommu.h>
 #include <plat/omap_device.h>
 #include <plat/omap_hwmod.h>
+#include <plat/irqs-44xx.h>
 
 static struct platform_device **omap_iommu_pdev;
 

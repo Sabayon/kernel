@@ -17,6 +17,7 @@
 #include <plat/omap_device.h>
 #include <plat/omap_hwmod.h>
 
+static struct platform_device **omap_iommu_pdev;
 
 struct iommu_device {
 	resource_size_t base;
@@ -74,13 +75,31 @@ static struct iommu_platform_data omap4_devices_data[] = {
 };
 #define NR_OMAP4_IOMMU_DEVICES ARRAY_SIZE(omap4_devices_data)
 static struct platform_device *omap4_iommu_pdev[NR_OMAP4_IOMMU_DEVICES];
+
+struct device *omap_iommu_get_dev(char *dev_name)
+{
+	int i;
+	struct platform_device *pdev;
+	struct device *dev = NULL;
+	struct iommu_platform_data *pdata;
+
+	for (i = 0; i < NR_OMAP4_IOMMU_DEVICES; i++) {
+		pdev = omap_iommu_pdev[i];
+		pdata = pdev->dev.platform_data;
+		if (!strcmp(pdata->oh_name, dev_name))
+			dev = &pdev->dev;
+	}
+	WARN_ONCE(!dev, "omap_iommu_get_dev: NULL dev\n");
+
+	return dev;
+}
+EXPORT_SYMBOL(omap_iommu_get_dev);
+
 #else
 #define omap4_devices_data	NULL
 #define NR_OMAP4_IOMMU_DEVICES	0
 #define omap4_iommu_pdev        NULL
 #endif
-
-static struct platform_device **omap_iommu_pdev;
 
 static struct omap_device_pm_latency omap_iommu_latency[] = {
 	[0] = {

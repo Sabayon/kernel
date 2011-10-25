@@ -27,6 +27,8 @@
 #define OMAP_748MHz	748000000
 
 #define OMAP_1GHz	1000000000
+#define OMAP_920MHz	920000000
+#define OMAP_748MHz	748000000
 
 /* Supported only on OMAP4 */
 int omap4_dpllmx_gatectrl_read(struct clk *clk)

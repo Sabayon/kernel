@@ -327,9 +327,6 @@ static s32 tiler_mmap(struct file *filp, struct vm_area_struct *vma)
 /* ioctl handler */
 static long tiler_ioctl(struct file *filp, u32 cmd, unsigned long arg)
 {
-	pgd_t *pgd;
-	pmd_t *pmd;
-	pte_t *ptep, pte;
 	s32 r;
 	void __user *data = (void __user *)arg;
 	struct process_info *pi = filp->private_data;
@@ -393,21 +390,7 @@ static long tiler_ioctl(struct file *filp, u32 cmd, unsigned long arg)
 		break;
 	/* get physical address */
 	case TILIOC_GSSP:
-		pgd = pgd_offset(current->mm, arg);
-		if (!(pgd_none(*pgd) || pgd_bad(*pgd))) {
-			pmd = pmd_offset(pgd, arg);
-			if (!(pmd_none(*pmd) || pmd_bad(*pmd))) {
-				ptep = pte_offset_map(pmd, arg);
-				if (ptep) {
-					pte = *ptep;
-					if (pte_present(pte))
-						return (pte & PAGE_MASK) |
-							(~PAGE_MASK & arg);
-				}
-			}
-		}
-		/* va not in page table, return NULL */
-		return (s32) NULL;
+		return tiler_virt2phys(arg);
 		break;
 	/* map block */
 	case TILIOC_MBLK:

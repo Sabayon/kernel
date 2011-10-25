@@ -116,6 +116,18 @@ config OMAP_MCBSP
 	  Say Y here if you want support for the OMAP Multichannel
 	  Buffered Serial Port.
 
+config OMAP_SCM_DEV
+	bool "OMAP4 System control module Support"
+	depends on ARCH_OMAP
+	default n
+	help
+	  Say Y here if you want support for the system control
+	  module on OMAP4.
+
+	  This provides the basic support of system control module
+	  subsystem. SCM also includes instance/instances of on die
+	  temperature sensor.
+
 config OMAP_MBOX_FWK
 	tristate "Mailbox framework support"
 	depends on ARCH_OMAP

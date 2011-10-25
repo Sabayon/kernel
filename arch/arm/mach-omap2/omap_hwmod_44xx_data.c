@@ -1095,7 +1095,7 @@ static struct omap_hwmod omap446x_bandgap_hwmod = {
 	.class		= &omap44xx_bandgap_hwmod_class,
 	.prcm		= {
 		.omap4 = {
-			.clkctrl_reg = OMAP4430_CM_WKUP_BANDGAP_CLKCTRL,
+			.clkctrl_offs = OMAP4_CM_WKUP_BANDGAP_CLKCTRL_OFFSET,
 		},
 	},
 	.opt_clks	= bandgap446x_opt_clks,
@@ -2153,11 +2153,10 @@ static struct omap_hwmod omap446x_gpio1_hwmod = {
 	.class		= &omap44xx_gpio_hwmod_class,
 	.flags          = HWMOD_INIT_NO_RESET,
 	.mpu_irqs	= omap44xx_gpio1_irqs,
-	.mpu_irqs_cnt	= ARRAY_SIZE(omap44xx_gpio1_irqs),
 	.main_clk	= "gpio1_ick",
 	.prcm = {
 		.omap4 = {
-			.clkctrl_reg = OMAP4430_CM_WKUP_GPIO1_CLKCTRL,
+			.clkctrl_offs = OMAP4_CM_WKUP_GPIO1_CLKCTRL_OFFSET,
 		},
 	},
 	.opt_clks	= gpio1_opt_clks,

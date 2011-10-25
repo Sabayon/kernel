@@ -598,18 +598,6 @@ static struct clockdomain l3_1_44xx_clkdm = {
 	.omap_chip	  = OMAP_CHIP_INIT(CHIP_IS_OMAP44XX),
 };
 
-static struct clockdomain l3_d2d_44xx_clkdm = {
-	.name		  = "l3_d2d_clkdm",
-	.pwrdm		  = { .name = "core_pwrdm" },
-	.prcm_partition	  = OMAP4430_CM2_PARTITION,
-	.cm_inst	  = OMAP4430_CM2_CORE_INST,
-	.clkdm_offs	  = OMAP4430_CM2_CORE_D2D_CDOFFS,
-	.wkdep_srcs	  = l3_d2d_wkup_sleep_deps,
-	.sleepdep_srcs	  = l3_d2d_wkup_sleep_deps,
-	.flags		  = CLKDM_CAN_FORCE_WAKEUP | CLKDM_CAN_HWSUP,
-	.omap_chip	  = OMAP_CHIP_INIT(CHIP_IS_OMAP44XX),
-};
-
 static struct clockdomain iss_44xx_clkdm = {
 	.name		  = "iss_clkdm",
 	.pwrdm		  = { .name = "cam_pwrdm" },

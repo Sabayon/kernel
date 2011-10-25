@@ -142,8 +142,6 @@ void __init omap44xx_voltagedomains_init(void)
 		omap4_vdd_core_info.volt_data = omap446x_vdd_core_volt_data;
 		omap4_vdd_mpu_info.dep_vdd_info = omap446x_vddmpu_dep_info;
 		omap4_vdd_iva_info.dep_vdd_info = omap446x_vddiva_dep_info;
-	} else {
-		return -ENODATA;
 	}
 /*
 	return omap_voltage_early_init(prm_mod, prm_irqst_ocp_mod,

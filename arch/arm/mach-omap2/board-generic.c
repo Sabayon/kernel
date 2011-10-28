@@ -29,6 +29,7 @@
  * XXX: Still needed to boot until the i2c & twl driver is adapted to
  * device-tree
  */
+#if defined(CONFIG_ARCH_OMAP4)
 static struct twl4030_platform_data sdp4430_twldata = {
 	.irq_base	= TWL6030_IRQ_BASE,
 	.irq_end	= TWL6030_IRQ_END,
@@ -38,6 +39,7 @@ static void __init omap4_i2c_init(void)
 {
 	omap4_pmic_init("twl6030", &sdp4430_twldata);
 }
+#endif
 
 static struct twl4030_platform_data beagle_twldata = {
 	.irq_base	= TWL4030_IRQ_BASE,
@@ -73,11 +75,13 @@ static void __init omap_generic_init(void)
 	of_platform_populate(NULL, omap_dt_match_table, NULL, NULL);
 }
 
+#if defined(CONFIG_ARCH_OMAP4)
 static void __init omap4_init(void)
 {
 	omap4_i2c_init();
 	omap_generic_init();
 }
+#endif
 
 static void __init omap3_init(void)
 {

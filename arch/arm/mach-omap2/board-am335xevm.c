@@ -144,6 +144,36 @@ struct da8xx_lcdc_platform_data TFC_S9700RTWV35TR_01B_pdata = {
 	.type			= "TFC_S9700RTWV35TR_01B",
 };
 
+static const struct display_panel dvi_panel = {
+	WVGA,
+	16,
+	16,
+	COLOR_ACTIVE,
+};
+
+static struct lcd_ctrl_config dvi_cfg = {
+	&dvi_panel,
+	.ac_bias		= 255,
+	.ac_bias_intrpt		= 0,
+	.dma_burst_sz		= 16,
+	.bpp			= 16,
+	.fdd			= 0x80,
+	.tft_alt_mode		= 0,
+	.stn_565_mode		= 0,
+	.mono_8bit_mode		= 0,
+	.invert_line_clock	= 1,
+	.invert_frm_clock	= 1,
+	.sync_edge		= 0,
+	.sync_ctrl		= 1,
+	.raster_order		= 0,
+};
+
+struct da8xx_lcdc_platform_data dvi_pdata = {
+	.manu_name		= "BBToys",
+	.controller_data	= &dvi_cfg,
+	.type			= "1024x768@60",
+};
+
 /* TSc controller */
 #include <linux/input/ti_tscadc.h>
 
@@ -366,6 +396,50 @@ static struct pinmux_config lcdc_pin_mux[] = {
 	{"lcd_hsync.lcd_hsync",		OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT},
 	{"lcd_pclk.lcd_pclk",		OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT},
 	{"lcd_ac_bias_en.lcd_ac_bias_en", OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT},
+	{NULL, 0},
+};
+
+/* Module pin mux for DVI board */
+static struct pinmux_config dvi_pin_mux[] = {
+	{"lcd_data0.lcd_data0",		OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT
+        | AM33XX_PULL_DISA},
+	{"lcd_data1.lcd_data1",		OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT
+        | AM33XX_PULL_DISA},
+	{"lcd_data2.lcd_data2",		OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT
+        | AM33XX_PULL_DISA},
+	{"lcd_data3.lcd_data3",		OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT
+        | AM33XX_PULL_DISA},
+	{"lcd_data4.lcd_data4",		OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT
+        | AM33XX_PULL_DISA},
+	{"lcd_data5.lcd_data5",		OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT
+        | AM33XX_PULL_DISA},
+	{"lcd_data6.lcd_data6",		OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT
+        | AM33XX_PULL_DISA},
+	{"lcd_data7.lcd_data7",		OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT
+        | AM33XX_PULL_DISA},
+	{"lcd_data8.lcd_data8",		OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT
+        | AM33XX_PULL_DISA},
+	{"lcd_data9.lcd_data9",		OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT
+        | AM33XX_PULL_DISA},
+	{"lcd_data10.lcd_data10",	OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT
+        | AM33XX_PULL_DISA},
+	{"lcd_data11.lcd_data11",	OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT
+        | AM33XX_PULL_DISA},
+	{"lcd_data12.lcd_data12",	OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT
+        | AM33XX_PULL_DISA},
+	{"lcd_data13.lcd_data13",	OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT
+        | AM33XX_PULL_DISA},
+	{"lcd_data14.lcd_data14",	OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT
+        | AM33XX_PULL_DISA},
+	{"lcd_data15.lcd_data15",	OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT
+        | AM33XX_PULL_DISA},
+	{"lcd_vsync.lcd_vsync",		OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT},
+	{"lcd_hsync.lcd_hsync",		OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT},
+	{"lcd_pclk.lcd_pclk",		OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT},
+	{"lcd_ac_bias_en.lcd_ac_bias_en", OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT}, //DVIEN
+	{"gpmc_a2.rgmii2_td3", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT}, // USR0 LED
+	{"gpmc_a3.rgmii2_td2", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT}, // USR1 LED
+	{"gpmc_ad7.gpmc_ad7", OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT}, // DVI PDn
 	{NULL, 0},
 };
 
@@ -679,6 +753,16 @@ static struct gpio_led gpio_leds[] = {
 		.name           = "beaglebone::usr3",
 		.gpio           = BEAGLEBONE_USR4_LED,
 	},
+	{
+		.name			= "dvi::usr0",
+		.default_trigger	= "heartbeat",
+		.gpio			= BEAGLEBONEDVI_USR0_LED,
+	},
+	{
+		.name           = "dvi::usr1",
+		.default_trigger	= "mmc0",
+		.gpio           = BEAGLEBONEDVI_USR1_LED,
+	},
 };
 
 static struct gpio_led_platform_data gpio_led_info = {
@@ -800,6 +884,26 @@ static void lcdc_init(int evm_id, int profile)
 
 	if (am33xx_register_lcdc(&TFC_S9700RTWV35TR_01B_pdata))
 		pr_info("Failed to register LCDC device\n");
+	return;
+}
+
+#define BEAGLEBONEDVI_PDn  GPIO_TO_PIN(1, 7)
+
+static void dvi_init(int evm_id, int profile)
+{
+    setup_pin_mux(dvi_pin_mux);
+	gpio_request(BEAGLEBONEDVI_PDn, "DVI_PDn");
+	gpio_direction_output(BEAGLEBONEDVI_PDn, 1);
+
+	// we are being stupid and setting pixclock from here instead of da8xx-fb.c
+	if (conf_disp_pll(560000000)) {
+		pr_info("Failed to set pixclock to 56000000, not attempting to"
+				"register DVI adapter\n");
+		return;
+	}
+	
+	if (am33xx_register_lcdc(&dvi_pdata))
+		pr_info("Failed to register BeagleBoardToys DVI adapter\n");
 	return;
 }
 
@@ -1291,6 +1395,7 @@ static struct evm_dev_cfg ip_phn_evm_dev_cfg[] = {
 /* Beaglebone < Rev A3 */
 static struct evm_dev_cfg beaglebone_old_dev_cfg[] = {
 	{rmii1_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
+	{dvi_init,	DEV_ON_BASEBOARD, PROFILE_ALL},
 	{usb0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{usb1_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
@@ -1301,6 +1406,7 @@ static struct evm_dev_cfg beaglebone_old_dev_cfg[] = {
 /* Beaglebone Rev A3 and after */
 static struct evm_dev_cfg beaglebone_dev_cfg[] = {
 	{mii1_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
+	{dvi_init,	DEV_ON_BASEBOARD, PROFILE_ALL},
 	{usb0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{usb1_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},

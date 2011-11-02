@@ -390,3 +390,4 @@ int decode_bch(int select_4_8, unsigned char *ecc, unsigned int *err_loc)
 	return no_of_err;
 }
 EXPORT_SYMBOL(decode_bch);
+MODULE_LICENSE("GPL");

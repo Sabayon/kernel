@@ -25,6 +25,7 @@
 #include <linux/mtd/nand.h>
 #include <linux/mtd/partitions.h>
 #include <linux/platform_device.h>
+#include <linux/can/platform/d_can.h>
 #include <linux/clk.h>
 #include <linux/err.h>
 #include <linux/wl12xx.h>
@@ -51,6 +52,7 @@
 /* LCD controller is similar to DA850 */
 #include <video/da8xx-fb.h>
 
+#include "control.h"
 #include "board-flash.h"
 #include "mux.h"
 #include "devices.h"
@@ -1159,6 +1161,133 @@ static void mmc2_wl12xx_init(int evm_id, int profile)
 	return;
 }
 
+#define AM33XX_D_CAN_RAM_BASE		0x1000
+#define AM33XX_D_CAN_NUM_MSG_OBJS	64
+#define AM33XX_D_CAN_VERSION		0x1
+#define AM33XX_CTL_DCAN_RAMINIT_OFFSET	0x644
+#define AM33XX_D_CAN_RAMINIT_START(n)	(0x1 << n)
+
+static void d_can_hw_raminit(unsigned int instance)
+{
+	u32 raminit_reg_val;
+
+	/* Read the value */
+	raminit_reg_val = __raw_readl(AM33XX_CTRL_REGADDR(
+				AM33XX_CTL_DCAN_RAMINIT_OFFSET));
+
+	/* Modify by setting "0" */
+	raminit_reg_val &= ~AM33XX_D_CAN_RAMINIT_START(instance);
+	__raw_writel(raminit_reg_val, AM33XX_CTRL_REGADDR(
+				AM33XX_CTL_DCAN_RAMINIT_OFFSET));
+
+	/* Reset to one */
+	raminit_reg_val |= AM33XX_D_CAN_RAMINIT_START(instance);
+	__raw_writel(raminit_reg_val, AM33XX_CTRL_REGADDR(
+			AM33XX_CTL_DCAN_RAMINIT_OFFSET));
+	udelay(10);
+}
+
+static struct d_can_platform_data am33xx_evm_d_can_pdata = {
+	.d_can_offset		= 0,
+	.d_can_ram_offset	= AM33XX_D_CAN_RAM_BASE,
+	.num_of_msg_objs	= AM33XX_D_CAN_NUM_MSG_OBJS,
+	.dma_support		= false,
+	.test_mode_enable	= false,
+	.parity_check		= false,
+	.version		= AM33XX_D_CAN_VERSION,
+	.hw_raminit		= d_can_hw_raminit,
+};
+
+static struct resource am33xx_d_can0_resources[] = {
+	{
+		.start	= AM33XX_D_CAN0_BASE,
+		.end	= AM33XX_D_CAN0_BASE + 0x3FFF,
+		.flags	= IORESOURCE_MEM,
+	},
+	{
+		.name	= "d_can_int0",
+		.start	= AM33XX_IRQ_DCAN0_0,
+		.end	= AM33XX_IRQ_DCAN0_0,
+		.flags	= IORESOURCE_IRQ,
+	},
+	{
+		.name	= "d_can_int1",
+		.start	= AM33XX_IRQ_DCAN0_1,
+		.end	= AM33XX_IRQ_DCAN0_1,
+		.flags	= IORESOURCE_IRQ,
+	},
+};
+
+static struct platform_device am33xx_d_can0_device = {
+	.dev		= {
+		.platform_data = &am33xx_evm_d_can_pdata,
+	},
+	.name		= "d_can",
+	.id		= 0,
+	.num_resources	= ARRAY_SIZE(am33xx_d_can0_resources),
+	.resource	= am33xx_d_can0_resources,
+};
+
+static struct pinmux_config d_can0_pin_mux[] = {
+	{"uart1_ctsn.d_can0_tx", OMAP_MUX_MODE2 | AM33XX_PULL_ENBL},
+	{"uart1_rtsn.d_can0_rx", OMAP_MUX_MODE2 | AM33XX_PIN_INPUT_PULLUP},
+	{NULL, 0},
+};
+
+static void d_can0_init(int evm_id, int profile)
+{
+	/* For instance 0 */
+	if (profile == PROFILE_1) {
+		setup_pin_mux(d_can0_pin_mux);
+		platform_device_register(&am33xx_d_can0_device);
+	}
+}
+
+/* DCAN instnace 1 specific resources */
+static struct resource am33xx_d_can1_resources[] = {
+	{
+		.start	= AM33XX_D_CAN1_BASE,
+		.end	= AM33XX_D_CAN1_BASE + 0x3FFF,
+		.flags	= IORESOURCE_MEM,
+	},
+	{
+		.name	= "d_can_int0",
+		.start	= AM33XX_IRQ_DCAN1_0,
+		.end	= AM33XX_IRQ_DCAN1_0,
+		.flags	= IORESOURCE_IRQ,
+	},
+	{
+		.name	= "d_can_int1",
+		.start	= AM33XX_IRQ_DCAN1_1,
+		.end	= AM33XX_IRQ_DCAN1_1,
+		.flags	= IORESOURCE_IRQ,
+	},
+};
+
+static struct platform_device am33xx_d_can1_device = {
+	.dev		= {
+		.platform_data = &am33xx_evm_d_can_pdata,
+	},
+	.name		= "d_can",
+	.id		= 1,
+	.num_resources	= ARRAY_SIZE(am33xx_d_can1_resources),
+	.resource	= am33xx_d_can1_resources,
+};
+
+static struct pinmux_config d_can1_pin_mux[] = {
+	{"uart1_rxd.d_can1_tx", OMAP_MUX_MODE2 | AM33XX_PULL_ENBL},
+	{"uart1_txd.d_can1_rx", OMAP_MUX_MODE2 | AM33XX_PIN_INPUT_PULLUP},
+	{NULL, 0},
+};
+
+static void d_can1_init(int evm_id, int profile)
+{
+	/* For instance 1 */
+	if (profile == PROFILE_4) {
+		setup_pin_mux(d_can1_pin_mux);
+		platform_device_register(&am33xx_d_can1_device);
+	}
+}
 static void uart1_wl12xx_init(int evm_id, int profile)
 {
 	setup_pin_mux(uart1_wl12xx_pin_mux);
@@ -1362,6 +1491,8 @@ static struct evm_dev_cfg gen_purp_evm_dev_cfg[] = {
 	{uart1_wl12xx_init,	DEV_ON_BASEBOARD, (PROFILE_0 | PROFILE_3 |
 								PROFILE_5)},
 	{wl12xx_init,	DEV_ON_BASEBOARD, (PROFILE_0 | PROFILE_3 | PROFILE_5)},
+	{d_can0_init,	DEV_ON_BASEBOARD, PROFILE_1},
+	{d_can1_init,	DEV_ON_BASEBOARD, PROFILE_4},
 	{NULL, 0, 0},
 };
 

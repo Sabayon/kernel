@@ -421,6 +421,22 @@ static struct clk dcan1_fck = {
 	.recalc		= &followparent_recalc,
 };
 
+static struct clk dcan0_ick = {
+	.name           = "dcan0_ick",
+	.parent		= &dpll_per_m2_ck ,
+	.ops		= &clkops_null,
+	.clkdm_name	= "l4ls_clkdm",
+	.recalc         = &followparent_recalc,
+};
+
+static struct clk dcan1_ick = {
+	.name           = "dcan1_ick",
+	.parent		= &dpll_per_m2_ck ,
+	.ops		= &clkops_null,
+	.clkdm_name	= "l4ls_clkdm",
+	.recalc         = &followparent_recalc,
+};
+
 static struct clk debugss_fck = {
 	.name		= "debugss_fck",
 	.ops		= &clkops_omap2_dflt,
@@ -1771,6 +1787,8 @@ static struct omap_clk am33xx_clks[] = {
 	CLK("cpsw.0",	NULL,			&cpgmac0_fck,	CK_AM33XX),
 	CLK(NULL,	"dcan0_fck",		&dcan0_fck,	CK_AM33XX),
 	CLK(NULL,	"dcan1_fck",		&dcan1_fck,	CK_AM33XX),
+	CLK(NULL,	"dcan0_ick",		&dcan0_ick,	CK_AM33XX),
+	CLK(NULL,	"dcan1_ick",		&dcan1_ick,	CK_AM33XX),
 	CLK(NULL,	"debugss_fck",		&debugss_fck,	CK_AM33XX),
 	CLK(NULL,	"elm_fck",		&elm_fck,	CK_AM33XX),
 	CLK(NULL,	"emif_fck",		&emif_fck,	CK_AM33XX),

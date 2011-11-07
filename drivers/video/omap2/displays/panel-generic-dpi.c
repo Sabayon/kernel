@@ -297,6 +297,31 @@ static struct panel_config generic_dpi_panels[] = {
 
 		.name			= "apollon",
 	},
+
+	/* ThreeFiveCorp S9700RTWV35TR-01B */
+	{
+		{
+			.x_res		= 800,
+			.y_res		= 480,
+
+			.pixel_clock	= 30000,
+
+			.hsw		= 49,
+			.hfp		= 41,
+			.hbp		= 40,
+
+			.vsw		= 4,
+			.vfp		= 14,
+			.vbp		= 29,
+		},
+		.acbi			= 0x0,
+		.acb			= 0x0,
+		.config			= OMAP_DSS_LCD_TFT | OMAP_DSS_LCD_IVS |
+					  OMAP_DSS_LCD_IHS, // | OMAP_DSS_LCD_IEO; - TODO check this - doesn't work with this enabled
+		.power_on_delay		= 50,
+		.power_off_delay	= 100,
+		.name			= "tfc_s9700rtwv35tr-01b",
+	},
 };
 
 struct panel_drv_data {

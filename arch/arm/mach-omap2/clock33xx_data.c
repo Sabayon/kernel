@@ -449,12 +449,13 @@ static struct clk debugss_fck = {
 
 static struct clk elm_fck = {
 	.name		= "elm_fck",
-	.ops		= &clkops_omap2_dflt,
+	.parent		= &dpll_per_m2_ck ,
+	.ops		= &clkops_am33xx_dflt_wait,
 	.enable_reg	= AM33XX_CM_PER_ELM_CLKCTRL,
 	.enable_bit	= AM33XX_MODULEMODE_SWCTRL,
 	.clkdm_name	= "l4ls_clkdm",
-	.parent		= &core_100m_ck,
-	.recalc		= &followparent_recalc,
+	.fixed_div	= 4,
+	.recalc         = &omap_fixed_divisor_recalc,
 };
 
 static struct clk emif_fw_fck = {

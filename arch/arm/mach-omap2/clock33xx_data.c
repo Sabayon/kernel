@@ -44,7 +44,7 @@ void am33xx_init_timer_parent(struct clk *clk)
 
 static struct clk clk_32768_ck = {
 	.name		= "clk_32768_ck",
-	.rate		= 32678,
+	.rate		= 32768,
 	.ops		= &clkops_null,
 };
 

@@ -29,9 +29,6 @@
 #include <linux/wl12xx.h>
 #include <linux/ethtool.h>
 
-/* LCD controller is similar to DA850 */
-#include <video/da8xx-fb.h>
-
 #include <mach/hardware.h>
 #include <mach/board-am335xevm.h>
 

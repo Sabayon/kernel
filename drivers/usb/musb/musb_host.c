@@ -361,16 +361,10 @@ static inline void musb_save_toggle(struct musb_qh *qh, int is_in,
 void musb_gb_work(struct work_struct *data)
 {
 	struct musb *musb = container_of(data, struct musb, gb_work);
-	unsigned long flags;
 	struct urb *urb;
 
-	while ((urb = pop_queue(musb)) != 0) {
-		spin_lock_irqsave(&musb->lock, flags);
-		spin_unlock(&musb->lock);
+	while ((urb = pop_queue(musb)) != 0)
 		musb_giveback(musb, urb, 0);
-		spin_lock(&musb->lock);
-		spin_unlock_irqrestore(&musb->lock, flags);
-	}
 }
 
 /*

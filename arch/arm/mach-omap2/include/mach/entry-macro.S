@@ -141,7 +141,7 @@
 		bne	9999f
 		ldr	\irqnr, [\base, #0xd8] /* IRQ pending reg 3 */
 		cmp	\irqnr, #0x0
-#ifdef CONFIG_SOC_OMAPTI816X
+#if defined(CONFIG_SOC_OMAPTI816X) || defined(CONFIG_SOC_OMAPAM33XX)
 		bne	9999f
 		ldr	\irqnr, [\base, #0xf8] /* IRQ pending reg 4 */
 		cmp	\irqnr, #0x0

@@ -340,6 +340,9 @@ static u32 am335x_get_profile_selection(void)
 {
 	int val = 0;
 
+	/* FIXME: temporary fix */
+	return 1;
+
 	if (!cpld_client)
 		/* error checking is not done in func's calling this routine.
 		so return profile 0 on error */
@@ -1721,8 +1724,8 @@ out:
 	 */
 	pr_err("Could not detect any board, falling back to: "
 		"Beaglebone (< Rev A3) with no daughter card connected\n");
-	daughter_brd_detected = false;
-	setup_beaglebone_old();
+	daughter_brd_detected = true;
+	setup_general_purpose_evm();
 
 	/* Initialize cpsw after board detection is completed as board
 	 * information is required for configuring phy address and hence

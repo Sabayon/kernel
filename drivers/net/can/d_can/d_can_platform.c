@@ -190,7 +190,6 @@ exit_iounmap:
 exit_release_mem:
 	release_mem_region(mem->start, resource_size(mem));
 exit_free_clks:
-#ifdef CONFIG_HAVE_CLK
 	clk_disable(priv->ick);
 	clk_put(priv->ick);
 exit_free_fck:
@@ -199,7 +198,6 @@ exit_free_fck:
 exit_free_ndev:
 	free_d_can_dev(ndev);
 exit:
-#endif
 	dev_err(&pdev->dev, "probe failed\n");
 
 	return ret;
@@ -211,18 +209,19 @@ static int __devexit d_can_plat_remove(struct platform_device *pdev)
 	struct d_can_priv *priv = netdev_priv(ndev);
 	struct resource *mem;
 
+	unregister_d_can_dev(ndev);
+	platform_set_drvdata(pdev, NULL);
+
 	free_d_can_dev(ndev);
 	iounmap(priv->base);
+
 	mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	release_mem_region(mem->start, resource_size(mem));
-#ifdef CONFIG_HAVE_CLK
+
 	clk_disable(priv->ick);
 	clk_disable(priv->fck);
 	clk_put(priv->ick);
 	clk_put(priv->fck);
-#endif
-	unregister_d_can_dev(ndev);
-	platform_set_drvdata(pdev, NULL);
 
 	return 0;
 }

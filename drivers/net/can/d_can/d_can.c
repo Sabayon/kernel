@@ -611,7 +611,7 @@ static inline int d_can_is_next_tx_obj_busy(struct d_can_priv *priv, int objno)
 	 * message object n, we need to handle the same properly.
 	 */
 	if (d_can_read(priv, D_CAN_TXRQ(txrq_x_reg_val)) &
-			(1 << (objno - 1)))
+			(1 << (objno - D_CAN_MSG_OBJ_TX_FIRST)))
 		return 1;
 
 	return 0;
@@ -858,7 +858,8 @@ static void d_can_do_tx(struct net_device *dev)
 		msg_obj_no = get_tx_echo_msg_obj(priv);
 		txrq_x_reg_val = D_CAN_GET_XREG_NUM(priv, D_CAN_TXRQ_X);
 		txrq_reg_val = d_can_read(priv, D_CAN_TXRQ(txrq_x_reg_val));
-		if (!(txrq_reg_val & (1 << (msg_obj_no - 1)))) {
+		if (!(txrq_reg_val & (1 << (msg_obj_no -
+						D_CAN_MSG_OBJ_TX_FIRST)))) {
 			can_get_echo_skb(dev,
 					msg_obj_no - D_CAN_MSG_OBJ_TX_FIRST);
 			stats->tx_bytes += d_can_read(priv,
@@ -1124,7 +1125,6 @@ static int d_can_poll(struct napi_struct *napi, int quota)
 	struct net_device *dev = napi->dev;
 	struct d_can_priv *priv = netdev_priv(dev);
 
-	priv->irqstatus = d_can_read(priv, D_CAN_INT);
 	if (!priv->irqstatus)
 		goto end;
 

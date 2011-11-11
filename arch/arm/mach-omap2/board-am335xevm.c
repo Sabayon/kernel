@@ -329,6 +329,11 @@ struct am335x_evm_eeprom_config {
 static struct am335x_evm_eeprom_config config;
 static bool daughter_brd_detected;
 
+#define GP_EVM_REV_IS_1_0A		0x1
+#define GP_EVM_REV_IS_1_1A		0x2
+#define GP_EVM_REV_IS_UNKNOWN		0xFF
+static unsigned int gp_evm_revision = GP_EVM_REV_IS_UNKNOWN;
+
 #define EEPROM_MAC_ADDRESS_OFFSET	60 /* 4+8+4+12+32 */
 #define EEPROM_NO_OF_MAC_ADDR		3
 static char am335x_mac_addr[EEPROM_NO_OF_MAC_ADDR][ETH_ALEN];
@@ -637,25 +642,8 @@ static struct pinmux_config mmc1_pin_mux[] = {
 	{"gpmc_ad0.mmc1_dat0",	OMAP_MUX_MODE1 | AM33XX_PIN_INPUT_PULLUP},
 	{"gpmc_csn1.mmc1_clk",	OMAP_MUX_MODE2 | AM33XX_PIN_INPUT_PULLUP},
 	{"gpmc_csn2.mmc1_cmd",	OMAP_MUX_MODE2 | AM33XX_PIN_INPUT_PULLUP},
-	{"uart1_rxd.mmc1_sdwp",	OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
-	{"mcasp0_fsx.mmc1_sdcd", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
-	{NULL, 0},
-};
-
-/* Module pin mux for mmc2 */
-static struct pinmux_config mmc2_pin_mux[] = {
-	{"gpmc_ad11.mmc2_dat7",	OMAP_MUX_MODE3 | AM33XX_PIN_INPUT_PULLUP},
-	{"gpmc_ad10.mmc2_dat6",	OMAP_MUX_MODE3 | AM33XX_PIN_INPUT_PULLUP},
-	{"gpmc_ad9.mmc2_dat5",	OMAP_MUX_MODE3 | AM33XX_PIN_INPUT_PULLUP},
-	{"gpmc_ad8.mmc2_dat4",	OMAP_MUX_MODE3 | AM33XX_PIN_INPUT_PULLUP},
-	{"gpmc_ad15.mmc2_dat3",	OMAP_MUX_MODE3 | AM33XX_PIN_INPUT_PULLUP},
-	{"gpmc_ad14.mmc2_dat2",	OMAP_MUX_MODE3 | AM33XX_PIN_INPUT_PULLUP},
-	{"gpmc_ad13.mmc2_dat1",	OMAP_MUX_MODE3 | AM33XX_PIN_INPUT_PULLUP},
-	{"gpmc_ad12.mmc2_dat0",	OMAP_MUX_MODE3 | AM33XX_PIN_INPUT_PULLUP},
-	{"gpmc_clk.mmc2_clk",	OMAP_MUX_MODE3 | AM33XX_PIN_INPUT_PULLUP},
-	{"gpmc_csn3.mmc2_cmd",	OMAP_MUX_MODE3 | AM33XX_PIN_INPUT_PULLUP},
-	{"spi0_cs0.mmc2_sdwp",	OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
-	{"mcasp0_axr0.mmc2_sdcd", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
+	{"gpmc_csn0.mmc1_sdwp",	OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
+	{"gpmc_advn_ale.mmc1_sdcd", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT_PULLUP},
 	{NULL, 0},
 };
 
@@ -1161,20 +1149,6 @@ static void mmc1_init(int evm_id, int profile)
 	return;
 }
 
-static void mmc2_init(int evm_id, int profile)
-{
-	setup_pin_mux(mmc2_pin_mux);
-
-	am335x_mmc[1].mmc = 3;
-	am335x_mmc[1].caps = MMC_CAP_4_BIT_DATA;
-	am335x_mmc[1].gpio_cd = GPIO_TO_PIN(3, 16);
-	am335x_mmc[1].gpio_wp = GPIO_TO_PIN(0, 5);
-	am335x_mmc[1].ocr_mask = MMC_VDD_32_33 | MMC_VDD_33_34; /* 3V3 */
-
-	/* mmc will be initialized when mmc0_init is called */
-	return;
-}
-
 static void mmc2_wl12xx_init(int evm_id, int profile)
 {
 	setup_pin_mux(mmc2_wl12xx_pin_mux);
@@ -1511,9 +1485,8 @@ static struct evm_dev_cfg gen_purp_evm_dev_cfg[] = {
 	{evm_nand_init, DEV_ON_DGHTR_BRD,
 		(PROFILE_ALL & ~PROFILE_2 & ~PROFILE_3)},
 	{i2c1_init,	DEV_ON_DGHTR_BRD, (PROFILE_0 | PROFILE_3 | PROFILE_7)},
-	{mcasp1_init,	DEV_ON_DGHTR_BRD, (PROFILE_0 | PROFILE_3) },
+	{mcasp1_init,	DEV_ON_DGHTR_BRD, (PROFILE_0 | PROFILE_3 | PROFILE_7) },
 	{mmc1_init,	DEV_ON_DGHTR_BRD, PROFILE_2},
-	{mmc2_init,	DEV_ON_DGHTR_BRD, PROFILE_4},
 	{mmc2_wl12xx_init,	DEV_ON_BASEBOARD, (PROFILE_0 | PROFILE_3 |
 								PROFILE_5)},
 	{mmc0_init,	DEV_ON_BASEBOARD, (PROFILE_ALL & ~PROFILE_5)},
@@ -1588,8 +1561,20 @@ static void setup_low_cost_evm(void)
 static void setup_general_purpose_evm(void)
 {
 	u32 prof_sel = am335x_get_profile_selection();
-
 	pr_info("The board is general purpose EVM in profile %d\n", prof_sel);
+
+	if (!strncmp("1.1A", config.version, 4)) {
+		pr_info("EVM version is %s\n", config.version);
+		gp_evm_revision = GP_EVM_REV_IS_1_1A;
+	}
+	else if (!strncmp("1.0A", config.version, 4)) {
+		pr_info("EVM version is %s\n", config.version);
+		gp_evm_revision = GP_EVM_REV_IS_1_0A;
+	}
+	else {
+		pr_err("EVM version read fail, falling back to Rev1.1A");
+		gp_evm_revision = GP_EVM_REV_IS_1_1A;
+	}
 
 	_configure_device(GEN_PURP_EVM, gen_purp_evm_dev_cfg, (1L << prof_sel));
 }

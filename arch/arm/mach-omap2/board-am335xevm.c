@@ -297,6 +297,7 @@ static bool daughter_brd_detected;
 #define GP_EVM_REV_IS_1_1A		0x2
 #define GP_EVM_REV_IS_UNKNOWN		0xFF
 static unsigned int gp_evm_revision = GP_EVM_REV_IS_UNKNOWN;
+unsigned int gigabit_enable = 1;
 
 #define EEPROM_MAC_ADDRESS_OFFSET	60 /* 4+8+4+12+32 */
 #define EEPROM_NO_OF_MAC_ADDR		3
@@ -1235,6 +1236,11 @@ static void setup_general_purpose_evm(void)
 		gp_evm_revision = GP_EVM_REV_IS_1_1A;
 	}
 
+	if (gp_evm_revision == GP_EVM_REV_IS_1_0A)
+		gigabit_enable = 0;
+	else if (gp_evm_revision == GP_EVM_REV_IS_1_1A)
+		gigabit_enable = 1;
+
 	_configure_device(GEN_PURP_EVM, gen_purp_evm_dev_cfg, (1L << prof_sel));
 }
 
@@ -1387,7 +1393,7 @@ static void am335x_evm_setup(struct memory_accessor *mem_acc, void *context)
 	 * information is required for configuring phy address and hence
 	 * should be call only after board detection
 	 */
-	am33xx_cpsw_init();
+	am33xx_cpsw_init(gigabit_enable);
 
 	return;
 out:
@@ -1405,7 +1411,8 @@ out:
 	 * information is required for configuring phy address and hence
 	 * should be call only after board detection
 	 */
-	am33xx_cpsw_init();
+
+	am33xx_cpsw_init(gigabit_enable);
 }
 
 static struct at24_platform_data am335x_daughter_board_eeprom_info = {

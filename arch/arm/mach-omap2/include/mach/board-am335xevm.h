@@ -39,7 +39,7 @@
 
 void am33xx_evmid_fillup(unsigned int evmid);
 void am33xx_cpsw_macidfillup(char *eeprommacid0, char *eeprommacid1);
-void am33xx_cpsw_init(void);
+void am33xx_cpsw_init(unsigned int gigen);
 
 extern void am335x_setup_macasp_snd_data_fixup(void);
 

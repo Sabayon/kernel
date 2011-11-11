@@ -11,10 +11,11 @@
  *			XPUL = AN0,YPLL = AN1,XNUR = AN2,
  *			YNLR = AN3, then set this variable to
  *			0.
+ * @x_plate_resistance:	X plate resistance.
  */
 
 struct tsc_data {
 	int wires;
 	int analog_input;
-
+	int x_plate_resistance;
 };

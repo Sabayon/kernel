@@ -194,6 +194,7 @@ static struct resource tsc_resources[]  = {
 
 static struct tsc_data am335x_touchscreen_data  = {
 	.wires  = 4,
+	.x_plate_resistance = 200,
 };
 
 static struct platform_device tsc_device = {

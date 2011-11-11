@@ -920,6 +920,14 @@ static void dvi_init(int evm_id, int profile)
 static void tsc_init(int evm_id, int profile)
 {
 	int err;
+
+	if (gp_evm_revision == GP_EVM_REV_IS_1_1A) {
+		am335x_touchscreen_data.analog_input = 1;
+		pr_info("TSC connected to beta GP EVM\n");
+	} else {
+		am335x_touchscreen_data.analog_input = 0;
+		pr_info("TSC connected to alpha GP EVM\n");
+	}
 	setup_pin_mux(tsc_pin_mux);
 	err = platform_device_register(&tsc_device);
 	if (err)

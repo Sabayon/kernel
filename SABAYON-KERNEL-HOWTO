@@ -47,13 +47,13 @@ How to cook a Sabayon kernel, in 4 steps:
    # In this case, our tag for Sabayon 3.0 kernel will be:
    #    sabayon-3.0
    # So that the config file names must be:
-   #    sabayon-3.0[-rX]-<arch>.config
+   #    sabayon-${PV}-${ARCH}.config
    # The [-rX] is optional and X must be an integer from 0 to 999.
    # In fact, successive revisions are going to get -r1, -r2, etc.
 
    # Test out and update config files (very important)
    # in this example we'll use an already available 2.6.39-r2 config
-   $ cp sabayon/config/sabayon-2.6.39-r2-amd64.config .config
+   $ cp sabayon/config/sabayon-2.6.39-amd64.config .config
    $ make oldconfig
 
    # test compilation

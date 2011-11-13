@@ -1319,6 +1319,16 @@ void txdma_completion_work(struct work_struct *data)
 	struct musb *musb = cppi->musb;
 	unsigned long flags;
 
+	/*
+	 * txdma worker thread can call schedule_work on itself and cause
+	 * itself to be scheduled immediately and because the data might still
+	 * be in FIFO if it hasn't been pushed out after DMA, it is possible for
+	 * the worker to consume lot of CPU when the controller is slow, so we
+	 * reschedule if necessary.
+	 */
+	if (need_resched())
+		cond_resched();
+
 	spin_lock_irqsave(&musb->lock, flags);
 	cppi41_check_fifo_empty(cppi);
 	spin_unlock_irqrestore(&musb->lock, flags);

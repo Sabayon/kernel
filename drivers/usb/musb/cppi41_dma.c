@@ -1283,6 +1283,7 @@ void cppi41_check_fifo_empty(struct cppi41 *cppi)
 	for (index = 0; index < USB_CPPI41_NUM_CH; index++) {
 		void __iomem *epio;
 		u16 csr;
+		unsigned long flags;
 
 		tx_ch = &cppi->tx_cppi_ch[index];
 		if (tx_ch->tx_complete) {
@@ -1299,29 +1300,34 @@ void cppi41_check_fifo_empty(struct cppi41 *cppi)
 			epio = tx_ch->end_pt->regs;
 			csr = musb_readw(epio, MUSB_TXCSR);
 
-			if (csr & (MUSB_TXCSR_TXPKTRDY |
-				MUSB_TXCSR_FIFONOTEMPTY))
-				resched = 1;
-			else {
-				tx_ch->tx_complete = 0;
-				musb_dma_completion(musb, index+1, 1);
+			while (1) {
+				csr = musb_readw(epio, MUSB_TXCSR);
+				if(!(csr & (MUSB_TXCSR_TXPKTRDY |
+					MUSB_TXCSR_FIFONOTEMPTY)))
+				break;
+				cond_resched();
 			}
+			tx_ch->tx_complete = 0;
+			spin_lock_irqsave(&musb->lock, flags);
+			musb_dma_completion(musb, index+1, 1);
+			spin_unlock_irqrestore(&musb->lock, flags);
 		}
 	}
-
-	if (resched)
-		schedule_work(&cppi->txdma_work);
 }
 
 void txdma_completion_work(struct work_struct *data)
 {
 	struct cppi41 *cppi = container_of(data, struct cppi41, txdma_work);
 	struct musb *musb = cppi->musb;
-	unsigned long flags;
 
-	spin_lock_irqsave(&musb->lock, flags);
+	/*
+	 * txdma worker thread can call schedule_work on itself and cause
+	 * itself to be scheduled immediately and because the data might still
+	 * be in FIFO if it hasn't been pushed out after DMA, it is possible for
+	 * the worker to consume lot of CPU when the controller is slow, so we
+	 * reschedule if necessary.
+	 */
 	cppi41_check_fifo_empty(cppi);
-	spin_unlock_irqrestore(&musb->lock, flags);
 }
 
 /**

@@ -1,10 +1,10 @@
 /*
  * CAN bus driver for Bosch D_CAN controller
  *
- * Copyright (C) 2011 Texas Instruments, Inc. - http://www.ti.com/
+ * Copyright (C) 2011 Texas Instruments Incorporated - http://www.ti.com/
  * Anil Kumar Ch <anilkumar@ti.com>
  *
- * Base taken from C_CAN driver
+ * Borrowed from C_CAN driver
  * Copyright (C) 2010 ST Microelectronics
  * - Bhupesh Sharma <bhupesh.sharma@st.com>
  *

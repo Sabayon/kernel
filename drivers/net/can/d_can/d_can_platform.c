@@ -1,10 +1,10 @@
 /*
  * Platform CAN bus driver for Bosch D_CAN controller
  *
- * Copyright (C) 2011 Texas Instruments, Inc. - http://www.ti.com/
+ * Copyright (C) 2011 Texas Instruments Incorporated - http://www.ti.com/
  * Anil Kumar Ch <anilkumar@ti.com>
  *
- * Base taken from C_CAN driver
+ * Borrowed from C_CAN driver
  * Copyright (C) 2010 ST Microelectronics
  * - Bhupesh Sharma <bhupesh.sharma@st.com>
  *
@@ -65,8 +65,6 @@
 
 #include "d_can.h"
 
-#define D_CAN_CLK_NAME_LEN	40
-
 static int __devinit d_can_plat_probe(struct platform_device *pdev)
 {
 	int ret = 0;
@@ -75,7 +73,6 @@ static int __devinit d_can_plat_probe(struct platform_device *pdev)
 	struct d_can_priv *priv;
 	struct resource *mem;
 	struct d_can_platform_data *pdata;
-	char *clk_name;
 
 	pdata = pdev->dev.platform_data;
 	if (!pdata) {
@@ -91,34 +88,19 @@ static int __devinit d_can_plat_probe(struct platform_device *pdev)
 		goto exit;
 	}
 
-	clk_name = kzalloc(D_CAN_CLK_NAME_LEN + 1, GFP_KERNEL);
-	if (!clk_name)
-		goto exit;
-
 	priv = netdev_priv(ndev);
-	clk_name = "dcan";
-	if (pdev->id == 0)
-		strcat(clk_name, "0_fck");
-	else
-		strcat(clk_name, "1_fck");
-	/* get the appropriate clk */
-	priv->fck = clk_get(&pdev->dev, clk_name);
+
+	priv->fck = clk_get(&pdev->dev, pdata->fck_name);
 	if (IS_ERR(priv->fck)) {
-		dev_err(&pdev->dev, "%s is not found\n", clk_name);
+		dev_err(&pdev->dev, "%s is not found\n", pdata->fck_name);
 		ret = -ENODEV;
 		goto exit_free_ndev;
 	}
 	clk_enable(priv->fck);
 
-	/* clk_name = D_CAN_DRV_NAME; */
-	clk_name = "dcan";
-	if (pdev->id == 0)
-		strcat(clk_name, "0_ick");
-	else
-		strcat(clk_name, "1_ick");
-	priv->ick = clk_get(&pdev->dev, clk_name);
+	priv->ick = clk_get(&pdev->dev, pdata->ick_name);
 	if (IS_ERR(priv->ick)) {
-		dev_err(&pdev->dev, "%s is not found\n", clk_name);
+		dev_err(&pdev->dev, "%s is not found\n", pdata->ick_name);
 		ret = -ENODEV;
 		goto exit_free_fck;
 	}
@@ -147,14 +129,14 @@ static int __devinit d_can_plat_probe(struct platform_device *pdev)
 	}
 
 	/* IRQ specific to Error and status & can be used for Message Object */
-	ndev->irq = platform_get_irq_byname(pdev, "d_can_int0");
+	ndev->irq = platform_get_irq_byname(pdev, "int0");
 	if (!ndev->irq) {
 		dev_err(&pdev->dev, "No irq0 resource\n");
 		goto exit_iounmap;
 	}
 
 	/* IRQ specific for Message Object */
-	priv->irq_obj = platform_get_irq_byname(pdev, "d_can_int1");
+	priv->irq_obj = platform_get_irq_byname(pdev, "int1");
 	if (!priv->irq_obj) {
 		dev_err(&pdev->dev, "No irq1 resource\n");
 		goto exit_iounmap;
@@ -162,10 +144,6 @@ static int __devinit d_can_plat_probe(struct platform_device *pdev)
 
 	priv->base = addr;
 	priv->can.clock.freq = clk_get_rate(priv->fck);
-
-	/* RAM init */
-	pdata->hw_raminit(pdev->id);
-
 	priv->test_mode = pdata->test_mode_enable;
 
 	platform_set_drvdata(pdev, ndev);

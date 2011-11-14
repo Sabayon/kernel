@@ -4,7 +4,7 @@
 /*
  * D_CAN controller driver platform header
  *
- * Copyright (C) 2011 Texas Instruments, Inc. - http://www.ti.com/
+ * Copyright (C) 2011 Texas Instruments Incorporated - http://www.ti.com/
  * Anil Kumar Ch <anilkumar@ti.com>
  *
  * Bosch D_CAN controller is compliant to CAN protocol version 2.0 part A and B.
@@ -32,8 +32,9 @@
  * @dma_support:	DMA support is required/not
  * test_mode_enable:	Test mode enable bit
  * @parity_check:	Parity error checking is needed/not
+ * @fck_name		Functional clock name
+ * @ick_name		Interface clock name
  * @version:		version for future use
- * @hw_raminit:		platform specific callback fn for h/w ram init
  *
  * Platform data structure to get all platform specific settings.
  * this structure also accounts the fact that the IP may have different
@@ -48,6 +49,7 @@ struct d_can_platform_data {
 	bool test_mode_enable;
 	bool parity_check;
 	u32 version;
-	void (*hw_raminit) (unsigned int);
+	char *fck_name;
+	char *ick_name;
 };
 #endif

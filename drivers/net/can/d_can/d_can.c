@@ -1,10 +1,10 @@
 /*
  * CAN bus driver for Bosch D_CAN controller
  *
- * Copyright (C) 2011 Texas Instruments, Inc. - http://www.ti.com/
+ * Copyright (C) 2011 Texas Instruments Incorporated - http://www.ti.com/
  * Anil Kumar Ch <anilkumar@ti.com>
  *
- * Base taken from C_CAN driver
+ * Borrowed from C_CAN driver
  * Copyright (C) 2010 ST Microelectronics
  * - Bhupesh Sharma <bhupesh.sharma@st.com>
  *
@@ -47,7 +47,7 @@
 /* TI D_CAN module registers */
 #define D_CAN_CTL		0x0	/* CAN control register */
 #define D_CAN_ES		0x4	/* Error and status */
-#define D_CAN_PEEOI_REG		0x4	/* Parity error EOI */
+#define D_CAN_PARITYERR_EOI	0x4	/* Parity error EOI */
 #define D_CAN_ERRC		0x8	/* Error counter */
 #define D_CAN_BTR		0xC	/* Bit timing */
 #define D_CAN_INT		0x10	/* Interrupt register */
@@ -55,22 +55,22 @@
 #define D_CAN_PERR		0x1C	/* Parity Error Code */
 #define D_CAN_ABOTR		0x80	/* Auto-Bus-On Time */
 #define D_CAN_TXRQ_X		0x84	/* Transmission Request X */
-#define D_CAN_TXRQ(n)		(0x88 + (n * 4)) /* Transmission request */
+#define D_CAN_TXRQ(n)		(0x88 + ((n) * 4)) /* Transmission request */
 #define D_CAN_NWDAT_X		0x98	/* New data X register */
-#define D_CAN_NWDAT(n)		(0x9C + (n * 4)) /* New data */
+#define D_CAN_NWDAT(n)		(0x9C + ((n) * 4)) /* New data */
 #define D_CAN_INTPND_X		0xAC	/* Interrupt Pending X */
-#define D_CAN_INTPND(n)		(0xB0 + (n * 4)) /* Interrupt Pending */
+#define D_CAN_INTPND(n)		(0xB0 + ((n) * 4)) /* Interrupt Pending */
 #define D_CAN_MSGVAL_X		0xC0		/* Message Valid X */
-#define D_CAN_MSGVAL(n)		(0xC4 + (n * 4)) /* Message Valid */
-#define D_CAN_INTMUX(n)		(0xD8 + (n * 4)) /* Interrupt Multiplexer */
-#define D_CAN_IFCMD(n)		(0x100 + (n * 0x20)) /* Command */
-#define D_CAN_IFMSK(n)		(0x104 + (n * 0x20)) /* Mask */
-#define D_CAN_IFARB(n)		(0x108 + (n * 0x20)) /* Arbitration */
-#define D_CAN_IFMCTL(n)		(0x10c + (n * 0x20)) /* Message ctl */
-#define D_CAN_IFDATA(n)		(0x110 + (n * 0x20)) /* DATA A */
-#define D_CAN_IFDATB(n)		(0x114 + (n * 0x20)) /* DATA B */
+#define D_CAN_MSGVAL(n)		(0xC4 + ((n) * 4)) /* Message Valid */
+#define D_CAN_INTMUX(n)		(0xD8 + ((n) * 4)) /* Interrupt Multiplexer */
+#define D_CAN_IFCMD(n)		(0x100 + ((n) * 0x20)) /* Command */
+#define D_CAN_IFMSK(n)		(0x104 + ((n) * 0x20)) /* Mask */
+#define D_CAN_IFARB(n)		(0x108 + ((n) * 0x20)) /* Arbitration */
+#define D_CAN_IFMCTL(n)		(0x10c + ((n) * 0x20)) /* Message ctl */
+#define D_CAN_IFDATA(n)		(0x110 + ((n) * 0x20)) /* DATA A */
+#define D_CAN_IFDATB(n)		(0x114 + ((n) * 0x20)) /* DATA B */
 #define D_CAN_IF3OBS		0x140	/* IF3 Observation */
-#define D_CAN_IF3UPD(n)		(0x160 + (n * 4)) /* Update enable */
+#define D_CAN_IF3UPD(n)		(0x160 + ((n) * 4)) /* Update enable */
 #define D_CAN_TIOC		0x1E0	/* CAN TX IO Control */
 #define D_CAN_RIOC		0x1E4	/* CAN RX IO Control */
 
@@ -146,13 +146,13 @@
 
 /* D_CAN IF command reg bit fields */
 #define D_CAN_IF_CMD_WR		BIT(23)	/* Write/read */
-#define D_CAN_IF_CMD_MASK	BIT(22)	/* Access mask bits */
-#define D_CAN_IF_CMD_ARB	BIT(21)	/* Access arbitration bits */
-#define D_CAN_IF_CMD_CONTROL	BIT(20)	/* Acess control bits */
+#define D_CAN_IF_CMD_MASK	BIT(22)	/* Access to mask bits */
+#define D_CAN_IF_CMD_ARB	BIT(21)	/* Access to arbitration bits */
+#define D_CAN_IF_CMD_CONTROL	BIT(20)	/* Acess to control bits */
 #define D_CAN_IF_CMD_CIP	BIT(19)	/* Clear int pending */
 #define D_CAN_IF_CMD_TXRQST	BIT(18)	/* Access transmission request */
-#define D_CAN_IF_CMD_DATAA	BIT(17)	/* Access Data Bytes 0-3 */
-#define D_CAN_IF_CMD_DATAB	BIT(16)	/* Access Data Bytes 4-7 */
+#define D_CAN_IF_CMD_DATAA	BIT(17)	/* Access to Data Bytes 0-3 */
+#define D_CAN_IF_CMD_DATAB	BIT(16)	/* Access to Data Bytes 4-7 */
 #define D_CAN_IF_CMD_BUSY	BIT(15)	/* Busy flag */
 #define D_CAN_IF_CMD_DAM	BIT(14)	/* Activation of DMA */
 #define D_CAN_IF_CMD_MN_MASK	0xFF	/* No. of msg's used for DMA T/F */
@@ -227,23 +227,23 @@
 #define IFX_CMD_BITS(x)			((x) & 0xFFFFFF00)
 #define IFX_CMD_MSG_NUMBER(x)		((x) & 0xFF)
 
-/* message object split */
-#define D_CAN_NUM_OF_OBJECTS		64
-#define D_CAN_MSG_OBJ_RX_NUM		32
-#define D_CAN_MSG_OBJ_TX_NUM		32
+/* Message objects split */
+#define D_CAN_NUM_MSG_OBJECTS		64
+#define D_CAN_NUM_RX_MSG_OBJECTS	32
+#define D_CAN_NUM_TX_MSG_OBJECTS	32
 
 #define D_CAN_MSG_OBJ_RX_FIRST		1
 #define D_CAN_MSG_OBJ_RX_LAST		(D_CAN_MSG_OBJ_RX_FIRST + \
-					D_CAN_MSG_OBJ_RX_NUM - 1)
+					D_CAN_NUM_RX_MSG_OBJECTS - 1)
 
 #define D_CAN_MSG_OBJ_TX_FIRST		(D_CAN_MSG_OBJ_RX_LAST + 1)
 #define D_CAN_MSG_OBJ_TX_LAST		(D_CAN_MSG_OBJ_TX_FIRST + \
-					D_CAN_MSG_OBJ_TX_NUM - 1)
+					D_CAN_NUM_TX_MSG_OBJECTS - 1)
 
 #define D_CAN_MSG_OBJ_RX_SPLIT		17
 #define D_CAN_MSG_OBJ_RX_LOW_LAST	(D_CAN_MSG_OBJ_RX_SPLIT - 1)
 
-#define D_CAN_NEXT_MSG_OBJ_MASK		(D_CAN_MSG_OBJ_TX_NUM - 1)
+#define D_CAN_NEXT_MSG_OBJ_MASK		(D_CAN_NUM_TX_MSG_OBJECTS - 1)
 
 /* status interrupt */
 #define STATUS_INTERRUPT		0x8000
@@ -276,7 +276,7 @@ static struct can_bittiming_const d_can_bittiming_const = {
 	.brp_inc = 1,
 };
 
-/* d_can lec values */
+/* d_can last error code (lec) values */
 enum d_can_lec_type {
 	LEC_NO_ERROR = 0,
 	LEC_STUFF_ERROR,
@@ -339,6 +339,11 @@ static inline int get_tx_echo_msg_obj(const struct d_can_priv *priv)
 			D_CAN_MSG_OBJ_TX_FIRST;
 }
 
+/*
+ * API for enabling and disabling the multiple interrupts
+ * of the DCAN module like error interrupt, status interrupt
+ * error enable/disable for instance zero and one and etc.
+ */
 static void d_can_interrupts(struct d_can_priv *priv, int enable)
 {
 	unsigned int cntrl_save = d_can_read(priv, D_CAN_CTL);
@@ -348,7 +353,7 @@ static void d_can_interrupts(struct d_can_priv *priv, int enable)
 				D_CAN_CTL_IE0);
 	else
 		cntrl_save &= ~(D_CAN_CTL_IE1 | D_CAN_CTL_SIE |
-				D_CAN_CTL_EIE |	D_CAN_CTL_IE0);
+				D_CAN_CTL_EIE | D_CAN_CTL_IE0);
 
 	d_can_write(priv, D_CAN_CTL, cntrl_save);
 }
@@ -357,8 +362,8 @@ static inline int d_can_msg_obj_is_busy(struct d_can_priv *priv, int iface)
 {
 	int count = MIN_TIMEOUT_VALUE;
 
-	while (count && d_can_read(priv, D_CAN_IFCMD(iface)) &
-				D_CAN_IF_CMD_BUSY) {
+	while (count && (d_can_read(priv, D_CAN_IFCMD(iface)) &
+				D_CAN_IF_CMD_BUSY)) {
 		count--;
 		udelay(1);
 	}
@@ -374,14 +379,14 @@ static inline void d_can_object_get(struct net_device *dev,
 {
 	struct d_can_priv *priv = netdev_priv(dev);
 
-	/*
-	 * As per specs, after writting the message object number in the
-	 * IF command register the transfer b/w interface register and
-	 * message RAM must be complete in 12 CAN-CLK period.
-	 */
 	d_can_write(priv, D_CAN_IFCMD(iface), IFX_CMD_BITS(mask) |
 					IFX_CMD_MSG_NUMBER(objno));
 
+	/*
+	 * As per specs, after writing the message object number in the
+	 * IF command register the transfer b/w interface register and
+	 * message RAM must be complete in 12 CAN-CLK period.
+	 */
 	if (d_can_msg_obj_is_busy(priv, iface))
 		netdev_err(dev, "timed out in object get\n");
 }
@@ -391,15 +396,14 @@ static inline void d_can_object_put(struct net_device *dev,
 {
 	struct d_can_priv *priv = netdev_priv(dev);
 
-	/*
-	 * As per specs, after writting the message object number in the
-	 * IF command request register the transfer b/w interface
-	 * register and message RAM must be complete in 12 CAN-CLK
-	 * period.
-	 */
 	d_can_write(priv, D_CAN_IFCMD(iface), D_CAN_IF_CMD_WR |
 		IFX_CMD_BITS(mask) | IFX_CMD_MSG_NUMBER(objno));
 
+	/*
+	 * As per specs, after writing the message object number in the
+	 * IF command register the transfer b/w interface register and
+	 * message RAM must be complete in 12 CAN-CLK period.
+	 */
 	if (d_can_msg_obj_is_busy(priv, iface))
 		netdev_err(dev, "timed out in object put\n");
 }
@@ -408,10 +412,10 @@ static void d_can_write_msg_object(struct net_device *dev,
 			int iface, struct can_frame *frame, int objno)
 {
 	int i;
-	u32 flags = 0;
 	unsigned int id;
 	u32 dataA = 0;
 	u32 dataB = 0;
+	u32 flags = 0;
 	struct d_can_priv *priv = netdev_priv(dev);
 
 	if (!(frame->can_id & CAN_RTR_FLAG))
@@ -427,21 +431,25 @@ static void d_can_write_msg_object(struct net_device *dev,
 	d_can_write(priv, D_CAN_IFARB(iface), IFX_WRITE_IDR(id) | flags);
 
 	for (i = 0; i < frame->can_dlc; i++) {
-		if (i < 4)
+		if (frame->can_dlc <= 4)
 			dataA |= (frame->data[i] << (8 * i));
-		else
-			dataB |= (frame->data[i] << (8 * (i - 4)));
+		else {
+			if (i < 4)
+				dataA |= (frame->data[i] << (8 * i));
+			else
+				dataB |= (frame->data[i] << (8 * (i - 4)));
+		}
 	}
 
 	/* DATA write to Message object registers DATAA and DATAB */
-	if (frame->can_dlc < 4)
+	if (frame->can_dlc <= 4)
 		d_can_write(priv, D_CAN_IFDATA(iface), dataA);
 	else {
 		d_can_write(priv, D_CAN_IFDATB(iface), dataB);
 		d_can_write(priv, D_CAN_IFDATA(iface), dataA);
 	}
 
-	/* enable interrupt for this message object */
+	/* enable TX interrupt for this message object */
 	d_can_write(priv, D_CAN_IFMCTL(iface),
 			D_CAN_IF_MCTL_TXIE | D_CAN_IF_MCTL_EOB |
 			D_CAN_IF_MCTL_TXRQST | D_CAN_IF_MCTL_NEWDAT |
@@ -451,9 +459,12 @@ static void d_can_write_msg_object(struct net_device *dev,
 	d_can_object_put(dev, iface, objno, D_CAN_IF_CMD_ALL);
 }
 
+/*
+ * Mark that this particular message object is received and clearing
+ * the interrupt pending register value.
+ */
 static inline void d_can_mark_rx_msg_obj(struct net_device *dev,
-						int iface, int ctrl_mask,
-						int obj)
+				int iface, int ctrl_mask, int obj)
 {
 	struct d_can_priv *priv = netdev_priv(dev);
 
@@ -463,9 +474,8 @@ static inline void d_can_mark_rx_msg_obj(struct net_device *dev,
 	d_can_object_put(dev, iface, obj, D_CAN_IF_CMD_CONTROL);
 }
 
-static inline void d_can_activate_all_lower_rx_msg_obj(struct net_device *dev,
-						int iface,
-						int ctrl_mask)
+static inline void d_can_activate_all_lower_rx_msg_objs(struct net_device *dev,
+				int iface, int ctrl_mask)
 {
 	int i;
 	struct d_can_priv *priv = netdev_priv(dev);
@@ -555,10 +565,14 @@ static int d_can_read_msg_object(struct net_device *dev, int iface, int ctrl)
 		dataB = d_can_read(priv, D_CAN_IFDATB(iface));
 		for (i = 0; i < frame->can_dlc; i++) {
 			/* Writing MO higher 4 data bytes to skb */
-			if (i <= 3)
-				frame->data[i] = dataA >> (8 * i); /* Lower */
-			if (i > 3)
-				frame->data[i] = dataB >> (8 * (i-4));
+			if (frame->can_dlc <= 4)
+				frame->data[i] = dataA >> (8 * i);
+			else {
+				if (i < 4)
+					frame->data[i] = dataA >> (8 * i);
+				else
+					frame->data[i] = dataB >> (8 * (i-4));
+			}
 		}
 	}
 
@@ -639,8 +653,7 @@ static netdev_tx_t d_can_start_xmit(struct sk_buff *skb,
 	 */
 	priv->tx_next++;
 	if (d_can_is_next_tx_obj_busy(priv, get_tx_next_msg_obj(priv)) ||
-		(priv->tx_next & D_CAN_NEXT_MSG_OBJ_MASK)
-		== 0)
+		((priv->tx_next & D_CAN_NEXT_MSG_OBJ_MASK) == 0))
 		netif_stop_queue(dev);
 
 	return NETDEV_TX_OK;
@@ -683,7 +696,7 @@ static void d_can_configure_msg_objects(struct net_device *dev)
 	unsigned int i;
 
 	/* first invalidate all message objects */
-	for (i = D_CAN_MSG_OBJ_RX_FIRST; i <= D_CAN_NUM_OF_OBJECTS; i++)
+	for (i = D_CAN_MSG_OBJ_RX_FIRST; i <= D_CAN_NUM_MSG_OBJECTS; i++)
 		d_can_inval_msg_object(dev, D_CAN_IF_RX_NUM, i);
 
 	/* setup receive message objects */
@@ -776,7 +789,7 @@ static void d_can_init(struct net_device *dev)
 	/* configure message objects */
 	d_can_configure_msg_objects(dev);
 
-	/* set a `lec` value so that we can check for updates later */
+	/* set a LEC value so that we can check for updates later */
 	d_can_write(priv, D_CAN_ES, LEC_UNUSED);
 }
 
@@ -874,8 +887,7 @@ static void d_can_do_tx(struct net_device *dev)
 
 	/* restart queue if wrap-up or if queue stalled on last pkt */
 	if (((priv->tx_next & D_CAN_NEXT_MSG_OBJ_MASK) != 0)
-		|| ((priv->tx_echo & D_CAN_NEXT_MSG_OBJ_MASK)
-		== 0))
+		|| ((priv->tx_echo & D_CAN_NEXT_MSG_OBJ_MASK) == 0))
 		netif_wake_queue(dev);
 }
 
@@ -959,7 +971,7 @@ static int d_can_do_rx_poll(struct net_device *dev, int quota)
 						mctrl_reg_val, msg_obj);
 			else if (msg_obj == D_CAN_MSG_OBJ_RX_LOW_LAST)
 				/* activate all lower message objects */
-				d_can_activate_all_lower_rx_msg_obj(dev,
+				d_can_activate_all_lower_rx_msg_objs(dev,
 						D_CAN_IF_RX_NUM, mctrl_reg_val);
 
 			num_rx_pkts++;
@@ -970,7 +982,7 @@ static int d_can_do_rx_poll(struct net_device *dev, int quota)
 	return num_rx_pkts;
 }
 
-static inline int d_can_has_and_handle_berr(struct d_can_priv *priv)
+static inline int d_can_has_handle_berr(struct d_can_priv *priv)
 {
 	return (priv->can.ctrlmode & CAN_CTRLMODE_BERR_REPORTING) &&
 		(priv->current_status & LEC_UNUSED);
@@ -1108,7 +1120,7 @@ static int d_can_handle_bus_err(struct net_device *dev,
 		break;
 	}
 
-	/* set a `lec` value so that we can check for updates later */
+	/* set a LEC value so that we can check for updates later */
 	d_can_write(priv, D_CAN_ES, LEC_UNUSED);
 
 	netif_receive_skb(skb);
@@ -1176,7 +1188,7 @@ static int d_can_poll(struct napi_struct *napi, int quota)
 		priv->last_status = priv->current_status;
 
 		/* handle lec errors on the bus */
-		lec_type = d_can_has_and_handle_berr(priv);
+		lec_type = d_can_has_handle_berr(priv);
 		if (lec_type)
 			work_done += d_can_handle_bus_err(dev, lec_type);
 	} else if ((priv->irqstatus >= D_CAN_MSG_OBJ_RX_FIRST) &&

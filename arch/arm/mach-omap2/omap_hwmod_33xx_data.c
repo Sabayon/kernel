@@ -716,8 +716,27 @@ static struct omap_hwmod am33xx_gpmc_hwmod = {
 
 /* 'i2c' class */
 
+static struct omap_hwmod_class_sysconfig omap44xx_i2c_sysc = {
+	.sysc_offs	= 0x0010,
+	.syss_offs	= 0x0090,
+	.sysc_flags	= (SYSC_HAS_AUTOIDLE | SYSC_HAS_CLOCKACTIVITY |
+			   SYSC_HAS_ENAWAKEUP | SYSC_HAS_SIDLEMODE |
+			   SYSC_HAS_SOFTRESET | SYSS_HAS_RESET_STATUS),
+	.idlemodes	= (SIDLE_FORCE | SIDLE_NO | SIDLE_SMART |
+			   SIDLE_SMART_WKUP),
+	.sysc_fields	= &omap_hwmod_sysc_type1,
+};
+
+
 static struct omap_hwmod_class i2c_class = {
 	.name = "i2c",
+	.sysc	= &omap44xx_i2c_sysc,
+	.rev	= OMAP_I2C_IP_VERSION_2,
+	.reset	= &omap_i2c_reset,
+};
+
+static struct omap_i2c_dev_attr i2c_dev_attr = {
+	.flags	= OMAP_I2C_FLAG_BUS_SHIFT_NONE,
 };
 
 /* I2C1 */
@@ -737,6 +756,7 @@ static struct omap_hwmod_ocp_if *am33xx_i2c1_slaves[] = {
 
 static struct omap_hwmod am33xx_i2c1_hwmod = {
 	.name           = "i2c1",
+	.flags		= HWMOD_16BIT_REG,
 	.mpu_irqs       = i2c1_mpu_irqs,
 	.sdma_reqs      = i2c1_edma_reqs,
 	.main_clk       = "i2c1_fck",
@@ -750,6 +770,7 @@ static struct omap_hwmod am33xx_i2c1_hwmod = {
 	.slaves         = am33xx_i2c1_slaves,
 	.slaves_cnt     = ARRAY_SIZE(am33xx_i2c1_slaves),
 	.class          = &i2c_class,
+	.dev_attr	= &i2c_dev_attr,
 };
 
 /* i2c2 */
@@ -785,6 +806,7 @@ static struct omap_hwmod_ocp_if *am33xx_i2c2_slaves[] = {
 
 static struct omap_hwmod am33xx_i2c2_hwmod = {
 	.name           = "i2c2",
+	.flags		= HWMOD_16BIT_REG,
 	.mpu_irqs       = i2c2_mpu_irqs,
 	.sdma_reqs      = i2c2_edma_reqs,
 	.main_clk       = "i2c2_fck",
@@ -798,6 +820,7 @@ static struct omap_hwmod am33xx_i2c2_hwmod = {
 	.slaves         = am33xx_i2c2_slaves,
 	.slaves_cnt     = ARRAY_SIZE(am33xx_i2c2_slaves),
 	.class          = &i2c_class,
+	.dev_attr	= &i2c_dev_attr,
 };
 
 /* 'icss' class */

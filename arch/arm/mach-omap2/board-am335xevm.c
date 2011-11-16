@@ -1237,13 +1237,11 @@ static void setup_general_purpose_evm(void)
 	pr_info("The board is general purpose EVM in profile %d\n", prof_sel);
 
 	if (!strncmp("1.1A", config.version, 4)) {
-		pr_info("EVM version is %s\n", config.version);
 		gp_evm_revision = GP_EVM_REV_IS_1_1A;
 	} else if (!strncmp("1.0A", config.version, 4)) {
-		pr_info("EVM version is %s\n", config.version);
 		gp_evm_revision = GP_EVM_REV_IS_1_0A;
 	} else {
-		pr_err("EVM version read fail, falling back to Rev1.1A");
+		pr_err("Found invalid GP EVM revision, falling back to Rev1.1A");
 		gp_evm_revision = GP_EVM_REV_IS_1_1A;
 	}
 

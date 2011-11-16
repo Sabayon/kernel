@@ -578,8 +578,8 @@ static struct clk i2c3_fck = {
 	.recalc		= &followparent_recalc,
 };
 
-static struct clk icss_fck = {
-	.name		= "icss_fck",
+static struct clk pruss = {
+	.name		= "pruss",
 	.ops		= &clkops_omap2_dflt,
 	.enable_reg	= AM33XX_CM_PER_ICSS_CLKCTRL,
 	.enable_bit	= AM33XX_MODULEMODE_SWCTRL,
@@ -1804,7 +1804,7 @@ static struct omap_clk am33xx_clks[] = {
 	CLK("omap_i2c.1",	"fck",		&i2c1_fck,	CK_AM33XX),
 	CLK("omap_i2c.2",	"fck",		&i2c2_fck,	CK_AM33XX),
 	CLK("omap_i2c.3",	"fck",		&i2c3_fck,	CK_AM33XX),
-	CLK(NULL,	"icss_fck",		&icss_fck,	CK_AM33XX),
+	CLK(NULL,	"pruss",		&pruss,		CK_AM33XX),
 	CLK(NULL,	"ieee5000_fck",		&ieee5000_fck,	CK_AM33XX),
 	CLK(NULL,	"l3_instr_fck",		&l3_instr_fck,	CK_AM33XX),
 	CLK(NULL,	"l3_main_fck",		&l3_main_fck,	CK_AM33XX),

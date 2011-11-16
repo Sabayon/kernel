@@ -28,5 +28,6 @@ int am33xx_clk_init(void);
 
 extern const struct clkops clkops_am33xx_dflt_wait;
 extern const struct clkops clkops_am33xx_sgx;
+extern const struct clkops clkops_am33xx_icss;
 
 #endif

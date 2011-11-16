@@ -580,7 +580,7 @@ static struct clk i2c3_fck = {
 
 static struct clk pruss = {
 	.name		= "pruss",
-	.ops		= &clkops_omap2_dflt,
+	.ops		= &clkops_am33xx_icss,
 	.enable_reg	= AM33XX_CM_PER_ICSS_CLKCTRL,
 	.enable_bit	= AM33XX_MODULEMODE_SWCTRL,
 	.clkdm_name	= "icss_ocp_clkdm",

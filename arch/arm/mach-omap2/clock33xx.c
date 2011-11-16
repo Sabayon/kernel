@@ -73,6 +73,31 @@ void am33xx_sgx_clk_disable(struct clk *clk)
 	omap2_dflt_clk_disable(clk);
 }
 
+int am33xx_icss_clk_enable(struct clk *clk)
+{
+	omap2_dflt_clk_enable(clk);
+
+	/* De-assert local reset after module enable */
+	omap2_prm_clear_mod_reg_bits(AM33XX_ICSS_LRST_MASK,
+			AM33XX_PRM_PER_MOD,
+			AM33XX_RM_PER_RSTCTRL_OFFSET);
+
+	omap2_cm_wait_idlest(clk->enable_reg, AM33XX_IDLEST_MASK,
+			AM33XX_IDLEST_VAL, clk->name);
+
+	return 0;
+}
+
+void am33xx_icss_clk_disable(struct clk *clk)
+{
+	/* Assert local reset */
+	omap2_prm_set_mod_reg_bits(AM33XX_ICSS_LRST_MASK,
+			AM33XX_PRM_PER_MOD,
+			AM33XX_RM_PER_RSTCTRL_OFFSET);
+
+	omap2_dflt_clk_disable(clk);
+}
+
 const struct clkops clkops_am33xx_dflt_wait = {
 	.enable         = am33xx_dflt_wait_clk_enable,
 	.disable	= omap2_dflt_clk_disable,
@@ -81,4 +106,9 @@ const struct clkops clkops_am33xx_dflt_wait = {
 const struct clkops clkops_am33xx_sgx = {
 	.enable         = am33xx_sgx_clk_enable,
 	.disable        = am33xx_sgx_clk_disable,
+};
+
+const struct clkops clkops_am33xx_icss = {
+	.enable         = am33xx_icss_clk_enable,
+	.disable        = am33xx_icss_clk_disable,
 };

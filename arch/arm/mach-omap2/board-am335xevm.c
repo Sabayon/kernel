@@ -582,6 +582,14 @@ static struct pinmux_config i2c1_pin_mux[] = {
 	{NULL, 0},
 };
 
+static struct pinmux_config i2c2_pin_mux[] = {
+	{"uart1_ctsn.i2c2_sda",    OMAP_MUX_MODE3 | AM33XX_SLEWCTRL_SLOW |
+					AM33XX_PULL_ENBL | AM33XX_INPUT_EN},
+	{"uart1_rtsn.i2c2_scl",   OMAP_MUX_MODE3 | AM33XX_SLEWCTRL_SLOW |
+					AM33XX_PULL_ENBL | AM33XX_INPUT_EN},
+	{NULL, 0},
+};
+
 /* Module pin mux for mcasp1 */
 static struct pinmux_config mcasp1_pin_mux[] = {
 	{"mii1_crs.mcasp1_aclkx", OMAP_MUX_MODE4 | AM33XX_PIN_INPUT_PULLDOWN},
@@ -1107,6 +1115,21 @@ static void i2c1_init(int evm_id, int profile)
 	return;
 }
 
+/* There will be more additions to this board_info over time. */
+static struct i2c_board_info beaglebone_i2c_boardinfo2[] = {
+	{
+		I2C_BOARD_INFO("tlv320aic3x", 0x1b),
+	},
+};
+
+static void i2c2_init(int evm_id, int profile)
+{
+	setup_pin_mux(i2c2_pin_mux);
+	omap_register_i2c_bus(3, 100, beaglebone_i2c_boardinfo2,
+			ARRAY_SIZE(beaglebone_i2c_boardinfo2));
+	return;
+}
+
 /* Setup McASP 1 */
 static void mcasp1_init(int evm_id, int profile)
 {
@@ -1529,6 +1552,7 @@ static struct evm_dev_cfg beaglebone_old_dev_cfg[] = {
 	{dvi_init,	DEV_ON_BASEBOARD, PROFILE_ALL},
 	{usb0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{usb1_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
+	{i2c2_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{boneleds_init,	DEV_ON_BASEBOARD, PROFILE_ALL},
 	{NULL, 0, 0},
@@ -1540,6 +1564,7 @@ static struct evm_dev_cfg beaglebone_dev_cfg[] = {
 	{dvi_init,	DEV_ON_BASEBOARD, PROFILE_ALL},
 	{usb0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{usb1_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
+	{i2c2_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{boneleds_init,	DEV_ON_BASEBOARD, PROFILE_ALL},
 	{NULL, 0, 0},

@@ -1273,55 +1273,56 @@ static int cppi41_channel_abort(struct dma_channel *channel)
 	return 0;
 }
 
-void cppi41_check_fifo_empty(struct cppi41 *cppi)
+void txdma_completion_work(struct work_struct *data)
 {
+	struct cppi41 *cppi = container_of(data, struct cppi41, txdma_work);
 	struct cppi41_channel *tx_ch;
 	struct musb *musb = cppi->musb;
 	unsigned index;
 	u8 resched = 0;
+	unsigned long flags;
 
-	for (index = 0; index < USB_CPPI41_NUM_CH; index++) {
-		void __iomem *epio;
-		u16 csr;
+	while (1) {
+		spin_lock_irqsave(&musb->lock, flags);
+		for (index = 0; index < USB_CPPI41_NUM_CH; index++) {
+			void __iomem *epio;
+			u16 csr;
 
-		tx_ch = &cppi->tx_cppi_ch[index];
-		if (tx_ch->tx_complete) {
-			/* Sometimes a EP can unregister from a DMA channel
-			 * while the data is still in the FIFO.  Probable
-			 * reason a proper abort was not called before taking
-			 * such a step.  Protect against such cases.
-			 */
-			if (!tx_ch->end_pt) {
-				tx_ch->tx_complete = 0;
-				continue;
+			tx_ch = &cppi->tx_cppi_ch[index];
+			if (tx_ch->tx_complete) {
+				/* Sometimes a EP can unregister from a DMA
+				 * channel while the data is still in the FIFO.
+				 * Probable reason a proper abort was not
+				 * called before taking such a step.
+				 * Protect against such cases.
+				 */
+				if (!tx_ch->end_pt) {
+					tx_ch->tx_complete = 0;
+					continue;
+				}
+
+				epio = tx_ch->end_pt->regs;
+				csr = musb_readw(epio, MUSB_TXCSR);
+
+				if (csr & (MUSB_TXCSR_TXPKTRDY |
+					MUSB_TXCSR_FIFONOTEMPTY)) {
+					resched = 1;
+				} else {
+					tx_ch->tx_complete = 0;
+					musb_dma_completion(musb, index+1, 1);
+				}
 			}
+		}
+		spin_unlock_irqrestore(&musb->lock, flags);
 
-			epio = tx_ch->end_pt->regs;
-			csr = musb_readw(epio, MUSB_TXCSR);
-
-			if (csr & (MUSB_TXCSR_TXPKTRDY |
-				MUSB_TXCSR_FIFONOTEMPTY))
-				resched = 1;
-			else {
-				tx_ch->tx_complete = 0;
-				musb_dma_completion(musb, index+1, 1);
-			}
+		if (resched) {
+			resched = 0;
+			cond_resched();
+		} else {
+			return ;
 		}
 	}
 
-	if (resched)
-		schedule_work(&cppi->txdma_work);
-}
-
-void txdma_completion_work(struct work_struct *data)
-{
-	struct cppi41 *cppi = container_of(data, struct cppi41, txdma_work);
-	struct musb *musb = cppi->musb;
-	unsigned long flags;
-
-	spin_lock_irqsave(&musb->lock, flags);
-	cppi41_check_fifo_empty(cppi);
-	spin_unlock_irqrestore(&musb->lock, flags);
 }
 
 /**

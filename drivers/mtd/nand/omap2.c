@@ -102,7 +102,7 @@
 #define MAX_HWECC_BYTES_OOB_64     24
 #define JFFS2_CLEAN_MARKER_OFFSET  0x2
 #define BCH_ECC_POS                    0x2
-#define BCH_JFFS2_CLEAN_MARKER_OFFSET  0x36
+#define BCH_JFFS2_CLEAN_MARKER_OFFSET  0x3a
 
 static const char *part_probes[] = { "cmdlinepart", NULL };
 
@@ -820,6 +820,8 @@ static int omap_read_page_bch(struct mtd_info *mtd, struct nand_chip *chip,
 	uint32_t data_pos;
 	uint32_t oob_pos;
 
+	struct omap_nand_info *info = container_of(mtd, struct omap_nand_info,
+							mtd);
 	data_pos = 0;
 	/* oob area start */
 	oob_pos = (eccsize * eccsteps) + chip->ecc.layout->eccpos[0];
@@ -833,7 +835,12 @@ static int omap_read_page_bch(struct mtd_info *mtd, struct nand_chip *chip,
 
 		/* read respective ecc from oob area */
 		chip->cmdfunc(mtd, NAND_CMD_RNDOUT, oob_pos, page);
-		chip->read_buf(mtd, oob, eccbytes);
+
+		if (info->ecc_opt == OMAP_ECC_BCH8_CODE_HW) {
+			chip->read_buf(mtd, oob, 13);
+			oob++;
+		} else
+			chip->read_buf(mtd, oob, eccbytes);
 		/* read syndrome */
 		chip->ecc.calculate(mtd, p, &ecc_calc[i]);
 
@@ -983,8 +990,8 @@ static int omap_correct_data(struct mtd_info *mtd, u_char *dat,
 			}
 
 			stat     += count;
-			calc_ecc  = calc_ecc + eccsize;
-			read_ecc  = read_ecc + eccsize;
+			calc_ecc  = calc_ecc + 14;
+			read_ecc  = read_ecc + 14;
 			dat      += BCH8_ECC_BYTES;
 		}
 		break;
@@ -1226,7 +1233,7 @@ static int __devinit omap_nand_probe(struct platform_device *pdev)
 			info->nand.ecc.bytes    = 4*7;
 			info->nand.ecc.size     = 4*512;
 		} else if (pdata->ecc_opt == OMAP_ECC_BCH8_CODE_HW) {
-			info->nand.ecc.bytes     = 13;
+			info->nand.ecc.bytes     = 14;
 			info->nand.ecc.size      = 512;
 			info->nand.ecc.read_page = omap_read_page_bch;
 		} else {

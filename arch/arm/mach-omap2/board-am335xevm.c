@@ -296,7 +296,7 @@ struct am335x_evm_eeprom_config {
 static struct am335x_evm_eeprom_config config;
 static bool daughter_brd_detected;
 
-#define GP_EVM_REV_IS_1_0A		0x1
+#define GP_EVM_REV_IS_1_0		0x1
 #define GP_EVM_REV_IS_1_1A		0x2
 #define GP_EVM_REV_IS_UNKNOWN		0xFF
 static unsigned int gp_evm_revision = GP_EVM_REV_IS_UNKNOWN;
@@ -1369,14 +1369,14 @@ static void setup_general_purpose_evm(void)
 
 	if (!strncmp("1.1A", config.version, 4)) {
 		gp_evm_revision = GP_EVM_REV_IS_1_1A;
-	} else if (!strncmp("1.0A", config.version, 4)) {
-		gp_evm_revision = GP_EVM_REV_IS_1_0A;
+	} else if (!strncmp("1.0", config.version, 3)) {
+		gp_evm_revision = GP_EVM_REV_IS_1_0;
 	} else {
 		pr_err("Found invalid GP EVM revision, falling back to Rev1.1A");
 		gp_evm_revision = GP_EVM_REV_IS_1_1A;
 	}
 
-	if (gp_evm_revision == GP_EVM_REV_IS_1_0A)
+	if (gp_evm_revision == GP_EVM_REV_IS_1_0)
 		gigabit_enable = 0;
 	else if (gp_evm_revision == GP_EVM_REV_IS_1_1A)
 		gigabit_enable = 1;

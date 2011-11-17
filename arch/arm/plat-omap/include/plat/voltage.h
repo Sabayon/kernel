@@ -92,6 +92,10 @@ struct voltagedomain {
 	struct omap_volt_data *volt_data;
 	struct omap_vdd_info *vdd;
 	struct dentry *debug_dir;
+
+	bool use_regulator;
+	struct regulator *regulator;
+	int (*regulator_init) (struct voltagedomain *voltdm);
 };
 
 /**

@@ -78,6 +78,7 @@ __setup("fpe=", fpe_setup);
 extern void paging_init(struct machine_desc *desc);
 extern void sanity_check_meminfo(void);
 extern void reboot_setup(char *str);
+extern void setup_dma_zone(struct machine_desc *desc);
 
 unsigned int processor_id;
 EXPORT_SYMBOL(processor_id);
@@ -917,6 +918,7 @@ void __init setup_arch(char **cmdline_p)
 	parse_early_param();
 
 	sanity_check_meminfo();
+	setup_dma_zone(mdesc);
 	arm_memblock_init(&meminfo, mdesc);
 
 	paging_init(mdesc);
@@ -932,12 +934,6 @@ void __init setup_arch(char **cmdline_p)
 
 	tcm_init();
 
-#ifdef CONFIG_ZONE_DMA
-	if (mdesc->dma_zone_size) {
-		extern unsigned long arm_dma_zone_size;
-		arm_dma_zone_size = mdesc->dma_zone_size;
-	}
-#endif
 #ifdef CONFIG_MULTI_IRQ_HANDLER
 	handle_arch_irq = mdesc->handle_irq;
 #endif

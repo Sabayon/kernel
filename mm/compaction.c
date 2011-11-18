@@ -19,28 +19,7 @@
 #define CREATE_TRACE_POINTS
 #include <trace/events/compaction.h>
 
-/*
- * compact_control is used to track pages being migrated and the free pages
- * they are being migrated to during memory compaction. The free_pfn starts
- * at the end of a zone and migrate_pfn begins at the start. Movable pages
- * are moved to the end of a zone during a compaction run and the run
- * completes when free_pfn <= migrate_pfn
- */
-struct compact_control {
-	struct list_head freepages;	/* List of free pages to migrate to */
-	struct list_head migratepages;	/* List of pages being migrated */
-	unsigned long nr_freepages;	/* Number of isolated free pages */
-	unsigned long nr_migratepages;	/* Number of pages to migrate */
-	unsigned long free_pfn;		/* isolate_freepages search base */
-	unsigned long migrate_pfn;	/* isolate_migratepages search base */
-	bool sync;			/* Synchronous migration */
-
-	unsigned int order;		/* order a direct compactor needs */
-	int migratetype;		/* MOVABLE, RECLAIMABLE etc */
-	struct zone *zone;
-};
-
-static unsigned long release_freepages(struct list_head *freelist)
+unsigned long release_freepages(struct list_head *freelist)
 {
 	struct page *page, *next;
 	unsigned long count = 0;
@@ -71,7 +50,7 @@ static unsigned long release_freepages(struct list_head *freelist)
  * Returns number of isolated pages.  This may be more then end-start
  * if end fell in a middle of a free page.
  */
-static unsigned long
+unsigned long
 isolate_freepages_range(struct zone *zone,
 			unsigned long start, unsigned long end,
 			struct list_head *freelist)
@@ -263,13 +242,6 @@ static bool too_many_isolated(struct zone *zone)
 	return isolated > (inactive + active) / 2;
 }
 
-/* possible outcome of isolate_migratepages */
-typedef enum {
-	ISOLATE_ABORT,		/* Abort compaction now */
-	ISOLATE_NONE,		/* No pages isolated, continue scanning */
-	ISOLATE_SUCCESS,	/* Pages isolated, migrate */
-} isolate_migrate_t;
-
 /**
  * isolate_migratepages_range() - isolate all migrate-able pages in range.
  * @zone:	Zone pages are in.
@@ -289,7 +261,7 @@ typedef enum {
  * does not modify any cc's fields, ie. it does not modify (or read
  * for that matter) cc->migrate_pfn.
  */
-static unsigned long
+unsigned long
 isolate_migratepages_range(struct zone *zone, struct compact_control *cc,
 			   unsigned long low_pfn, unsigned long end_pfn)
 {
@@ -404,6 +376,60 @@ isolate_migratepages_range(struct zone *zone, struct compact_control *cc,
 }
 
 /*
+ * This is a migrate-callback that "allocates" freepages by taking pages
+ * from the isolated freelists in the block we are migrating to.
+ */
+struct page *compaction_alloc(struct page *migratepage, unsigned long data,
+			      int **result)
+{
+	struct compact_control *cc = (struct compact_control *)data;
+	struct page *freepage;
+
+	/* Isolate free pages if necessary */
+	if (list_empty(&cc->freepages)) {
+		isolate_freepages(cc->zone, cc);
+
+		if (list_empty(&cc->freepages))
+			return NULL;
+	}
+
+	freepage = list_entry(cc->freepages.next, struct page, lru);
+	list_del(&freepage->lru);
+	cc->nr_freepages--;
+
+	return freepage;
+}
+
+#ifdef CONFIG_COMPACTION
+
+/*
+ * We cannot control nr_migratepages and nr_freepages fully when migration is
+ * running as migrate_pages() has no knowledge of compact_control. When
+ * migration is complete, we count the number of pages on the lists by hand.
+ */
+static void update_nr_listpages(struct compact_control *cc)
+{
+	int nr_migratepages = 0;
+	int nr_freepages = 0;
+	struct page *page;
+
+	list_for_each_entry(page, &cc->migratepages, lru)
+		nr_migratepages++;
+	list_for_each_entry(page, &cc->freepages, lru)
+		nr_freepages++;
+
+	cc->nr_migratepages = nr_migratepages;
+	cc->nr_freepages = nr_freepages;
+}
+
+/* possible outcome of isolate_migratepages */
+typedef enum {
+	ISOLATE_ABORT,		/* Abort compaction now */
+	ISOLATE_NONE,		/* No pages isolated, continue scanning */
+	ISOLATE_SUCCESS,	/* Pages isolated, migrate */
+} isolate_migrate_t;
+
+/*
  * Isolate all pages that can be migrated from the block pointed to by
  * the migrate scanner within compact_control.
  */
@@ -432,52 +458,6 @@ static isolate_migrate_t isolate_migratepages(struct zone *zone,
 	cc->migrate_pfn = low_pfn;
 
 	return ISOLATE_SUCCESS;
-}
-
-/*
- * This is a migrate-callback that "allocates" freepages by taking pages
- * from the isolated freelists in the block we are migrating to.
- */
-static struct page *compaction_alloc(struct page *migratepage,
-					unsigned long data,
-					int **result)
-{
-	struct compact_control *cc = (struct compact_control *)data;
-	struct page *freepage;
-
-	/* Isolate free pages if necessary */
-	if (list_empty(&cc->freepages)) {
-		isolate_freepages(cc->zone, cc);
-
-		if (list_empty(&cc->freepages))
-			return NULL;
-	}
-
-	freepage = list_entry(cc->freepages.next, struct page, lru);
-	list_del(&freepage->lru);
-	cc->nr_freepages--;
-
-	return freepage;
-}
-
-/*
- * We cannot control nr_migratepages and nr_freepages fully when migration is
- * running as migrate_pages() has no knowledge of compact_control. When
- * migration is complete, we count the number of pages on the lists by hand.
- */
-static void update_nr_listpages(struct compact_control *cc)
-{
-	int nr_migratepages = 0;
-	int nr_freepages = 0;
-	struct page *page;
-
-	list_for_each_entry(page, &cc->migratepages, lru)
-		nr_migratepages++;
-	list_for_each_entry(page, &cc->freepages, lru)
-		nr_freepages++;
-
-	cc->nr_migratepages = nr_migratepages;
-	cc->nr_freepages = nr_freepages;
 }
 
 static int compact_finished(struct zone *zone,
@@ -796,3 +776,5 @@ void compaction_unregister_node(struct node *node)
 	return sysdev_remove_file(&node->sysdev, &attr_compact);
 }
 #endif /* CONFIG_SYSFS && CONFIG_NUMA */
+
+#endif /* CONFIG_COMPACTION */

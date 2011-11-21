@@ -609,7 +609,7 @@ static void setup_pin_mux(struct pinmux_config *pin_mux)
 /* pinmux for keypad device */
 static struct pinmux_config matrix_keypad_pin_mux[] = {
 	{"gpmc_a5.gpio1_21",  OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
-	{"gpmc_a8.gpio1_24",  OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
+	{"gpmc_a8.gpio1_22",  OMAP_MUX_MODE7 | AM33XX_PIN_OUTPUT},
 	{"gpmc_a9.gpio1_25",  OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
 	{"gpmc_a10.gpio1_26", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
 	{"gpmc_a11.gpio1_27", OMAP_MUX_MODE7 | AM33XX_PIN_INPUT},
@@ -637,7 +637,7 @@ static const unsigned int am335x_evm_keypad_row_gpios[] = {
 };
 
 static const unsigned int am335x_evm_keypad_col_gpios[] = {
-	GPIO_TO_PIN(1, 21), GPIO_TO_PIN(1, 24)
+	GPIO_TO_PIN(1, 21), GPIO_TO_PIN(1, 22)
 };
 
 static struct matrix_keypad_platform_data am335x_evm_keypad_platform_data = {

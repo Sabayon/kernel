@@ -252,8 +252,12 @@ static void __init omap3_init_voltages(void)
 	if (!cpu_is_omap34xx())
 		return;
 
-	omap2_set_init_voltage("mpu_iva", "dpll1_ck", "mpu");
-	omap2_set_init_voltage("core", "l3_ick", "l3_main");
+	if (cpu_is_am33xx()) {
+		omap2_set_init_voltage("mpu", "dpll_mpu_ck", "mpu");
+	} else {
+		omap2_set_init_voltage("mpu_iva", "dpll1_ck", "mpu");
+		omap2_set_init_voltage("core", "l3_ick", "l3_main");
+	}
 }
 
 static void __init omap4_init_voltages(void)

@@ -1308,6 +1308,8 @@ void txdma_completion_work(struct work_struct *data)
 					MUSB_TXCSR_FIFONOTEMPTY)) {
 					resched = 1;
 				} else {
+					tx_ch->channel.status =
+							MUSB_DMA_STATUS_FREE;
 					tx_ch->tx_complete = 0;
 					musb_dma_completion(musb, index+1, 1);
 				}
@@ -1420,8 +1422,6 @@ static void usb_process_tx_queue(struct cppi41 *cppi, unsigned index)
 		    (tx_ch->transfer_mode && !tx_ch->zlp_queued))
 			cppi41_next_tx_segment(tx_ch);
 		else if (tx_ch->channel.actual_len >= tx_ch->length) {
-			tx_ch->channel.status = MUSB_DMA_STATUS_FREE;
-
 			/*
 			 * We get Tx DMA completion interrupt even when
 			 * data is still in FIFO and not moved out to

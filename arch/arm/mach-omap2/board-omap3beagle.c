@@ -344,21 +344,14 @@ static void beagle_disable_lcd(struct omap_dss_device *dssdev)
        return;
 }
 
-static struct panel_generic_dpi_data lcd_panel = {
-	.name = "tfc_s9700rtwv35tr-01b",
-	.platform_enable = beagle_enable_lcd,
-	.platform_disable = beagle_disable_lcd,
-};
-
 static struct omap_dss_device beagle_lcd_device = {
 	.type                   = OMAP_DISPLAY_TYPE_DPI,
 	.name                   = "lcd",
-	.driver_name		= "generic_dpi_panel",
+	.driver_name		= "tfc_s9700rtwv35tr-01b",
 	.phy.dpi.data_lines     = 24,
 	.platform_enable        = beagle_enable_lcd,
 	.platform_disable       = beagle_disable_lcd,
 	.reset_gpio 		= -EINVAL,
-	.data			= &lcd_panel,
 };
 
 static struct omap_dss_device *beagle_dss_devices[] = {
@@ -762,7 +755,7 @@ static void __init omap3_beagle_init(void)
 
 	/* TODO: set lcd_driver_name by command line or device tree */
 	beagle_config.lcd_driver_name = "tfc_s9700rtwv35tr-01b",
-	lcd_panel.name = beagle_config.lcd_driver_name;
+	//lcd_panel.name = beagle_config.lcd_driver_name;
 
 	platform_add_devices(omap3_beagle_devices,
 			ARRAY_SIZE(omap3_beagle_devices));

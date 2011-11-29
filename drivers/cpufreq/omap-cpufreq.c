@@ -115,7 +115,7 @@ static int omap_target(struct cpufreq_policy *policy,
 	pr_info("cpufreq-omap: transition: %u --> %u\n", freqs.old, freqs.new);
 #endif
 
-	ret = clk_set_rate(mpu_clk, freqs.new * 1000);
+	ret = omap_device_scale(mpu_dev, mpu_dev, freqs.new * 1000);
 	freqs.new = omap_getspeed(policy->cpu);
 
 #ifdef CONFIG_SMP

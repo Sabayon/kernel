@@ -20,12 +20,11 @@
 #include <linux/init.h>
 
 #include <plat/common.h>
+#include <plat/voltage.h>
+#include <plat/vp.h>
 
 #include "prm44xx.h"
 #include "prm-regbits-44xx.h"
-#include "voltage.h"
-
-#include "vp.h"
 
 static const struct omap_vp_ops omap4_vp_ops = {
 	.check_txdone = omap4_prm_vp_check_txdone,

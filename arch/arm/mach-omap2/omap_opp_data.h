@@ -20,8 +20,8 @@
 #define __ARCH_ARM_MACH_OMAP2_OMAP_OPP_DATA_H
 
 #include <plat/omap_hwmod.h>
+#include <plat/voltage.h>
 
-#include "voltage.h"
 
 /*
  * *BIG FAT WARNING*:

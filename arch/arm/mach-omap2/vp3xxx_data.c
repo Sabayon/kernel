@@ -20,11 +20,11 @@
 #include <linux/init.h>
 
 #include <plat/common.h>
+#include <plat/voltage.h>
+#include <plat/vp.h>
 
 #include "prm-regbits-34xx.h"
-#include "voltage.h"
 
-#include "vp.h"
 #include "prm2xxx_3xxx.h"
 
 static const struct omap_vp_ops omap3_vp_ops = {

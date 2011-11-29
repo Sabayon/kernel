@@ -9,8 +9,8 @@
  */
 #include <linux/kernel.h>
 #include <linux/init.h>
+#include <plat/voltage.h>
 
-#include "voltage.h"
 
 static struct voltagedomain omap2_voltdm_core = {
 	.name = "core",

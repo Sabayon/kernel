@@ -10,7 +10,7 @@
 #include <linux/kernel.h>
 #include <linux/init.h>
 
-#include "voltage.h"
+#include <plat/voltage.h>
 
 static struct voltagedomain am33xx_voltdm_mpu = {
 	.name = "mpu",

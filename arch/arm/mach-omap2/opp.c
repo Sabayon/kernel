@@ -20,9 +20,9 @@
 #include <linux/opp.h>
 
 #include <plat/omap_device.h>
+#include <plat/dvfs.h>
 
 #include "omap_opp_data.h"
-#include "dvfs.h"
 
 /* Temp variable to allow multiple calls */
 static u8 __initdata omap_table_init;

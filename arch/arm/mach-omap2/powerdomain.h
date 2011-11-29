@@ -23,8 +23,8 @@
 #include <linux/atomic.h>
 
 #include <plat/cpu.h>
+#include <plat/voltage.h>
 
-#include "voltage.h"
 
 /* Powerdomain basic power states */
 #define PWRDM_POWER_OFF		0x0

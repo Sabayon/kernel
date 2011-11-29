@@ -19,8 +19,7 @@
 #include <plat/common.h>
 #include <plat/cpu.h>
 #include <plat/prcm.h>
-
-#include "vp.h"
+#include <plat/vp.h>
 
 #include "prm2xxx_3xxx.h"
 #include "cm2xxx_3xxx.h"

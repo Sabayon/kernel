@@ -14,7 +14,7 @@
 #ifndef __ARCH_ARM_MACH_OMAP2_DVFS_H
 #define __ARCH_ARM_MACH_OMAP2_DVFS_H
 #include <plat/omap_hwmod.h>
-#include "voltage.h"
+#include <plat/voltage.h>
 
 #ifdef CONFIG_PM
 int omap_dvfs_register_device(struct device *dev, char *voltdm_name,

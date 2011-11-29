@@ -30,4 +30,16 @@ extern const struct clkops clkops_am33xx_dflt_wait;
 extern const struct clkops clkops_am33xx_sgx;
 extern const struct clkops clkops_am33xx_icss;
 
+/* TRM ERRATA: Timer 3 & 6 default parent (TCLKIN) may not be always
+     physically present, in such a case HWMOD enabling of
+     clock would be failure with default parent. And timer
+     probe thinks clock is already enabled, this leads to
+     crash upon accessing timer 3 & 6 registers in probe.
+     Fix by setting parent of both these timers to master
+     oscillator clock.
+ */
+static inline void am33xx_init_timer_parent(struct clk *clk)
+{
+	omap2_clksel_set_parent(clk, clk->parent);
+}
 #endif

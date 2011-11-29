@@ -917,14 +917,14 @@ static struct event_to_channel_map am33xx_xbar_event_mapping[] = {
  *
  * Returns zero on success, else negative errno.
  */
-int map_xbar_event_to_channel(unsigned event, unsigned *channel,
+int map_xbar_event_to_channel(unsigned int event, unsigned int *channel,
 			struct event_to_channel_map *xbar_event_mapping)
 {
-	unsigned ctrl = 0;
-	unsigned xbar_evt_no = 0;
-	unsigned val = 0;
-	unsigned offset = 0;
-	unsigned mask = 0;
+	unsigned int ctrl = 0;
+	unsigned int xbar_evt_no = 0;
+	unsigned int val = 0;
+	unsigned int offset = 0;
+	unsigned int mask = 0;
 
 	ctrl = EDMA_CTLR(event);
 	xbar_evt_no = event - (edma_info[ctrl]->num_channels);
@@ -940,7 +940,7 @@ int map_xbar_event_to_channel(unsigned event, unsigned *channel,
 		offset = (*channel)/4;
 		offset *= 4;
 		offset += mask;
-		val = (unsigned)__raw_readl(AM33XX_CTRL_REGADDR(
+		val = (unsigned int)__raw_readl(AM33XX_CTRL_REGADDR(
 					AM33XX_SCM_BASE_EDMA + offset));
 		val = val & (~(0xFF));
 		val = val | (xbar_event_mapping[xbar_evt_no].xbar_event_no);
@@ -953,7 +953,6 @@ int map_xbar_event_to_channel(unsigned event, unsigned *channel,
 
 	return 0;
 }
-EXPORT_SYMBOL(map_xbar_event_to_channel);
 
 static struct edma_soc_info am33xx_edma_info[] = {
 	{

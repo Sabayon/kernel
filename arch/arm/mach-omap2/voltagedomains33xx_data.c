@@ -12,6 +12,10 @@
 
 #include "voltage.h"
 
+static struct voltagedomain am33xx_voltdm_mpu = {
+	.name = "mpu",
+};
+
 static struct voltagedomain am33xx_voltdm_core = {
 	.name = "core",
 };
@@ -21,6 +25,7 @@ static struct voltagedomain am33xx_voltdm_rtc = {
 };
 
 static struct voltagedomain *voltagedomains_am33xx[] __initdata = {
+	&am33xx_voltdm_mpu,
 	&am33xx_voltdm_core,
 	&am33xx_voltdm_rtc,
 	NULL,

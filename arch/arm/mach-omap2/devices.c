@@ -1199,13 +1199,13 @@ static struct resource am33xx_cpsw_resources[] = {
 		.flags	= IORESOURCE_IRQ,
 	},
 	{
-		.start	= AM33XX_IRQ_DMTIMER_5,
-		.end	= AM33XX_IRQ_DMTIMER_5,
+		.start	= AM33XX_IRQ_DMTIMER5,
+		.end	= AM33XX_IRQ_DMTIMER5,
 		.flags	= IORESOURCE_IRQ,
 	},
 	{
-		.start	= AM33XX_IRQ_DMTIMER_6,
-		.end	= AM33XX_IRQ_DMTIMER_6,
+		.start	= AM33XX_IRQ_DMTIMER6,
+		.end	= AM33XX_IRQ_DMTIMER6,
 		.flags	= IORESOURCE_IRQ,
 	},
 	{

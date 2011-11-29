@@ -10,7 +10,7 @@
  *
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any
  * kind, whether express or implied; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
 
@@ -74,23 +74,23 @@ static struct omap_hwmod am33xx_elm_hwmod;
 
 /* MPU -> L3_SLOW Peripheral interface */
 static struct omap_hwmod_ocp_if am33xx_mpu__l3_slow = {
-	.master = &am33xx_mpu_hwmod,
-	.slave  = &am33xx_l3slow_hwmod,
-	.user   = OCP_USER_MPU,
+	.master 	= &am33xx_mpu_hwmod,
+	.slave		= &am33xx_l3slow_hwmod,
+	.user		= OCP_USER_MPU,
 };
 
 /* L3 SLOW -> L4_PER Peripheral interface */
 static struct omap_hwmod_ocp_if am33xx_l3_slow__l4_per = {
-	.master = &am33xx_l3slow_hwmod,
-	.slave  = &am33xx_l4per_hwmod,
-	.user   = OCP_USER_MPU,
+	.master 	= &am33xx_l3slow_hwmod,
+	.slave		= &am33xx_l4per_hwmod,
+	.user		= OCP_USER_MPU,
 };
 
 /* L3 SLOW -> L4_WKUP Peripheral interface */
 static struct omap_hwmod_ocp_if am33xx_l3_slow__l4_wkup = {
-	.master = &am33xx_l3slow_hwmod,
-	.slave  = &am33xx_l4wkup_hwmod,
-	.user   = OCP_USER_MPU,
+	.master 	= &am33xx_l3slow_hwmod,
+	.slave		= &am33xx_l4wkup_hwmod,
+	.user		= OCP_USER_MPU,
 };
 
 /* Master interfaces on the L4_WKUP interconnect */
@@ -105,65 +105,65 @@ static struct omap_hwmod_ocp_if *am33xx_l3_slow_slaves[] = {
 };
 
 static struct omap_hwmod am33xx_l3slow_hwmod = {
-	.name           = "l3_slow",
-	.class          = &l3_hwmod_class,
+	.name		= "l3_slow",
+	.class		= &l3_hwmod_class,
 	.clkdm_name	= "l3s_clkdm",
 	.flags		= (HWMOD_INIT_NO_IDLE | HWMOD_INIT_NO_RESET),
-	.masters        = am33xx_l3_slow_masters,
-	.masters_cnt    = ARRAY_SIZE(am33xx_l3_slow_masters),
-	.slaves         = am33xx_l3_slow_slaves,
-	.slaves_cnt     = ARRAY_SIZE(am33xx_l3_slow_slaves),
+	.masters	= am33xx_l3_slow_masters,
+	.masters_cnt	= ARRAY_SIZE(am33xx_l3_slow_masters),
+	.slaves		= am33xx_l3_slow_slaves,
+	.slaves_cnt	= ARRAY_SIZE(am33xx_l3_slow_slaves),
 };
 
 /* L4 PER -> GPIO2 */
 static struct omap_hwmod_addr_space am33xx_gpio1_addrs[] = {
 	{
-		.pa_start       = AM33XX_GPIO1_BASE,
-		.pa_end         = AM33XX_GPIO1_BASE + SZ_4K - 1,
-		.flags          = ADDR_MAP_ON_INIT | ADDR_TYPE_RT,
+		.pa_start	= AM33XX_GPIO1_BASE,
+		.pa_end		= AM33XX_GPIO1_BASE + SZ_4K - 1,
+		.flags		= ADDR_MAP_ON_INIT | ADDR_TYPE_RT,
 	},
 };
 
 static struct omap_hwmod_ocp_if am33xx_l4_per__gpio1 = {
-	.master         = &am33xx_l4per_hwmod,
-	.slave          = &am33xx_gpio1_hwmod,
-	.clk		= "l4ls_fck",
-	.addr           = am33xx_gpio1_addrs,
-	.user           = OCP_USER_MPU | OCP_USER_SDMA,
+	.master		= &am33xx_l4per_hwmod,
+	.slave		= &am33xx_gpio1_hwmod,
+	.clk		= "l4ls_gclk",
+	.addr		= am33xx_gpio1_addrs,
+	.user		= OCP_USER_MPU | OCP_USER_SDMA,
 };
 
 /* L4 PER -> GPIO3 */
 static struct omap_hwmod_addr_space am33xx_gpio2_addrs[] = {
 	{
-		.pa_start       = AM33XX_GPIO2_BASE,
-		.pa_end         = AM33XX_GPIO2_BASE + SZ_4K - 1,
-		.flags          = ADDR_MAP_ON_INIT | ADDR_TYPE_RT,
+		.pa_start	= AM33XX_GPIO2_BASE,
+		.pa_end		= AM33XX_GPIO2_BASE + SZ_4K - 1,
+		.flags		= ADDR_MAP_ON_INIT | ADDR_TYPE_RT,
 	},
 };
 
 static struct omap_hwmod_ocp_if am33xx_l4_per__gpio2 = {
-	.master         = &am33xx_l4per_hwmod,
-	.slave          = &am33xx_gpio2_hwmod,
-	.clk		= "l4ls_fck",
-	.addr           = am33xx_gpio2_addrs,
-	.user           = OCP_USER_MPU | OCP_USER_SDMA,
+	.master		= &am33xx_l4per_hwmod,
+	.slave		= &am33xx_gpio2_hwmod,
+	.clk		= "l4ls_gclk",
+	.addr		= am33xx_gpio2_addrs,
+	.user		= OCP_USER_MPU | OCP_USER_SDMA,
 };
 
 /* L4 PER -> GPIO4 */
 static struct omap_hwmod_addr_space am33xx_gpio3_addrs[] = {
 	{
-		.pa_start       = AM33XX_GPIO3_BASE,
-		.pa_end         = AM33XX_GPIO3_BASE + SZ_4K - 1,
-		.flags          = ADDR_MAP_ON_INIT | ADDR_TYPE_RT,
+		.pa_start	= AM33XX_GPIO3_BASE,
+		.pa_end		= AM33XX_GPIO3_BASE + SZ_4K - 1,
+		.flags		= ADDR_MAP_ON_INIT | ADDR_TYPE_RT,
 	},
 };
 
 static struct omap_hwmod_ocp_if am33xx_l4_per__gpio3 = {
-	.master         = &am33xx_l4per_hwmod,
-	.slave          = &am33xx_gpio3_hwmod,
-	.clk		= "l4ls_fck",
-	.addr           = am33xx_gpio3_addrs,
-	.user           = OCP_USER_MPU | OCP_USER_SDMA,
+	.master		= &am33xx_l4per_hwmod,
+	.slave		= &am33xx_gpio3_hwmod,
+	.clk		= "l4ls_gclk",
+	.addr		= am33xx_gpio3_addrs,
+	.user		= OCP_USER_MPU | OCP_USER_SDMA,
 };
 
 /* Master interfaces on the L4_PER interconnect */
@@ -178,47 +178,47 @@ static struct omap_hwmod_ocp_if *am33xx_l4_per_slaves[] = {
 };
 
 static struct omap_hwmod am33xx_l4per_hwmod = {
-	.name           = "l4_per",
-	.class          = &l4_hwmod_class,
+	.name		= "l4_per",
+	.class		= &l4_hwmod_class,
 	.clkdm_name	= "l4ls_clkdm",
 	.flags		= (HWMOD_INIT_NO_IDLE | HWMOD_INIT_NO_RESET),
-	.masters        = am33xx_l4_per_masters,
-	.masters_cnt    = ARRAY_SIZE(am33xx_l4_per_masters),
-	.slaves         = am33xx_l4_per_slaves,
-	.slaves_cnt     = ARRAY_SIZE(am33xx_l4_per_slaves),
+	.masters	= am33xx_l4_per_masters,
+	.masters_cnt	= ARRAY_SIZE(am33xx_l4_per_masters),
+	.slaves		= am33xx_l4_per_slaves,
+	.slaves_cnt	= ARRAY_SIZE(am33xx_l4_per_slaves),
 };
 
 /* L4 WKUP -> I2C1 */
 static struct omap_hwmod_addr_space am33xx_i2c1_addr_space[] = {
 	{
-		.pa_start       = 0x44E0B000,
-		.pa_end         = 0x44E0B000 + SZ_4K - 1,
-		.flags          = ADDR_MAP_ON_INIT | ADDR_TYPE_RT,
+		.pa_start	= AM33XX_I2C0_BASE,
+		.pa_end		= AM33XX_I2C0_BASE + SZ_4K - 1,
+		.flags		= ADDR_MAP_ON_INIT | ADDR_TYPE_RT,
 	},
 };
 
 static struct omap_hwmod_ocp_if am33xx_l4_wkup_i2c1 = {
-	.master         = &am33xx_l4wkup_hwmod,
-	.slave          = &am33xx_i2c1_hwmod,
-	.addr           = am33xx_i2c1_addr_space,
-	.user           = OCP_USER_MPU,
+	.master		= &am33xx_l4wkup_hwmod,
+	.slave		= &am33xx_i2c1_hwmod,
+	.addr		= am33xx_i2c1_addr_space,
+	.user		= OCP_USER_MPU,
 };
 
 /* L4 WKUP -> GPIO1 */
 static struct omap_hwmod_addr_space am33xx_gpio0_addrs[] = {
 	{
-		.pa_start       = AM33XX_GPIO0_BASE,
-		.pa_end         = AM33XX_GPIO0_BASE + SZ_4K - 1,
-		.flags          = ADDR_MAP_ON_INIT | ADDR_TYPE_RT,
+		.pa_start	= AM33XX_GPIO0_BASE,
+		.pa_end		= AM33XX_GPIO0_BASE + SZ_4K - 1,
+		.flags		= ADDR_MAP_ON_INIT | ADDR_TYPE_RT,
 	},
 };
 
 static struct omap_hwmod_ocp_if am33xx_l4_wkup__gpio0 = {
-	.master         = &am33xx_l4wkup_hwmod,
-	.slave          = &am33xx_gpio0_hwmod,
-	.clk		= "l4ls_fck",
-	.addr           = am33xx_gpio0_addrs,
-	.user           = OCP_USER_MPU | OCP_USER_SDMA,
+	.master		= &am33xx_l4wkup_hwmod,
+	.slave		= &am33xx_gpio0_hwmod,
+	.clk		= "l4ls_gclk",
+	.addr		= am33xx_gpio0_addrs,
+	.user		= OCP_USER_MPU | OCP_USER_SDMA,
 };
 
 /* Master interfaces on the L4_WKUP interconnect */
@@ -231,35 +231,35 @@ static struct omap_hwmod_ocp_if *am33xx_l4_wkup_slaves[] = {
 };
 
 static struct omap_hwmod am33xx_l4wkup_hwmod = {
-	.name           = "l4_wkup",
-	.class          = &l4_hwmod_class,
+	.name		= "l4_wkup",
+	.class		= &l4_hwmod_class,
 	.clkdm_name	= "l4_wkup_clkdm",
 	.flags		= (HWMOD_INIT_NO_IDLE | HWMOD_INIT_NO_RESET),
-	.masters        = am33xx_l4_wkup_masters,
-	.masters_cnt    = ARRAY_SIZE(am33xx_l4_wkup_masters),
-	.slaves         = am33xx_l4_wkup_slaves,
-	.slaves_cnt     = ARRAY_SIZE(am33xx_l4_wkup_slaves),
+	.masters	= am33xx_l4_wkup_masters,
+	.masters_cnt	= ARRAY_SIZE(am33xx_l4_wkup_masters),
+	.slaves		= am33xx_l4_wkup_slaves,
+	.slaves_cnt	= ARRAY_SIZE(am33xx_l4_wkup_slaves),
 };
 
 /* 'adc_tsc' class */
 static struct omap_hwmod_class am33xx_adc_tsc_hwmod_class = {
-	.name = "adc_tsc",
+	.name		= "adc_tsc",
 };
 
 /* adc_tsc */
 static struct omap_hwmod_irq_info am33xx_adc_tsc_irqs[] = {
-	{ .irq = 115 },
+	{ .irq = AM33XX_IRQ_TSC },
 	{ .irq = -1 }
 };
 
 static struct omap_hwmod am33xx_adc_tsc_hwmod = {
 	.name		= "adc_tsc",
 	.class		= &am33xx_adc_tsc_hwmod_class,
-	.mpu_irqs       = am33xx_adc_tsc_irqs,
+	.mpu_irqs	= am33xx_adc_tsc_irqs,
 	.main_clk	= "adc_tsc_fck",
 	.clkdm_name	= "l4_wkup_clkdm",
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_WKUP_ADC_TSC_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -268,23 +268,23 @@ static struct omap_hwmod am33xx_adc_tsc_hwmod = {
 
 /* 'aes' class */
 static struct omap_hwmod_class am33xx_aes_hwmod_class = {
-	.name = "aes",
+	.name		= "aes",
 };
 
 /* aes0 */
 static struct omap_hwmod_irq_info am33xx_aes0_irqs[] = {
-	{ .irq = 102 },
-	{ .irq = -1 }
+	{ .irq = AM33XX_IRQ_AESEIP36t0_S },
+	{ .irq = -1 },
 };
 
 static struct omap_hwmod am33xx_aes0_hwmod = {
 	.name		= "aes0",
 	.class		= &am33xx_aes_hwmod_class,
-	.mpu_irqs       = am33xx_aes0_irqs,
+	.mpu_irqs	= am33xx_aes0_irqs,
 	.main_clk	= "aes0_fck",
 	.clkdm_name	= "l3_clkdm",
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_AES0_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -293,7 +293,7 @@ static struct omap_hwmod am33xx_aes0_hwmod = {
 
 /* 'cefuse' class */
 static struct omap_hwmod_class am33xx_cefuse_hwmod_class = {
-	.name = "cefuse",
+	.name		= "cefuse",
 };
 
 /* cefuse */
@@ -302,8 +302,8 @@ static struct omap_hwmod am33xx_cefuse_hwmod = {
 	.class		= &am33xx_cefuse_hwmod_class,
 	.main_clk	= "cefuse_fck",
 	.clkdm_name	= "l4_cefuse_clkdm",
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_CEFUSE_CEFUSE_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -312,17 +312,17 @@ static struct omap_hwmod am33xx_cefuse_hwmod = {
 
 /* 'clkdiv32k' class */
 static struct omap_hwmod_class am33xx_clkdiv32k_hwmod_class = {
-	.name = "clkdiv32k",
+	.name		= "clkdiv32k",
 };
 
 /* clkdiv32k */
 static struct omap_hwmod am33xx_clkdiv32k_hwmod = {
 	.name		= "clkdiv32k",
 	.class		= &am33xx_clkdiv32k_hwmod_class,
-	.main_clk	= "clkdiv32k_fck",
+	.main_clk	= "clkdiv32k_ick",
 	.clkdm_name	= "clk_24mhz_clkdm",
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_CLKDIV32K_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -332,43 +332,43 @@ static struct omap_hwmod am33xx_clkdiv32k_hwmod = {
 
 /* 'control' class */
 static struct omap_hwmod_class am33xx_control_hwmod_class = {
-	.name = "control",
+	.name		= "control",
 };
 
 /* control */
 static struct omap_hwmod_irq_info am33xx_control_irqs[] = {
-	{ .irq = 8 },
-	{ .irq = -1 }
+	{ .irq = AM33XX_IRQ_CONTROL_PLATFORM },
+	{ .irq = -1 },
 };
 
 static struct omap_hwmod am33xx_control_hwmod = {
 	.name		= "control",
 	.class		= &am33xx_control_hwmod_class,
-	.flags		= (HWMOD_INIT_NO_IDLE | HWMOD_INIT_NO_RESET),
-	.mpu_irqs       = am33xx_control_irqs,
+	.mpu_irqs	= am33xx_control_irqs,
 	.main_clk	= "control_fck",
 	.clkdm_name	= "l4_wkup_clkdm",
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_WKUP_CONTROL_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
 	},
+	.flags		= (HWMOD_INIT_NO_IDLE | HWMOD_INIT_NO_RESET),
 };
 
 /* 'cpgmac0' class */
 static struct omap_hwmod_class am33xx_cpgmac0_hwmod_class = {
-	.name = "cpgmac0",
+	.name		= "cpgmac0",
 };
 
 /* cpgmac0 */
 static struct omap_hwmod am33xx_cpgmac0_hwmod = {
 	.name		= "cpgmac0",
 	.class		= &am33xx_cpgmac0_hwmod_class,
-	.main_clk	= "cpgmac0_fck",
+	.main_clk	= "cpgmac0_ick",
 	.clkdm_name	= "cpsw_125mhz_clkdm",
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_CPGMAC0_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -377,23 +377,23 @@ static struct omap_hwmod am33xx_cpgmac0_hwmod = {
 
 /* 'dcan' class */
 static struct omap_hwmod_class am33xx_dcan_hwmod_class = {
-	.name = "dcan",
+	.name		= "dcan",
 };
 
 /* dcan0 */
 static struct omap_hwmod_irq_info am33xx_dcan0_irqs[] = {
-	{ .irq = 52 },
-	{ .irq = -1 }
+	{ .irq = AM33XX_IRQ_DCAN0_0 },
+	{ .irq = -1 },
 };
 
 static struct omap_hwmod am33xx_dcan0_hwmod = {
 	.name		= "dcan0",
 	.class		= &am33xx_dcan_hwmod_class,
-	.mpu_irqs       = am33xx_dcan0_irqs,
+	.mpu_irqs	= am33xx_dcan0_irqs,
 	.main_clk	= "dcan0_fck",
 	.clkdm_name	= "l4ls_clkdm",
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_DCAN0_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -402,17 +402,17 @@ static struct omap_hwmod am33xx_dcan0_hwmod = {
 
 /* dcan1 */
 static struct omap_hwmod_irq_info am33xx_dcan1_irqs[] = {
-	{ .irq = 55 },
-	{ .irq = -1 }
+	{ .irq = AM33XX_IRQ_DCAN1_0 },
+	{ .irq = -1 },
 };
 static struct omap_hwmod am33xx_dcan1_hwmod = {
 	.name		= "dcan1",
 	.class		= &am33xx_dcan_hwmod_class,
-	.mpu_irqs       = am33xx_dcan1_irqs,
+	.mpu_irqs	= am33xx_dcan1_irqs,
 	.main_clk	= "dcan1_fck",
 	.clkdm_name	= "l4ls_clkdm",
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_DCAN1_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -421,17 +421,17 @@ static struct omap_hwmod am33xx_dcan1_hwmod = {
 
 /* 'debugss' class */
 static struct omap_hwmod_class am33xx_debugss_hwmod_class = {
-	.name = "debugss",
+	.name		= "debugss",
 };
 
 /* debugss */
 static struct omap_hwmod am33xx_debugss_hwmod = {
 	.name		= "debugss",
 	.class		= &am33xx_debugss_hwmod_class,
-	.main_clk	= "debugss_fck",
+	.main_clk	= "debugss_ick",
 	.clkdm_name	= "l3_aon_clkdm",
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_WKUP_DEBUGSS_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -491,8 +491,8 @@ static struct omap_hwmod am33xx_elm_hwmod = {
 	.clkdm_name	= "l4ls_clkdm",
 	.slaves		= am33xx_elm_slaves,
 	.slaves_cnt	= ARRAY_SIZE(am33xx_elm_slaves),
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_ELM_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -501,7 +501,7 @@ static struct omap_hwmod am33xx_elm_hwmod = {
 
 /* 'emif_fw' class */
 static struct omap_hwmod_class am33xx_emif_fw_hwmod_class = {
-	.name = "emif_fw",
+	.name		= "emif_fw",
 };
 
 /* emif_fw */
@@ -510,8 +510,8 @@ static struct omap_hwmod am33xx_emif_fw_hwmod = {
 	.class		= &am33xx_emif_fw_hwmod_class,
 	.main_clk	= "emif_fw_fck",
 	.clkdm_name	= "l4fw_clkdm",
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_EMIF_FW_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -521,7 +521,7 @@ static struct omap_hwmod am33xx_emif_fw_hwmod = {
 
 /* 'epwmss' class */
 static struct omap_hwmod_class am33xx_epwmss_hwmod_class = {
-	.name = "epwmss",
+	.name		= "epwmss",
 };
 
 /* epwmss0 */
@@ -530,8 +530,8 @@ static struct omap_hwmod am33xx_epwmss0_hwmod = {
 	.class		= &am33xx_epwmss_hwmod_class,
 	.main_clk	= "epwmss0_fck",
 	.clkdm_name	= "l4ls_clkdm",
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_EPWMSS0_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -544,8 +544,8 @@ static struct omap_hwmod am33xx_epwmss1_hwmod = {
 	.class		= &am33xx_epwmss_hwmod_class,
 	.main_clk	= "epwmss1_fck",
 	.clkdm_name	= "l4ls_clkdm",
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_EPWMSS1_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -558,8 +558,8 @@ static struct omap_hwmod am33xx_epwmss2_hwmod = {
 	.class		= &am33xx_epwmss_hwmod_class,
 	.main_clk	= "epwmss2_fck",
 	.clkdm_name	= "l4ls_clkdm",
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_EPWMSS2_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -567,34 +567,34 @@ static struct omap_hwmod am33xx_epwmss2_hwmod = {
 };
 
 static struct omap_hwmod_class_sysconfig am33xx_gpio_sysc = {
-	.rev_offs       = 0x0000,
-	.sysc_offs      = 0x0010,
-	.syss_offs      = 0x0114,
-	.sysc_flags     = (SYSC_HAS_AUTOIDLE | SYSC_HAS_ENAWAKEUP |
+	.rev_offs	= 0x0000,
+	.sysc_offs	= 0x0010,
+	.syss_offs	= 0x0114,
+	.sysc_flags	= (SYSC_HAS_AUTOIDLE | SYSC_HAS_ENAWAKEUP |
 			SYSC_HAS_SIDLEMODE | SYSC_HAS_SOFTRESET |
 			SYSS_HAS_RESET_STATUS),
-	.idlemodes      = (SIDLE_FORCE | SIDLE_NO | SIDLE_SMART |
+	.idlemodes	= (SIDLE_FORCE | SIDLE_NO | SIDLE_SMART |
 			SIDLE_SMART_WKUP),
-	.sysc_fields    = &omap_hwmod_sysc_type1,
+	.sysc_fields	= &omap_hwmod_sysc_type1,
 };
 
 /* 'gpio' class */
 static struct omap_hwmod_class am33xx_gpio_hwmod_class = {
-	.name = "gpio",
-	.sysc   = &am33xx_gpio_sysc,
-	.rev    = 2,
+	.name		= "gpio",
+	.sysc		= &am33xx_gpio_sysc,
+	.rev		= 2,
 };
 
 /* gpio dev_attr */
 static struct omap_gpio_dev_attr gpio_dev_attr = {
-	.bank_width     = 32,
-	.dbck_flag      = true,
+	.bank_width	= 32,
+	.dbck_flag	= true,
 };
 
 /* gpio0 */
 static struct omap_hwmod_irq_info am33xx_gpio0_irqs[] = {
-	{ .irq = 96 },
-	{ .irq = -1 }
+	{ .irq = AM33XX_IRQ_GPIO0_1 },
+	{ .irq = -1 },
 };
 
 /* gpio0 slave ports */
@@ -611,26 +611,26 @@ static struct omap_hwmod am33xx_gpio0_hwmod = {
 	.name		= "gpio1",
 	.class		= &am33xx_gpio_hwmod_class,
 	.flags		= HWMOD_CONTROL_OPT_CLKS_IN_RESET,
-	.mpu_irqs       = am33xx_gpio0_irqs,
-	.main_clk	= "gpio0_fck",
+	.mpu_irqs	= am33xx_gpio0_irqs,
+	.main_clk	= "gpio0_ick",
 	.clkdm_name	= "l4_wkup_clkdm",
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_WKUP_GPIO0_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
 	},
-	.opt_clks       = gpio0_opt_clks,
-	.opt_clks_cnt   = ARRAY_SIZE(gpio0_opt_clks),
-	.dev_attr       = &gpio_dev_attr,
-	.slaves         = am33xx_gpio0_slaves,
-	.slaves_cnt     = ARRAY_SIZE(am33xx_gpio0_slaves),
+	.opt_clks	= gpio0_opt_clks,
+	.opt_clks_cnt	= ARRAY_SIZE(gpio0_opt_clks),
+	.dev_attr	= &gpio_dev_attr,
+	.slaves		= am33xx_gpio0_slaves,
+	.slaves_cnt	= ARRAY_SIZE(am33xx_gpio0_slaves),
 };
 
 /* gpio1 */
 static struct omap_hwmod_irq_info am33xx_gpio1_irqs[] = {
-	{ .irq = 98 },
-	{ .irq = -1 }
+	{ .irq = AM33XX_IRQ_GPIO1_1 },
+	{ .irq = -1 },
 };
 
 /* gpio1 slave ports */
@@ -646,26 +646,26 @@ static struct omap_hwmod am33xx_gpio1_hwmod = {
 	.name		= "gpio2",
 	.class		= &am33xx_gpio_hwmod_class,
 	.flags		= HWMOD_CONTROL_OPT_CLKS_IN_RESET,
-	.mpu_irqs       = am33xx_gpio1_irqs,
-	.main_clk       = "gpio1_fck",
+	.mpu_irqs	= am33xx_gpio1_irqs,
+	.main_clk	= "gpio1_ick",
 	.clkdm_name	= "l4ls_clkdm",
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_GPIO1_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
 	},
-	.opt_clks       = gpio1_opt_clks,
-	.opt_clks_cnt   = ARRAY_SIZE(gpio1_opt_clks),
-	.dev_attr       = &gpio_dev_attr,
-	.slaves         = am33xx_gpio1_slaves,
-	.slaves_cnt     = ARRAY_SIZE(am33xx_gpio1_slaves),
+	.opt_clks	= gpio1_opt_clks,
+	.opt_clks_cnt	= ARRAY_SIZE(gpio1_opt_clks),
+	.dev_attr	= &gpio_dev_attr,
+	.slaves		= am33xx_gpio1_slaves,
+	.slaves_cnt	= ARRAY_SIZE(am33xx_gpio1_slaves),
 };
 
 /* gpio2 */
 static struct omap_hwmod_irq_info am33xx_gpio2_irqs[] = {
-	{ .irq = 32 },
-	{ .irq = -1 }
+	{ .irq = AM33XX_IRQ_GPIO2_1 },
+	{ .irq = -1 },
 };
 
 /* gpio2 slave ports */
@@ -682,26 +682,26 @@ static struct omap_hwmod am33xx_gpio2_hwmod = {
 	.name		= "gpio3",
 	.class		= &am33xx_gpio_hwmod_class,
 	.flags		= HWMOD_CONTROL_OPT_CLKS_IN_RESET,
-	.mpu_irqs       = am33xx_gpio2_irqs,
-	.main_clk       = "gpio2_fck",
+	.mpu_irqs	= am33xx_gpio2_irqs,
+	.main_clk	= "gpio2_ick",
 	.clkdm_name	= "l4ls_clkdm",
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_GPIO1_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
 	},
-	.opt_clks       = gpio2_opt_clks,
-	.opt_clks_cnt   = ARRAY_SIZE(gpio2_opt_clks),
-	.dev_attr       = &gpio_dev_attr,
-	.slaves         = am33xx_gpio2_slaves,
-	.slaves_cnt     = ARRAY_SIZE(am33xx_gpio2_slaves),
+	.opt_clks	= gpio2_opt_clks,
+	.opt_clks_cnt	= ARRAY_SIZE(gpio2_opt_clks),
+	.dev_attr	= &gpio_dev_attr,
+	.slaves		= am33xx_gpio2_slaves,
+	.slaves_cnt	= ARRAY_SIZE(am33xx_gpio2_slaves),
 };
 
 /* gpio3 */
 static struct omap_hwmod_irq_info am33xx_gpio3_irqs[] = {
-	{ .irq = 62 },
-	{ .irq = -1 }
+	{ .irq = AM33XX_IRQ_GPIO3_1 },
+	{ .irq = -1 },
 };
 
 /* gpio3 slave ports */
@@ -718,26 +718,26 @@ static struct omap_hwmod am33xx_gpio3_hwmod = {
 	.name		= "gpio4",
 	.class		= &am33xx_gpio_hwmod_class,
 	.flags		= HWMOD_CONTROL_OPT_CLKS_IN_RESET,
-	.mpu_irqs       = am33xx_gpio3_irqs,
-	.main_clk       = "gpio3_fck",
+	.mpu_irqs	= am33xx_gpio3_irqs,
+	.main_clk	= "gpio3_ick",
 	.clkdm_name	= "l4ls_clkdm",
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_GPIO1_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
 	},
-	.opt_clks       = gpio3_opt_clks,
-	.opt_clks_cnt   = ARRAY_SIZE(gpio3_opt_clks),
-	.dev_attr       = &gpio_dev_attr,
-	.slaves         = am33xx_gpio3_slaves,
-	.slaves_cnt     = ARRAY_SIZE(am33xx_gpio3_slaves),
+	.opt_clks	= gpio3_opt_clks,
+	.opt_clks_cnt	= ARRAY_SIZE(gpio3_opt_clks),
+	.dev_attr	= &gpio_dev_attr,
+	.slaves		= am33xx_gpio3_slaves,
+	.slaves_cnt	= ARRAY_SIZE(am33xx_gpio3_slaves),
 };
 
 /* 'gpmc' class */
 
 static struct omap_hwmod_class am33xx_gpmc_hwmod_class = {
-	.name = "gpmc",
+	.name		= "gpmc",
 };
 
 /* gpmc */
@@ -746,8 +746,8 @@ static struct omap_hwmod am33xx_gpmc_hwmod = {
 	.class		= &am33xx_gpmc_hwmod_class,
 	.main_clk	= "gpmc_fck",
 	.clkdm_name	= "l3s_clkdm",
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_GPMC_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -756,33 +756,32 @@ static struct omap_hwmod am33xx_gpmc_hwmod = {
 
 /* 'i2c' class */
 
-static struct omap_hwmod_class_sysconfig omap44xx_i2c_sysc = {
+static struct omap_hwmod_class_sysconfig am33xx_i2c_sysc = {
 	.sysc_offs	= 0x0010,
 	.syss_offs	= 0x0090,
 	.sysc_flags	= (SYSC_HAS_AUTOIDLE | SYSC_HAS_CLOCKACTIVITY |
-			   SYSC_HAS_ENAWAKEUP | SYSC_HAS_SIDLEMODE |
-			   SYSC_HAS_SOFTRESET | SYSS_HAS_RESET_STATUS),
+			SYSC_HAS_ENAWAKEUP | SYSC_HAS_SIDLEMODE |
+			SYSC_HAS_SOFTRESET | SYSS_HAS_RESET_STATUS),
 	.idlemodes	= (SIDLE_FORCE | SIDLE_NO | SIDLE_SMART |
-			   SIDLE_SMART_WKUP),
+			SIDLE_SMART_WKUP),
 	.sysc_fields	= &omap_hwmod_sysc_type1,
 };
 
-
-static struct omap_hwmod_class i2c_class = {
-	.name = "i2c",
-	.sysc	= &omap44xx_i2c_sysc,
-	.rev	= OMAP_I2C_IP_VERSION_2,
-	.reset	= &omap_i2c_reset,
+static struct omap_i2c_dev_attr i2c_dev_attr = {
+	.flags		= OMAP_I2C_FLAG_BUS_SHIFT_NONE,
 };
 
-static struct omap_i2c_dev_attr i2c_dev_attr = {
-	.flags	= OMAP_I2C_FLAG_BUS_SHIFT_NONE,
+static struct omap_hwmod_class i2c_class = {
+	.name		= "i2c",
+	.sysc		= &am33xx_i2c_sysc,
+	.rev		= OMAP_I2C_IP_VERSION_2,
+	.reset		= &omap_i2c_reset,
 };
 
 /* I2C1 */
 static struct omap_hwmod_irq_info i2c1_mpu_irqs[] = {
-	{ .irq = 70 },
-	{ .irq = -1 }
+	{ .irq = AM33XX_IRQ_MSHSI2COCP0 },
+	{ .irq = -1 },
 };
 
 static struct omap_hwmod_dma_info i2c1_edma_reqs[] = {
@@ -795,44 +794,44 @@ static struct omap_hwmod_ocp_if *am33xx_i2c1_slaves[] = {
 };
 
 static struct omap_hwmod am33xx_i2c1_hwmod = {
-	.name           = "i2c1",
-	.flags		= HWMOD_16BIT_REG,
-	.mpu_irqs       = i2c1_mpu_irqs,
-	.sdma_reqs      = i2c1_edma_reqs,
-	.main_clk       = "i2c1_fck",
+	.name		= "i2c1",
+	.mpu_irqs	= i2c1_mpu_irqs,
+	.sdma_reqs	= i2c1_edma_reqs,
+	.main_clk	= "i2c1_fck",
 	.clkdm_name	= "l4_wkup_clkdm",
-	.prcm           = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_WKUP_I2C0_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
 	},
-	.slaves         = am33xx_i2c1_slaves,
-	.slaves_cnt     = ARRAY_SIZE(am33xx_i2c1_slaves),
-	.class          = &i2c_class,
+	.flags		= HWMOD_16BIT_REG,
 	.dev_attr	= &i2c_dev_attr,
+	.slaves		= am33xx_i2c1_slaves,
+	.slaves_cnt	= ARRAY_SIZE(am33xx_i2c1_slaves),
+	.class		= &i2c_class,
 };
 
 /* i2c2 */
 /* l4 per -> i2c2 */
 static struct omap_hwmod_addr_space am33xx_i2c2_addr_space[] = {
 	{
-		.pa_start       = 0x4802A000,
-		.pa_end         = 0x4802A000 + SZ_4K - 1,
-		.flags          = ADDR_MAP_ON_INIT | ADDR_TYPE_RT,
+		.pa_start	= AM33XX_I2C1_BASE,
+		.pa_end		= AM33XX_I2C1_BASE + SZ_4K - 1,
+		.flags		= ADDR_MAP_ON_INIT | ADDR_TYPE_RT,
 	},
 };
 
 static struct omap_hwmod_ocp_if am335_l4_per_i2c2 = {
-	.master         = &am33xx_l4per_hwmod,
-	.slave          = &am33xx_i2c2_hwmod,
-	.addr           = am33xx_i2c2_addr_space,
-	.user           = OCP_USER_MPU,
+	.master		= &am33xx_l4per_hwmod,
+	.slave		= &am33xx_i2c2_hwmod,
+	.addr		= am33xx_i2c2_addr_space,
+	.user		= OCP_USER_MPU,
 };
 
 static struct omap_hwmod_irq_info i2c2_mpu_irqs[] = {
-	{ .irq = 71 },
-	{ .irq = -1 }
+	{ .irq = AM33XX_IRQ_MSHSI2COCP1 },
+	{ .irq = -1 },
 };
 
 static struct omap_hwmod_dma_info i2c2_edma_reqs[] = {
@@ -845,22 +844,22 @@ static struct omap_hwmod_ocp_if *am33xx_i2c2_slaves[] = {
 };
 
 static struct omap_hwmod am33xx_i2c2_hwmod = {
-	.name           = "i2c2",
-	.flags		= HWMOD_16BIT_REG,
-	.mpu_irqs       = i2c2_mpu_irqs,
-	.sdma_reqs      = i2c2_edma_reqs,
-	.main_clk       = "i2c2_fck",
+	.name		= "i2c2",
+	.mpu_irqs	= i2c2_mpu_irqs,
+	.sdma_reqs	= i2c2_edma_reqs,
+	.main_clk	= "i2c2_fck",
 	.clkdm_name	= "l4ls_clkdm",
-	.prcm           = {
+	.prcm		= {
 		.omap4 = {
 			.clkctrl_offs	= AM33XX_CM_PER_I2C1_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
 	},
-	.slaves         = am33xx_i2c2_slaves,
-	.slaves_cnt     = ARRAY_SIZE(am33xx_i2c2_slaves),
-	.class          = &i2c_class,
+	.flags		= HWMOD_16BIT_REG,
 	.dev_attr	= &i2c_dev_attr,
+	.slaves		= am33xx_i2c2_slaves,
+	.slaves_cnt	= ARRAY_SIZE(am33xx_i2c2_slaves),
+	.class		= &i2c_class,
 };
 
 /* 'icss' class */
@@ -872,10 +871,10 @@ static struct omap_hwmod_class am33xx_icss_hwmod_class = {
 static struct omap_hwmod am33xx_icss_hwmod = {
 	.name		= "icss",
 	.class		= &am33xx_icss_hwmod_class,
-	.main_clk	= "pruss",
+	.main_clk	= "icss_uart_gclk",
 	.clkdm_name	= "icss_ocp_clkdm",
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_ICSS_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -884,7 +883,7 @@ static struct omap_hwmod am33xx_icss_hwmod = {
 
 /* 'ieee5000' class */
 static struct omap_hwmod_class am33xx_ieee5000_hwmod_class = {
-	.name = "ieee5000",
+	.name		= "ieee5000",
 };
 
 /* ieee5000 */
@@ -893,8 +892,8 @@ static struct omap_hwmod am33xx_ieee5000_hwmod = {
 	.class		= &am33xx_ieee5000_hwmod_class,
 	.main_clk	= "ieee5000_fck",
 	.clkdm_name	= "l3s_clkdm",
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_IEEE5000_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -904,7 +903,7 @@ static struct omap_hwmod am33xx_ieee5000_hwmod = {
 
 /* 'l3' class */
 static struct omap_hwmod_class am33xx_l3_hwmod_class = {
-	.name = "l3",
+	.name		= "l3",
 };
 
 /* l4_hs */
@@ -913,8 +912,8 @@ static struct omap_hwmod am33xx_l4_hs_hwmod = {
 	.class		= &am33xx_l3_hwmod_class,
 	.clkdm_name	= "l4hs_clkdm",
 	.flags		= (HWMOD_INIT_NO_IDLE | HWMOD_INIT_NO_RESET),
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_L4HS_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -927,8 +926,8 @@ static struct omap_hwmod am33xx_l3_instr_hwmod = {
 	.class		= &am33xx_l3_hwmod_class,
 	.clkdm_name	= "l3_clkdm",
 	.flags		= (HWMOD_INIT_NO_IDLE | HWMOD_INIT_NO_RESET),
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_L3_INSTR_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -941,8 +940,8 @@ static struct omap_hwmod am33xx_l3_main_hwmod = {
 	.class		= &am33xx_l3_hwmod_class,
 	.clkdm_name	= "l3_clkdm",
 	.flags		= (HWMOD_INIT_NO_IDLE | HWMOD_INIT_NO_RESET),
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_L3_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -951,7 +950,7 @@ static struct omap_hwmod am33xx_l3_main_hwmod = {
 
 /* 'l4fw' class */
 static struct omap_hwmod_class am33xx_l4fw_hwmod_class = {
-	.name = "l4fw",
+	.name		= "l4fw",
 };
 
 /* l4fw */
@@ -960,8 +959,8 @@ static struct omap_hwmod am33xx_l4fw_hwmod = {
 	.class		= &am33xx_l4fw_hwmod_class,
 	.clkdm_name	= "l4fw_clkdm",
 	.flags		= (HWMOD_INIT_NO_IDLE | HWMOD_INIT_NO_RESET),
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_L4FW_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -970,70 +969,69 @@ static struct omap_hwmod am33xx_l4fw_hwmod = {
 
 /* 'l4ls' class */
 static struct omap_hwmod_class am33xx_l4ls_hwmod_class = {
-	.name = "l4ls",
+	.name		= "l4ls",
 };
 
 /* l4ls */
 static struct omap_hwmod am33xx_l4ls_hwmod = {
 	.name		= "l4ls",
 	.class		= &am33xx_l4ls_hwmod_class,
-	.main_clk	= "l4ls_fck",
+	.main_clk	= "l4ls_gclk",
 	.clkdm_name	= "l4ls_clkdm",
 	.flags		= (HWMOD_INIT_NO_IDLE | HWMOD_INIT_NO_RESET),
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_L4LS_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
 	},
 };
 
-#if 0
 /* 'lcdc' class */
 static struct omap_hwmod_class am33xx_lcdc_hwmod_class = {
-	.name = "lcdc",
+	.name		= "lcdc",
 };
 
 /* lcdc */
 static struct omap_hwmod_irq_info am33xx_lcdc_irqs[] = {
-	{ .irq = 36 },
-	{ .irq = -1 }
+	{ .irq = AM33XX_IRQ_LCD },
+	{ .irq = -1 },
 };
 
 static struct omap_hwmod am33xx_lcdc_hwmod = {
 	.name		= "lcdc",
 	.class		= &am33xx_lcdc_hwmod_class,
-	.mpu_irqs       = am33xx_lcdc_irqs,
+	.mpu_irqs	= am33xx_lcdc_irqs,
 	.main_clk	= "lcdc_fck",
 	.clkdm_name	= "lcdc_clkdm",
-	.prcm = {
-		.omap4 = {
+	.flags		= (HWMOD_INIT_NO_IDLE | HWMOD_INIT_NO_RESET),
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_LCDC_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
 	},
 };
-#endif
 
 /* 'mcasp' class */
 static struct omap_hwmod_class am33xx_mcasp_hwmod_class = {
-	.name = "mcasp",
+	.name		= "mcasp",
 };
 
 /* mcasp0 */
 static struct omap_hwmod_irq_info am33xx_mcasp0_irqs[] = {
 	{ .irq = 80 },
-	{ .irq = -1 }
+	{ .irq = -1 },
 };
 
 static struct omap_hwmod am33xx_mcasp0_hwmod = {
 	.name		= "mcasp0",
 	.class		= &am33xx_mcasp_hwmod_class,
-	.mpu_irqs       = am33xx_mcasp0_irqs,
+	.mpu_irqs	= am33xx_mcasp0_irqs,
 	.main_clk	= "mcasp0_fck",
 	.clkdm_name	= "l3s_clkdm",
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_MCASP0_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -1041,6 +1039,7 @@ static struct omap_hwmod am33xx_mcasp0_hwmod = {
 };
 
 /* 'mmc' class */
+
 static struct omap_hwmod_class_sysconfig am33xx_mmc_sysc = {
 	.rev_offs	= 0x1fc,
 	.sysc_offs	= 0x10,
@@ -1053,14 +1052,14 @@ static struct omap_hwmod_class_sysconfig am33xx_mmc_sysc = {
 };
 
 static struct omap_hwmod_class am33xx_mmc_hwmod_class = {
-	.name	= "mmc",
-	.sysc	= &am33xx_mmc_sysc,
+	.name		= "mmc",
+	.sysc		= &am33xx_mmc_sysc,
 };
 
 /* mmc0 */
 static struct omap_hwmod_irq_info am33xx_mmc0_irqs[] = {
 	{ .irq = AM33XX_IRQ_MMCHS0 },
-	{ .irq = -1 }
+	{ .irq = -1 },
 };
 
 static struct omap_hwmod_dma_info am33xx_mmc0_edma_reqs[] = {
@@ -1086,22 +1085,22 @@ static struct omap_hwmod_ocp_if am33xx_l4ls__mmc0 = {
 };
 
 static struct omap_hwmod_ocp_if *am33xx_mmc0_slaves[] = {
-       &am33xx_l4ls__mmc0,
+	&am33xx_l4ls__mmc0,
 };
 
 static struct omap_mmc_dev_attr am33xx_mmc0_dev_attr = {
-       .flags = OMAP_HSMMC_SUPPORTS_DUAL_VOLT,
+	.flags		= OMAP_HSMMC_SUPPORTS_DUAL_VOLT,
 };
 
 static struct omap_hwmod am33xx_mmc0_hwmod = {
 	.name		= "mmc1",
 	.class		= &am33xx_mmc_hwmod_class,
-	.mpu_irqs       = am33xx_mmc0_irqs,
+	.mpu_irqs	= am33xx_mmc0_irqs,
 	.sdma_reqs	= am33xx_mmc0_edma_reqs,
 	.main_clk	= "mmc0_fck",
 	.clkdm_name	= "l4ls_clkdm",
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_MMC0_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -1114,7 +1113,7 @@ static struct omap_hwmod am33xx_mmc0_hwmod = {
 /* mmc1 */
 static struct omap_hwmod_irq_info am33xx_mmc1_irqs[] = {
 	{ .irq = AM33XX_IRQ_MMCHS1 },
-	{ .irq = -1 }
+	{ .irq = -1 },
 };
 
 static struct omap_hwmod_dma_info am33xx_mmc1_edma_reqs[] = {
@@ -1144,18 +1143,18 @@ static struct omap_hwmod_ocp_if *am33xx_mmc1_slaves[] = {
 };
 
 static struct omap_mmc_dev_attr am33xx_mmc1_dev_attr = {
-       .flags = OMAP_HSMMC_SUPPORTS_DUAL_VOLT,
+	.flags		= OMAP_HSMMC_SUPPORTS_DUAL_VOLT,
 };
 
 static struct omap_hwmod am33xx_mmc1_hwmod = {
 	.name		= "mmc2",
 	.class		= &am33xx_mmc_hwmod_class,
-	.mpu_irqs       = am33xx_mmc1_irqs,
+	.mpu_irqs	= am33xx_mmc1_irqs,
 	.sdma_reqs	= am33xx_mmc1_edma_reqs,
 	.main_clk	= "mmc1_fck",
 	.clkdm_name	= "l4ls_clkdm",
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_MMC1_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -1168,7 +1167,7 @@ static struct omap_hwmod am33xx_mmc1_hwmod = {
 /* mmc2 */
 static struct omap_hwmod_irq_info am33xx_mmc2_irqs[] = {
 	{ .irq = AM33XX_IRQ_MMCHS2 },
-	{ .irq = -1 }
+	{ .irq = -1 },
 };
 
 static struct omap_hwmod_dma_info am33xx_mmc2_edma_reqs[] = {
@@ -1194,22 +1193,21 @@ static struct omap_hwmod_ocp_if am33xx_l3_main__mmc2 = {
 };
 
 static struct omap_hwmod_ocp_if *am33xx_mmc2_slaves[] = {
-       &am33xx_l3_main__mmc2,
+	&am33xx_l3_main__mmc2,
 };
 
 static struct omap_mmc_dev_attr am33xx_mmc2_dev_attr = {
-       .flags = OMAP_HSMMC_SUPPORTS_DUAL_VOLT,
+	.flags		= OMAP_HSMMC_SUPPORTS_DUAL_VOLT,
 };
-
 static struct omap_hwmod am33xx_mmc2_hwmod = {
 	.name		= "mmc3",
 	.class		= &am33xx_mmc_hwmod_class,
-	.mpu_irqs       = am33xx_mmc2_irqs,
+	.mpu_irqs	= am33xx_mmc2_irqs,
 	.sdma_reqs	= am33xx_mmc2_edma_reqs,
 	.main_clk	= "mmc2_fck",
 	.clkdm_name	= "l3s_clkdm",
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_MMC2_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -1227,14 +1225,14 @@ static struct omap_hwmod_ocp_if *am33xx_l3_mpu_masters[] = {
 /* mpu */
 static struct omap_hwmod am33xx_mpu_hwmod = {
 	.name		= "mpu",
-	.class          = &mpu_hwmod_class,
-	.masters        = am33xx_l3_mpu_masters,
-	.masters_cnt    = ARRAY_SIZE(am33xx_l3_mpu_masters),
+	.class		= &mpu_hwmod_class,
+	.masters	= am33xx_l3_mpu_masters,
+	.masters_cnt	= ARRAY_SIZE(am33xx_l3_mpu_masters),
 	.flags		= (HWMOD_INIT_NO_IDLE | HWMOD_INIT_NO_RESET),
 	.main_clk	= "mpu_fck",
-	.clkdm_name     = "mpu_clkdm",
-	.prcm = {
-		.omap4 = {
+	.clkdm_name	= "mpu_clkdm",
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_MPU_MPU_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -1250,10 +1248,10 @@ static struct omap_hwmod_class am33xx_ocmcram_hwmod_class = {
 static struct omap_hwmod am33xx_ocmcram_hwmod = {
 	.name		= "ocmcram",
 	.class		= &am33xx_ocmcram_hwmod_class,
-	.main_clk	= "ocmcram_fck",
+	.main_clk	= "ocmcram_ick",
 	.clkdm_name	= "l3_clkdm",
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_OCMCRAM_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -1262,7 +1260,7 @@ static struct omap_hwmod am33xx_ocmcram_hwmod = {
 
 /* 'ocpwp' class */
 static struct omap_hwmod_class am33xx_ocpwp_hwmod_class = {
-	.name = "ocpwp",
+	.name		= "ocpwp",
 };
 
 /* ocpwp */
@@ -1271,8 +1269,8 @@ static struct omap_hwmod am33xx_ocpwp_hwmod = {
 	.class		= &am33xx_ocpwp_hwmod_class,
 	.main_clk	= "ocpwp_fck",
 	.clkdm_name	= "l4ls_clkdm",
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_OCPWP_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -1281,24 +1279,24 @@ static struct omap_hwmod am33xx_ocpwp_hwmod = {
 
 /* 'rtc' class */
 static struct omap_hwmod_class am33xx_rtc_hwmod_class = {
-	.name = "rtc",
+	.name		= "rtc",
 };
 
 /* rtc */
 static struct omap_hwmod_irq_info am33xx_rtc_irqs[] = {
-	{ .irq = 75 },
-	{ .irq = -1 }
+	{ .irq = AM33XX_IRQ_RTC_TIMER },
+	{ .irq = -1 },
 };
 
 static struct omap_hwmod am33xx_rtc_hwmod = {
 	.name		= "rtc",
 	.class		= &am33xx_rtc_hwmod_class,
-	.mpu_irqs       = am33xx_rtc_irqs,
+	.mpu_irqs	= am33xx_rtc_irqs,
 	.main_clk	= "rtc_fck",
 	.clkdm_name	= "l4_rtc_clkdm",
-	.flags		= HWMOD_INIT_NO_IDLE,
-	.prcm = {
-		.omap4 = {
+	.flags		= (HWMOD_INIT_NO_IDLE | HWMOD_INIT_NO_RESET),
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_RTC_RTC_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -1307,23 +1305,23 @@ static struct omap_hwmod am33xx_rtc_hwmod = {
 
 /* 'sha0' class */
 static struct omap_hwmod_class am33xx_sha0_hwmod_class = {
-	.name = "sha0",
+	.name		= "sha0",
 };
 
 /* sha0 */
 static struct omap_hwmod_irq_info am33xx_sha0_irqs[] = {
-	{ .irq = 108 },
-	{ .irq = -1 }
+	{ .irq = AM33XX_IRQ_SHAEIP57t0_S },
+	{ .irq = -1 },
 };
 
 static struct omap_hwmod am33xx_sha0_hwmod = {
 	.name		= "sha0",
 	.class		= &am33xx_sha0_hwmod_class,
-	.mpu_irqs       = am33xx_sha0_irqs,
+	.mpu_irqs	= am33xx_sha0_irqs,
 	.main_clk	= "sha0_fck",
 	.clkdm_name	= "l3_clkdm",
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_SHA0_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -1332,23 +1330,23 @@ static struct omap_hwmod am33xx_sha0_hwmod = {
 
 /* 'smartreflex' class */
 static struct omap_hwmod_class am33xx_smartreflex_hwmod_class = {
-	.name = "smartreflex",
+	.name		= "smartreflex",
 };
 
 /* smartreflex0 */
 static struct omap_hwmod_irq_info am33xx_smartreflex0_irqs[] = {
-	{ .irq = 120 },
-	{ .irq = -1 }
+	{ .irq = AM33XX_IRQ_SMARTREFLEX0 },
+	{ .irq = -1 },
 };
 
 static struct omap_hwmod am33xx_smartreflex0_hwmod = {
 	.name		= "smartreflex0",
 	.class		= &am33xx_smartreflex_hwmod_class,
-	.mpu_irqs       = am33xx_smartreflex0_irqs,
+	.mpu_irqs	= am33xx_smartreflex0_irqs,
 	.main_clk	= "smartreflex0_fck",
 	.clkdm_name	= "l4_wkup_clkdm",
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_WKUP_SMARTREFLEX0_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -1357,46 +1355,47 @@ static struct omap_hwmod am33xx_smartreflex0_hwmod = {
 
 /* smartreflex1 */
 static struct omap_hwmod_irq_info am33xx_smartreflex1_irqs[] = {
-	{ .irq = 121 },
-	{ .irq = -1 }
+	{ .irq = AM33XX_IRQ_SMARTREFLEX1 },
+	{ .irq = -1 },
 };
 
 static struct omap_hwmod am33xx_smartreflex1_hwmod = {
 	.name		= "smartreflex1",
 	.class		= &am33xx_smartreflex_hwmod_class,
-	.mpu_irqs       = am33xx_smartreflex1_irqs,
+	.mpu_irqs	= am33xx_smartreflex1_irqs,
 	.main_clk	= "smartreflex1_fck",
 	.clkdm_name	= "l4_wkup_clkdm",
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_WKUP_SMARTREFLEX1_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
 	},
 };
 
+/* 'spi' class */
+
 static struct omap_hwmod_class_sysconfig am33xx_mcspi_sysc = {
 	.rev_offs	= 0x0000,
 	.sysc_offs	= 0x0110,
 	.syss_offs	= 0x0114,
 	.sysc_flags	= (SYSC_HAS_CLOCKACTIVITY | SYSC_HAS_SIDLEMODE |
-				SYSC_HAS_SOFTRESET |
-				SYSC_HAS_AUTOIDLE | SYSS_HAS_RESET_STATUS),
+			SYSC_HAS_SOFTRESET | SYSC_HAS_AUTOIDLE |
+			SYSS_HAS_RESET_STATUS),
 	.idlemodes	= (SIDLE_FORCE | SIDLE_NO | SIDLE_SMART),
 	.sysc_fields	= &omap_hwmod_sysc_type1,
 };
 
-/* 'spi' class */
 static struct omap_hwmod_class am33xx_spi_hwmod_class = {
-	.name   = "mcspi",
-	.sysc	= &am33xx_mcspi_sysc,
-	.rev	= OMAP4_MCSPI_REV,
+	.name		= "mcspi",
+	.sysc		= &am33xx_mcspi_sysc,
+	.rev		= OMAP4_MCSPI_REV,
 };
 
 /* spi0 */
 static struct omap_hwmod_irq_info am33xx_spi0_irqs[] = {
 	{ .irq = AM33XX_IRQ_MCSPIOCP0 },
-	{ .irq = -1 }
+	{ .irq = -1 },
 };
 
 struct omap_hwmod_dma_info am33xx_mcspi0_sdma_reqs[] = {
@@ -1413,7 +1412,7 @@ struct omap_hwmod_addr_space am33xx_mcspi0_addr_space[] = {
 		.pa_end		= AM33XX_SPI0_BASE + SZ_1K - 1,
 		.flags		= ADDR_MAP_ON_INIT | ADDR_TYPE_RT,
 	},
-	{ }
+	{ },
 };
 
 struct omap_hwmod_ocp_if am33xx_l4_core__mcspi0 = {
@@ -1429,31 +1428,30 @@ static struct omap_hwmod_ocp_if *am33xx_mcspi0_slaves[] = {
 };
 
 struct omap2_mcspi_dev_attr mcspi_attrib = {
-	.num_chipselect = 2,
+	.num_chipselect	= 2,
 };
-
 static struct omap_hwmod am33xx_spi0_hwmod = {
 	.name		= "spi0",
 	.class		= &am33xx_spi_hwmod_class,
-	.mpu_irqs       = am33xx_spi0_irqs,
+	.mpu_irqs	= am33xx_spi0_irqs,
 	.sdma_reqs	= am33xx_mcspi0_sdma_reqs,
 	.main_clk	= "spi0_fck",
 	.clkdm_name	= "l4ls_clkdm",
-	.dev_attr       = &mcspi_attrib,
-	.slaves		= am33xx_mcspi0_slaves,
-	.slaves_cnt	= ARRAY_SIZE(am33xx_mcspi0_slaves),
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_SPI0_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
 	},
+	.dev_attr	= &mcspi_attrib,
+	.slaves		= am33xx_mcspi0_slaves,
+	.slaves_cnt	= ARRAY_SIZE(am33xx_mcspi0_slaves),
 };
 
 /* spi1 */
 static struct omap_hwmod_irq_info am33xx_spi1_irqs[] = {
 	{ .irq = AM33XX_IRQ_SPI1 },
-	{ .irq = -1 }
+	{ .irq = -1 },
 };
 
 struct omap_hwmod_dma_info am33xx_mcspi1_sdma_reqs[] = {
@@ -1470,7 +1468,7 @@ struct omap_hwmod_addr_space am33xx_mcspi1_addr_space[] = {
 		.pa_end		= AM33XX_SPI1_BASE + SZ_1K - 1,
 		.flags		= ADDR_MAP_ON_INIT | ADDR_TYPE_RT,
 	},
-	{ }
+	{ },
 };
 
 struct omap_hwmod_ocp_if am33xx_l4_core__mcspi1 = {
@@ -1484,28 +1482,27 @@ struct omap_hwmod_ocp_if am33xx_l4_core__mcspi1 = {
 static struct omap_hwmod_ocp_if *am33xx_mcspi1_slaves[] = {
 	&am33xx_l4_core__mcspi1,
 };
-
 static struct omap_hwmod am33xx_spi1_hwmod = {
-	.name           = "spi1",
-	.class          = &am33xx_spi_hwmod_class,
-	.mpu_irqs       = am33xx_spi1_irqs,
+	.name		= "spi1",
+	.class		= &am33xx_spi_hwmod_class,
+	.mpu_irqs	= am33xx_spi1_irqs,
 	.sdma_reqs	= am33xx_mcspi1_sdma_reqs,
 	.main_clk	= "spi1_fck",
 	.clkdm_name	= "l4ls_clkdm",
-	.dev_attr       = &mcspi_attrib,
-	.slaves		= am33xx_mcspi1_slaves,
-	.slaves_cnt	= ARRAY_SIZE(am33xx_mcspi1_slaves),
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_SPI1_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
 	},
+	.dev_attr	= &mcspi_attrib,
+	.slaves		= am33xx_mcspi1_slaves,
+	.slaves_cnt	= ARRAY_SIZE(am33xx_mcspi1_slaves),
 };
 
 /* 'spinlock' class */
 static struct omap_hwmod_class am33xx_spinlock_hwmod_class = {
-	.name = "spinlock",
+	.name		= "spinlock",
 };
 
 /* spinlock */
@@ -1514,68 +1511,66 @@ static struct omap_hwmod am33xx_spinlock_hwmod = {
 	.class		= &am33xx_spinlock_hwmod_class,
 	.main_clk	= "spinlock_fck",
 	.clkdm_name	= "l4ls_clkdm",
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_SPINLOCK_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
 	},
 };
 
-
 /* 'timer 0 & 2-7' class */
 static struct omap_hwmod_class_sysconfig am33xx_timer_sysc = {
-	.rev_offs       = 0x0000,
-	.sysc_offs      = 0x0010,
-	.syss_offs      = 0x0014,
-	.sysc_flags     = (SYSC_HAS_SIDLEMODE | SYSC_HAS_SOFTRESET),
-	.idlemodes      = (SIDLE_FORCE | SIDLE_NO | SIDLE_SMART |
+	.rev_offs	= 0x0000,
+	.sysc_offs	= 0x0010,
+	.syss_offs	= 0x0014,
+	.sysc_flags	= (SYSC_HAS_SIDLEMODE | SYSC_HAS_SOFTRESET),
+	.idlemodes	= (SIDLE_FORCE | SIDLE_NO | SIDLE_SMART |
 			SIDLE_SMART_WKUP),
-	.sysc_fields    = &omap_hwmod_sysc_type2,
+	.sysc_fields	= &omap_hwmod_sysc_type2,
 };
 
-/* 'timer 0 & 2-7' class */
 static struct omap_hwmod_class am33xx_timer_hwmod_class = {
-	.name = "timer",
-	.sysc = &am33xx_timer_sysc,
+	.name		= "timer",
+	.sysc		= &am33xx_timer_sysc,
 };
 
 /* timer0 */
 /* l4 wkup -> timer0 interface */
 static struct omap_hwmod_addr_space am33xx_timer0_addr_space[] = {
 	{
-		.pa_start       = 0x44E05000,
-		.pa_end         = 0x44E05000 + SZ_1K - 1,
+		.pa_start	= AM33XX_TIMER0_BASE,
+		.pa_end		= AM33XX_TIMER0_BASE + SZ_1K - 1,
 		.flags		= ADDR_TYPE_RT
 	},
-	{ }
+	{ },
 };
 
 static struct omap_hwmod_ocp_if am33xx_l4wkup__timer0 = {
-	.master         = &am33xx_l4wkup_hwmod,
-	.slave          = &am33xx_timer0_hwmod,
-	.clk            = "timer0_ick",
-	.addr           = am33xx_timer0_addr_space,
-	.user           = OCP_USER_MPU,
+	.master		= &am33xx_l4wkup_hwmod,
+	.slave		= &am33xx_timer0_hwmod,
+	.clk		= "timer0_ick",
+	.addr		= am33xx_timer0_addr_space,
+	.user		= OCP_USER_MPU,
 };
 
 static struct omap_hwmod_ocp_if *am33xx_timer0_slaves[] = {
-	        &am33xx_l4wkup__timer0,
+	&am33xx_l4wkup__timer0,
 };
 
 static struct omap_hwmod_irq_info am33xx_timer0_irqs[] = {
-	{ .irq = 66 },
-	{ .irq = -1 }
+	{ .irq = AM33XX_IRQ_DMTIMER0 },
+	{ .irq = -1 },
 };
 
 static struct omap_hwmod am33xx_timer0_hwmod = {
 	.name		= "timer0",
 	.class		= &am33xx_timer_hwmod_class,
-	.mpu_irqs       = am33xx_timer0_irqs,
+	.mpu_irqs	= am33xx_timer0_irqs,
 	.main_clk	= "timer0_fck",
 	.clkdm_name	= "l4_wkup_clkdm",
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_WKUP_TIMER0_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -1584,58 +1579,58 @@ static struct omap_hwmod am33xx_timer0_hwmod = {
 	.slaves_cnt	= ARRAY_SIZE(am33xx_timer0_slaves),
 };
 
-/* timer 1ms */
+/* timer1 1ms */
 static struct omap_hwmod_class_sysconfig am33xx_timer1ms_sysc = {
-	.rev_offs       = 0x0000,
-	.sysc_offs      = 0x0010,
-	.syss_offs      = 0x0014,
-	.sysc_flags	= (SYSC_HAS_CLOCKACTIVITY | SYSC_HAS_SIDLEMODE
-				| SYSC_HAS_SOFTRESET | SYSC_HAS_AUTOIDLE
-				| SYSS_HAS_RESET_STATUS),
-	.idlemodes      = (SIDLE_FORCE | SIDLE_NO | SIDLE_SMART),
-	.sysc_fields    = &omap_hwmod_sysc_type1,
+	.rev_offs	= 0x0000,
+	.sysc_offs	= 0x0010,
+	.syss_offs	= 0x0014,
+	.sysc_flags	= (SYSC_HAS_CLOCKACTIVITY | SYSC_HAS_SIDLEMODE |
+			SYSC_HAS_SOFTRESET | SYSC_HAS_AUTOIDLE |
+			SYSS_HAS_RESET_STATUS),
+	.idlemodes	= (SIDLE_FORCE | SIDLE_NO | SIDLE_SMART),
+	.sysc_fields	= &omap_hwmod_sysc_type1,
 };
 
 static struct omap_hwmod_class am33xx_timer1ms_hwmod_class = {
-	.name = "timer",
-	.sysc = &am33xx_timer1ms_sysc,
+	.name		= "timer",
+	.sysc		= &am33xx_timer1ms_sysc,
 };
 
 /* l4 wkup -> timer1 interface */
 static struct omap_hwmod_addr_space am33xx_timer1_addr_space[] = {
 	{
-		.pa_start       = 0x44E31000,
-		.pa_end         = 0x44E31000 + SZ_1K - 1,
+		.pa_start	= AM33XX_TIMER1_BASE,
+		.pa_end		= AM33XX_TIMER1_BASE + SZ_1K - 1,
 		.flags		= ADDR_TYPE_RT
 	},
-	{ }
+	{ },
 };
 
 static struct omap_hwmod_ocp_if am33xx_l4wkup__timer1 = {
-	.master         = &am33xx_l4wkup_hwmod,
-	.slave          = &am33xx_timer1_hwmod,
-	.clk            = "timer1_ick",
-	.addr           = am33xx_timer1_addr_space,
-	.user           = OCP_USER_MPU,
+	.master		= &am33xx_l4wkup_hwmod,
+	.slave		= &am33xx_timer1_hwmod,
+	.clk		= "timer1_ick",
+	.addr		= am33xx_timer1_addr_space,
+	.user		= OCP_USER_MPU,
 };
 
 static struct omap_hwmod_ocp_if *am33xx_timer1_slaves[] = {
-	        &am33xx_l4wkup__timer1,
+	&am33xx_l4wkup__timer1,
 };
 
 static struct omap_hwmod_irq_info am33xx_timer1_irqs[] = {
-	{ .irq = 67 },
-	{ .irq = -1 }
+	{ .irq = AM33XX_IRQ_DMTIMER1 },
+	{ .irq = -1 },
 };
 
 static struct omap_hwmod am33xx_timer1_hwmod = {
 	.name		= "timer1",
 	.class		= &am33xx_timer1ms_hwmod_class,
-	.mpu_irqs       = am33xx_timer1_irqs,
+	.mpu_irqs	= am33xx_timer1_irqs,
 	.main_clk	= "timer1_fck",
 	.clkdm_name	= "l4_wkup_clkdm",
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_WKUP_TIMER1_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -1648,37 +1643,37 @@ static struct omap_hwmod am33xx_timer1_hwmod = {
 /* l4 per -> timer2 interface */
 static struct omap_hwmod_addr_space am33xx_timer2_addr_space[] = {
 	{
-		.pa_start       = 0x48040000,
-		.pa_end         = 0x48040000 + SZ_1K - 1,
+		.pa_start	= AM33XX_TIMER2_BASE,
+		.pa_end		= AM33XX_TIMER2_BASE + SZ_1K - 1,
 		.flags		= ADDR_TYPE_RT
 	},
-	{ }
+	{ },
 };
 
 static struct omap_hwmod_ocp_if am33xx_l4per__timer2 = {
-	.master         = &am33xx_l4per_hwmod,
-	.slave          = &am33xx_timer2_hwmod,
-	.clk            = "timer2_ick",
-	.addr           = am33xx_timer2_addr_space,
-	.user           = OCP_USER_MPU,
+	.master		= &am33xx_l4per_hwmod,
+	.slave		= &am33xx_timer2_hwmod,
+	.clk		= "timer2_ick",
+	.addr		= am33xx_timer2_addr_space,
+	.user		= OCP_USER_MPU,
 };
 
 static struct omap_hwmod_ocp_if *am33xx_timer2_slaves[] = {
-	        &am33xx_l4per__timer2,
+	&am33xx_l4per__timer2,
 };
 
 static struct omap_hwmod_irq_info am33xx_timer2_irqs[] = {
-	{ .irq = 68 },
-	{ .irq = -1 }
+	{ .irq = AM33XX_IRQ_DMTIMER2 },
+	{ .irq = -1 },
 };
 
 static struct omap_hwmod am33xx_timer2_hwmod = {
 	.name		= "timer2",
 	.class		= &am33xx_timer_hwmod_class,
-	.mpu_irqs       = am33xx_timer2_irqs,
+	.mpu_irqs	= am33xx_timer2_irqs,
 	.main_clk	= "timer2_fck",
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_TIMER2_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -1692,38 +1687,38 @@ static struct omap_hwmod am33xx_timer2_hwmod = {
 /* l4 per -> timer3 interface */
 static struct omap_hwmod_addr_space am33xx_timer3_addr_space[] = {
 	{
-		.pa_start       = 0x48042000,
-		.pa_end         = 0x48042000 + SZ_1K - 1,
+		.pa_start	= AM33XX_TIMER3_BASE,
+		.pa_end		= AM33XX_TIMER3_BASE + SZ_1K - 1,
 		.flags		= ADDR_TYPE_RT
 	},
-	{ }
+	{ },
 };
 
 static struct omap_hwmod_ocp_if am33xx_l4per__timer3 = {
-	.master         = &am33xx_l4per_hwmod,
-	.slave          = &am33xx_timer3_hwmod,
-	.clk            = "timer3_ick",
-	.addr           = am33xx_timer3_addr_space,
-	.user           = OCP_USER_MPU,
+	.master		= &am33xx_l4per_hwmod,
+	.slave		= &am33xx_timer3_hwmod,
+	.clk		= "timer3_ick",
+	.addr		= am33xx_timer3_addr_space,
+	.user		= OCP_USER_MPU,
 };
 
 static struct omap_hwmod_ocp_if *am33xx_timer3_slaves[] = {
-		&am33xx_l4per__timer3,
+	&am33xx_l4per__timer3,
 };
 
 static struct omap_hwmod_irq_info am33xx_timer3_irqs[] = {
-	{ .irq = 69 },
-	{ .irq = -1 }
+	{ .irq = AM33XX_IRQ_DMTIMER3 },
+	{ .irq = -1 },
 };
 
 static struct omap_hwmod am33xx_timer3_hwmod = {
 	.name		= "timer3",
 	.class		= &am33xx_timer_hwmod_class,
-	.mpu_irqs       = am33xx_timer3_irqs,
+	.mpu_irqs	= am33xx_timer3_irqs,
 	.main_clk	= "timer3_fck",
 	.clkdm_name	= "l4ls_clkdm",
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_TIMER3_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -1736,37 +1731,37 @@ static struct omap_hwmod am33xx_timer3_hwmod = {
 /* l4 per -> timer4 interface */
 static struct omap_hwmod_addr_space am33xx_timer4_addr_space[] = {
 	{
-		.pa_start       = 0x48044000,
-		.pa_end         = 0x48044000 + SZ_1K - 1,
+		.pa_start	= AM33XX_TIMER4_BASE,
+		.pa_end		= AM33XX_TIMER4_BASE + SZ_1K - 1,
 		.flags		= ADDR_TYPE_RT
 	},
-	{ }
+	{ },
 };
 
 static struct omap_hwmod_ocp_if am33xx_l4per__timer4 = {
-	.master         = &am33xx_l4per_hwmod,
-	.slave          = &am33xx_timer4_hwmod,
-	.clk            = "timer4_ick",
-	.addr           = am33xx_timer4_addr_space,
-	.user           = OCP_USER_MPU,
+	.master		= &am33xx_l4per_hwmod,
+	.slave		= &am33xx_timer4_hwmod,
+	.clk		= "timer4_ick",
+	.addr		= am33xx_timer4_addr_space,
+	.user		= OCP_USER_MPU,
 };
 
 static struct omap_hwmod_ocp_if *am33xx_timer4_slaves[] = {
-		&am33xx_l4per__timer4,
+	&am33xx_l4per__timer4,
 };
 
 static struct omap_hwmod_irq_info am33xx_timer4_irqs[] = {
-	{ .irq = 92 },
-	{ .irq = -1 }
+	{ .irq = AM33XX_IRQ_DMTIMER4 },
+	{ .irq = -1 },
 };
 
 static struct omap_hwmod am33xx_timer4_hwmod = {
 	.name		= "timer4",
 	.class		= &am33xx_timer_hwmod_class,
-	.mpu_irqs       = am33xx_timer4_irqs,
+	.mpu_irqs	= am33xx_timer4_irqs,
 	.main_clk	= "timer4_fck",
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_TIMER4_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -1781,37 +1776,37 @@ static struct omap_hwmod am33xx_timer4_hwmod = {
 /* l4 per -> timer5 interface */
 static struct omap_hwmod_addr_space am33xx_timer5_addr_space[] = {
 	{
-		.pa_start       = 0x48046000,
-		.pa_end         = 0x48046000 + SZ_1K - 1,
+		.pa_start	= AM33XX_TIMER5_BASE,
+		.pa_end		= AM33XX_TIMER5_BASE + SZ_1K - 1,
 		.flags		= ADDR_TYPE_RT
 	},
-	{ }
+	{ },
 };
 
 static struct omap_hwmod_ocp_if am33xx_l4per__timer5 = {
-	.master         = &am33xx_l4per_hwmod,
-	.slave          = &am33xx_timer5_hwmod,
-	.clk            = "timer5_ick",
-	.addr           = am33xx_timer5_addr_space,
-	.user           = OCP_USER_MPU,
+	.master		= &am33xx_l4per_hwmod,
+	.slave		= &am33xx_timer5_hwmod,
+	.clk		= "timer5_ick",
+	.addr		= am33xx_timer5_addr_space,
+	.user		= OCP_USER_MPU,
 };
 
 static struct omap_hwmod_ocp_if *am33xx_timer5_slaves[] = {
-		&am33xx_l4per__timer5,
+	&am33xx_l4per__timer5,
 };
 
 static struct omap_hwmod_irq_info am33xx_timer5_irqs[] = {
-	{ .irq = 93 },
-	{ .irq = -1 }
+	{ .irq = AM33XX_IRQ_DMTIMER5 },
+	{ .irq = -1 },
 };
 
 static struct omap_hwmod am33xx_timer5_hwmod = {
 	.name		= "timer5",
 	.class		= &am33xx_timer_hwmod_class,
-	.mpu_irqs       = am33xx_timer5_irqs,
+	.mpu_irqs	= am33xx_timer5_irqs,
 	.main_clk	= "timer5_fck",
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_TIMER5_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -1825,37 +1820,37 @@ static struct omap_hwmod am33xx_timer5_hwmod = {
 /* l4 per -> timer6 interface */
 static struct omap_hwmod_addr_space am33xx_timer6_addr_space[] = {
 	{
-		.pa_start       = 0x48048000,
-		.pa_end         = 0x48048000 + SZ_1K - 1,
+		.pa_start	= AM33XX_TIMER6_BASE,
+		.pa_end		= AM33XX_TIMER6_BASE + SZ_1K - 1,
 		.flags		= ADDR_TYPE_RT
 	},
-	{ }
+	{ },
 };
 
 static struct omap_hwmod_ocp_if am33xx_l4per__timer6 = {
-	.master         = &am33xx_l4per_hwmod,
-	.slave          = &am33xx_timer6_hwmod,
-	.clk            = "timer6_ick",
-	.addr           = am33xx_timer6_addr_space,
-	.user           = OCP_USER_MPU,
+	.master		= &am33xx_l4per_hwmod,
+	.slave		= &am33xx_timer6_hwmod,
+	.clk		= "timer6_ick",
+	.addr		= am33xx_timer6_addr_space,
+	.user		= OCP_USER_MPU,
 };
 
 static struct omap_hwmod_ocp_if *am33xx_timer6_slaves[] = {
-		&am33xx_l4per__timer6,
+	&am33xx_l4per__timer6,
 };
 
 static struct omap_hwmod_irq_info am33xx_timer6_irqs[] = {
-	{ .irq = 94 },
-	{ .irq = -1 }
+	{ .irq = AM33XX_IRQ_DMTIMER6 },
+	{ .irq = -1 },
 };
 
 static struct omap_hwmod am33xx_timer6_hwmod = {
 	.name		= "timer6",
 	.class		= &am33xx_timer_hwmod_class,
-	.mpu_irqs       = am33xx_timer6_irqs,
+	.mpu_irqs	= am33xx_timer6_irqs,
 	.main_clk	= "timer6_fck",
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_TIMER6_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -1865,42 +1860,41 @@ static struct omap_hwmod am33xx_timer6_hwmod = {
 	.clkdm_name	= "l4ls_clkdm",
 };
 
-
 /* timer7 */
 /* l4 per -> timer7 interface */
 static struct omap_hwmod_addr_space am33xx_timer7_addr_space[] = {
 	{
-		.pa_start       = 0x4804a000,
-		.pa_end         = 0x4804a000 + SZ_1K - 1,
+		.pa_start	= AM33XX_TIMER7_BASE,
+		.pa_end		= AM33XX_TIMER7_BASE + SZ_1K - 1,
 		.flags		= ADDR_TYPE_RT
 	},
-	{ }
+	{ },
 };
 
 static struct omap_hwmod_ocp_if am33xx_l4per__timer7 = {
-	.master         = &am33xx_l4per_hwmod,
-	.slave          = &am33xx_timer7_hwmod,
-	.clk            = "timer7_ick",
-	.addr           = am33xx_timer7_addr_space,
-	.user           = OCP_USER_MPU,
+	.master		= &am33xx_l4per_hwmod,
+	.slave		= &am33xx_timer7_hwmod,
+	.clk		= "timer7_ick",
+	.addr		= am33xx_timer7_addr_space,
+	.user		= OCP_USER_MPU,
 };
 
 static struct omap_hwmod_ocp_if *am33xx_timer7_slaves[] = {
-		&am33xx_l4per__timer7,
+	&am33xx_l4per__timer7,
 };
 
 static struct omap_hwmod_irq_info am33xx_timer7_irqs[] = {
-	{ .irq = 69 },
-	{ .irq = -1 }
+	{ .irq = AM33XX_IRQ_DMTIMER7 },
+	{ .irq = -1 },
 };
 
 static struct omap_hwmod am33xx_timer7_hwmod = {
 	.name		= "timer7",
 	.class		= &am33xx_timer_hwmod_class,
-	.mpu_irqs       = am33xx_timer7_irqs,
+	.mpu_irqs	= am33xx_timer7_irqs,
 	.main_clk	= "timer7_fck",
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_TIMER7_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -1912,23 +1906,23 @@ static struct omap_hwmod am33xx_timer7_hwmod = {
 
 /* 'tpcc' class */
 static struct omap_hwmod_class am33xx_tpcc_hwmod_class = {
-	.name = "tpcc",
+	.name		= "tpcc",
 };
 
 /* tpcc */
 static struct omap_hwmod_irq_info am33xx_tpcc_irqs[] = {
-	{ .irq = 12 },
-	{ .irq = -1 }
+	{ .irq = AM33XX_IRQ_TPCC0_INT_PO0 },
+	{ .irq = -1 },
 };
 
 static struct omap_hwmod am33xx_tpcc_hwmod = {
 	.name		= "tpcc",
 	.class		= &am33xx_tpcc_hwmod_class,
-	.mpu_irqs       = am33xx_tpcc_irqs,
+	.mpu_irqs	= am33xx_tpcc_irqs,
 	.main_clk	= "tpcc_ick",
 	.clkdm_name	= "l3_clkdm",
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_TPCC_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -1937,23 +1931,23 @@ static struct omap_hwmod am33xx_tpcc_hwmod = {
 
 /* 'tptc' class */
 static struct omap_hwmod_class am33xx_tptc_hwmod_class = {
-	.name = "tptc",
+	.name		= "tptc",
 };
 
 /* tptc0 */
 static struct omap_hwmod_irq_info am33xx_tptc0_irqs[] = {
-	{ .irq = 112 },
-	{ .irq = -1 }
+	{ .irq = AM33XX_IRQ_TPTC0 },
+	{ .irq = -1 },
 };
 
 static struct omap_hwmod am33xx_tptc0_hwmod = {
 	.name		= "tptc0",
 	.class		= &am33xx_tptc_hwmod_class,
-	.mpu_irqs       = am33xx_tptc0_irqs,
+	.mpu_irqs	= am33xx_tptc0_irqs,
 	.main_clk	= "tptc0_ick",
 	.clkdm_name	= "l3_clkdm",
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_TPTC0_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -1962,18 +1956,18 @@ static struct omap_hwmod am33xx_tptc0_hwmod = {
 
 /* tptc1 */
 static struct omap_hwmod_irq_info am33xx_tptc1_irqs[] = {
-	{ .irq = 113 },
-	{ .irq = -1 }
+	{ .irq = AM33XX_IRQ_TPTC1 },
+	{ .irq = -1 },
 };
 
 static struct omap_hwmod am33xx_tptc1_hwmod = {
 	.name		= "tptc1",
 	.class		= &am33xx_tptc_hwmod_class,
-	.mpu_irqs       = am33xx_tptc1_irqs,
+	.mpu_irqs	= am33xx_tptc1_irqs,
 	.main_clk	= "tptc1_ick",
 	.clkdm_name	= "l3_clkdm",
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_TPTC1_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -1982,18 +1976,18 @@ static struct omap_hwmod am33xx_tptc1_hwmod = {
 
 /* tptc2 */
 static struct omap_hwmod_irq_info am33xx_tptc2_irqs[] = {
-	{ .irq = 114 },
-	{ .irq = -1 }
+	{ .irq = AM33XX_IRQ_TPTC2 },
+	{ .irq = -1 },
 };
 
 static struct omap_hwmod am33xx_tptc2_hwmod = {
 	.name		= "tptc2",
 	.class		= &am33xx_tptc_hwmod_class,
-	.mpu_irqs       = am33xx_tptc2_irqs,
+	.mpu_irqs	= am33xx_tptc2_irqs,
 	.main_clk	= "tptc2_ick",
 	.clkdm_name	= "l3_clkdm",
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_TPTC2_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -2006,15 +2000,15 @@ static struct omap_hwmod_class_sysconfig uart_sysc = {
 	.sysc_offs	= 0x54,
 	.syss_offs	= 0x58,
 	.sysc_flags	= (SYSC_HAS_SIDLEMODE |
-			   SYSC_HAS_ENAWAKEUP | SYSC_HAS_SOFTRESET |
-			   SYSC_HAS_AUTOIDLE),
+			SYSC_HAS_ENAWAKEUP | SYSC_HAS_SOFTRESET |
+			SYSC_HAS_AUTOIDLE),
 	.idlemodes	= (SIDLE_FORCE | SIDLE_NO | SIDLE_SMART),
-	.sysc_fields    = &omap_hwmod_sysc_type1,
+	.sysc_fields	= &omap_hwmod_sysc_type1,
 };
 
 static struct omap_hwmod_class uart_class = {
-	.name = "uart",
-	.sysc = &uart_sysc,
+	.name		= "uart",
+	.sysc		= &uart_sysc,
 };
 
 /* uart1 */
@@ -2041,7 +2035,7 @@ static struct omap_hwmod_ocp_if am33xx_l4_wkup__uart1 = {
 };
 
 static struct omap_hwmod_irq_info am33xx_uart1_irqs[] = {
-	{ .irq = 72 },
+	{ .irq = AM33XX_IRQ_UART0 },
 	{ .irq = -1 }
 };
 
@@ -2052,12 +2046,12 @@ static struct omap_hwmod_ocp_if *am33xx_uart1_slaves[] = {
 static struct omap_hwmod am33xx_uart1_hwmod = {
 	.name		= "uart1",
 	.class		= &uart_class,
-	.mpu_irqs       = am33xx_uart1_irqs,
+	.mpu_irqs	= am33xx_uart1_irqs,
 	.sdma_reqs	= uart1_edma_reqs,
 	.main_clk	= "uart1_fck",
 	.clkdm_name	= "l4_wkup_clkdm",
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_WKUP_UART0_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -2083,8 +2077,8 @@ static struct omap_hwmod_ocp_if am33xx_l4_ls__uart2 = {
 };
 
 static struct omap_hwmod_irq_info am33xx_uart2_irqs[] = {
-	{ .irq = 73 },
-	{ .irq = -1 }
+	{ .irq = AM33XX_IRQ_UART1 },
+	{ .irq = -1 },
 };
 
 static struct omap_hwmod_ocp_if *am33xx_uart2_slaves[] = {
@@ -2094,12 +2088,12 @@ static struct omap_hwmod_ocp_if *am33xx_uart2_slaves[] = {
 static struct omap_hwmod am33xx_uart2_hwmod = {
 	.name		= "uart2",
 	.class		= &uart_class,
-	.mpu_irqs       = am33xx_uart2_irqs,
+	.mpu_irqs	= am33xx_uart2_irqs,
 	.main_clk	= "uart2_fck",
 	.clkdm_name	= "l4ls_clkdm",
 	.sdma_reqs	= uart1_edma_reqs,
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_UART1_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -2125,8 +2119,8 @@ static struct omap_hwmod_ocp_if am33xx_l4_ls__uart3 = {
 };
 
 static struct omap_hwmod_irq_info am33xx_uart3_irqs[] = {
-	{ .irq = 74 },
-	{ .irq = -1 }
+	{ .irq = AM33XX_IRQ_UART2 },
+	{ .irq = -1 },
 };
 
 static struct omap_hwmod_ocp_if *am33xx_uart3_slaves[] = {
@@ -2136,12 +2130,12 @@ static struct omap_hwmod_ocp_if *am33xx_uart3_slaves[] = {
 static struct omap_hwmod am33xx_uart3_hwmod = {
 	.name		= "uart3",
 	.class		= &uart_class,
-	.mpu_irqs       = am33xx_uart3_irqs,
+	.mpu_irqs	= am33xx_uart3_irqs,
 	.main_clk	= "uart3_fck",
 	.clkdm_name	= "l4ls_clkdm",
 	.sdma_reqs	= uart1_edma_reqs,
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_UART2_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -2167,8 +2161,8 @@ static struct omap_hwmod_ocp_if am33xx_l4_ls__uart4 = {
 };
 
 static struct omap_hwmod_irq_info am33xx_uart4_irqs[] = {
-	{ .irq = 44 },
-	{ .irq = -1 }
+	{ .irq = AM33XX_IRQ_UART3 },
+	{ .irq = -1 },
 };
 
 static struct omap_hwmod_ocp_if *am33xx_uart4_slaves[] = {
@@ -2178,12 +2172,12 @@ static struct omap_hwmod_ocp_if *am33xx_uart4_slaves[] = {
 static struct omap_hwmod am33xx_uart4_hwmod = {
 	.name		= "uart4",
 	.class		= &uart_class,
-	.mpu_irqs       = am33xx_uart4_irqs,
+	.mpu_irqs	= am33xx_uart4_irqs,
 	.main_clk	= "uart4_fck",
 	.clkdm_name	= "l4ls_clkdm",
 	.sdma_reqs	= uart1_edma_reqs,
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_UART3_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -2209,8 +2203,8 @@ static struct omap_hwmod_ocp_if am33xx_l4_ls__uart5 = {
 };
 
 static struct omap_hwmod_irq_info am33xx_uart5_irqs[] = {
-	{ .irq = 45 },
-	{ .irq = -1 }
+	{ .irq = AM33XX_IRQ_UART4 },
+	{ .irq = -1 },
 };
 
 static struct omap_hwmod_ocp_if *am33xx_uart5_slaves[] = {
@@ -2220,12 +2214,12 @@ static struct omap_hwmod_ocp_if *am33xx_uart5_slaves[] = {
 static struct omap_hwmod am33xx_uart5_hwmod = {
 	.name		= "uart5",
 	.class		= &uart_class,
-	.mpu_irqs       = am33xx_uart5_irqs,
+	.mpu_irqs	= am33xx_uart5_irqs,
 	.main_clk	= "uart5_fck",
 	.clkdm_name	= "l4ls_clkdm",
 	.sdma_reqs	= uart1_edma_reqs,
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_UART4_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -2251,8 +2245,8 @@ static struct omap_hwmod_ocp_if am33xx_l4_ls__uart6 = {
 };
 
 static struct omap_hwmod_irq_info am33xx_uart6_irqs[] = {
-	{ .irq = 46 },
-	{ .irq = -1 }
+	{ .irq = AM33XX_IRQ_UART5 },
+	{ .irq = -1 },
 };
 
 static struct omap_hwmod_ocp_if *am33xx_uart6_slaves[] = {
@@ -2262,12 +2256,12 @@ static struct omap_hwmod_ocp_if *am33xx_uart6_slaves[] = {
 static struct omap_hwmod am33xx_uart6_hwmod = {
 	.name		= "uart6",
 	.class		= &uart_class,
-	.mpu_irqs       = am33xx_uart6_irqs,
+	.mpu_irqs	= am33xx_uart6_irqs,
 	.main_clk	= "uart6_fck",
 	.clkdm_name	= "l4ls_clkdm",
 	.sdma_reqs	= uart1_edma_reqs,
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_UART5_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -2283,11 +2277,11 @@ static struct omap_hwmod_class am33xx_wd_timer_hwmod_class = {
 
 static struct omap_hwmod_addr_space am33xx_wd_timer1_addrs[] = {
 	{
-		.pa_start	= 0x44E35000,
-		.pa_end		= 0x44E35000 + SZ_4K - 1,
+		.pa_start	= AM33XX_WDT1_BASE,
+		.pa_end		= AM33XX_WDT1_BASE + SZ_4K - 1,
 		.flags		= ADDR_TYPE_RT
 	},
-	{ }
+	{ },
 };
 
 /* l4_wkup -> wd_timer1 */
@@ -2312,10 +2306,10 @@ static struct omap_hwmod_ocp_if *am33xx_wd_timer1_slaves[] = {
 static struct omap_hwmod am33xx_wd_timer1_hwmod = {
 	.name		= "wd_timer2",
 	.class		= &am33xx_wd_timer_hwmod_class,
-	.main_clk	= "wd_timer1_fck",
+	.main_clk	= "wdt1_fck",
 	.clkdm_name	= "l4_wkup_clkdm",
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_WKUP_WDT1_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -2324,29 +2318,9 @@ static struct omap_hwmod am33xx_wd_timer1_hwmod = {
 	.slaves_cnt	= ARRAY_SIZE(am33xx_wd_timer1_slaves),
 };
 
-/* wdt0 */
-static struct omap_hwmod_irq_info am33xx_wdt0_irqs[] = {
-	{ .irq = 15 },
-	{ .irq = -1 }
-};
-
-static struct omap_hwmod am33xx_wdt0_hwmod = {
-	.name		= "wdt0",
-	.class		= &am33xx_wd_timer_hwmod_class,
-	.mpu_irqs       = am33xx_wdt0_irqs,
-	.main_clk	= "wdt0_fck",
-	.clkdm_name	= "l4_wkup_clkdm",
-	.prcm = {
-		.omap4 = {
-			.clkctrl_offs	= AM33XX_CM_WKUP_WDT0_CLKCTRL_OFFSET,
-			.modulemode	= MODULEMODE_SWCTRL,
-		},
-	},
-};
-
 /* 'wkup_m3' class */
 static struct omap_hwmod_class am33xx_wkup_m3_hwmod_class = {
-	.name = "wkup_m3",
+	.name		= "wkup_m3",
 };
 
 /* wkup_m3 */
@@ -2355,8 +2329,8 @@ static struct omap_hwmod am33xx_wkup_m3_hwmod = {
 	.class		= &am33xx_wkup_m3_hwmod_class,
 	.clkdm_name	= "l4_wkup_aon_clkdm",
 	.main_clk	= "wkup_m3_fck",
-	.prcm = {
-		.omap4 = {
+	.prcm		= {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_WKUP_WKUP_M3_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -2367,20 +2341,20 @@ static struct omap_hwmod am33xx_wkup_m3_hwmod = {
 static struct omap_hwmod_addr_space am33xx_usbss_addr_space[] = {
 	{
 		.name		= "usbss",
-		.pa_start	= 0x47400000,
-		.pa_end		= 0x47400000 + SZ_4K - 1,
+		.pa_start	= AM33XX_USBSS_BASE,
+		.pa_end		= AM33XX_USBSS_BASE + SZ_4K - 1,
 		.flags		= ADDR_TYPE_RT
 	},
 	{
 		.name		= "musb0",
-		.pa_start	= 0x47401000,
-		.pa_end		= 0x47401000 + SZ_2K - 1,
+		.pa_start	= AM33XX_USB0_BASE,
+		.pa_end		= AM33XX_USB0_BASE + SZ_2K - 1,
 		.flags		= ADDR_TYPE_RT
 	},
 	{
 		.name		= "musb1",
-		.pa_start	= 0x47401800,
-		.pa_end		= 0x47401800 + SZ_2K - 1,
+		.pa_start	= AM33XX_USB1_BASE,
+		.pa_end		= AM33XX_USB1_BASE + SZ_2K - 1,
 		.flags		= ADDR_TYPE_RT
 	},
 	{
@@ -2396,14 +2370,14 @@ static struct omap_hwmod_class_sysconfig am33xx_usbhsotg_sysc = {
 };
 
 static struct omap_hwmod_class am33xx_usbotg_class = {
-	.name = "usbotg",
-	.sysc = &am33xx_usbhsotg_sysc,
+	.name		= "usbotg",
+	.sysc		= &am33xx_usbhsotg_sysc,
 };
 
 static struct omap_hwmod_irq_info am33xx_usbss_mpu_irqs[] = {
-	{ .name = "usbss-irq", .irq = 17, },
-	{ .name = "musb0-irq", .irq = 18, },
-	{ .name = "musb1-irq", .irq = 19, },
+	{ .name = "usbss-irq", .irq = AM33XX_IRQ_USBSS, },
+	{ .name = "musb0-irq", .irq = AM33XX_IRQ_USB0, },
+	{ .name = "musb1-irq", .irq = AM33XX_IRQ_USB1, },
 	{ .irq = -1, },
 };
 
@@ -2422,6 +2396,7 @@ static struct omap_hwmod_ocp_if *am33xx_usbss_slaves[] = {
 static struct omap_hwmod_opt_clk usbss_opt_clks[] = {
 	{ .role = "clkdcoldo", .clk = "usbotg_fck" },
 };
+
 static struct omap_hwmod am33xx_usbss_hwmod = {
 	.name		= "usb_otg_hs",
 	.mpu_irqs	= am33xx_usbss_mpu_irqs,
@@ -2429,7 +2404,7 @@ static struct omap_hwmod am33xx_usbss_hwmod = {
 	.clkdm_name	= "l4ls_clkdm",
 	.flags		= HWMOD_CONTROL_OPT_CLKS_IN_RESET,
 	.prcm		= {
-		.omap4 = {
+		.omap4	= {
 			.clkctrl_offs	= AM33XX_CM_PER_USB0_CLKCTRL_OFFSET,
 			.modulemode	= MODULEMODE_SWCTRL,
 		},
@@ -2439,6 +2414,42 @@ static struct omap_hwmod am33xx_usbss_hwmod = {
 	.slaves		= am33xx_usbss_slaves,
 	.slaves_cnt	= ARRAY_SIZE(am33xx_usbss_slaves),
 	.class		= &am33xx_usbotg_class,
+};
+
+/* sgx/gfx */
+/* Pseudo hwmod for reset control purpose only */
+static struct omap_hwmod_class am33xx_gfx_hwmod_class = {
+	.name   = "gfx",
+};
+
+static struct omap_hwmod_rst_info am33xx_gfx_resets[] = {
+	{ .name = "gfx", .rst_shift = 0, .st_shift = 0 },
+};
+
+static struct omap_hwmod am33xx_gfx_hwmod = {
+	.name           = "gfx",
+	.class          = &am33xx_gfx_hwmod_class,
+	.clkdm_name     = "gfx_l3_clkdm",
+	.rst_lines      = am33xx_gfx_resets,
+	.rst_lines_cnt  = ARRAY_SIZE(am33xx_gfx_resets),
+};
+
+/* PRUSS/ICSS */
+/* Pseudo hwmod for reset control purpose only */
+static struct omap_hwmod_class am33xx_pruss_hwmod_class = {
+	.name   = "pruss",
+};
+
+static struct omap_hwmod_rst_info am33xx_pruss_resets[] = {
+	{ .name = "pruss", .rst_shift = 1, .st_shift = 1 },
+};
+
+static struct omap_hwmod am33xx_pruss_hwmod = {
+	.name           = "pruss",
+	.class          = &am33xx_pruss_hwmod_class,
+	.clkdm_name     = "icss_ocp_clkdm",
+	.rst_lines      = am33xx_pruss_resets,
+	.rst_lines_cnt  = ARRAY_SIZE(am33xx_pruss_resets),
 };
 
 static __initdata struct omap_hwmod *am33xx_hwmods[] = {
@@ -2541,13 +2552,20 @@ static __initdata struct omap_hwmod *am33xx_hwmods[] = {
 	&am33xx_usbss_hwmod,
 	/* cpgmac0 class */
 	&am33xx_cpgmac0_hwmod,
-	&am33xx_wdt0_hwmod, /* Secure WDT */
 	/* tptc class */
 	&am33xx_tptc0_hwmod,
 	&am33xx_tptc1_hwmod,
 	&am33xx_tptc2_hwmod,
 	/* tpcc class */
 	&am33xx_tpcc_hwmod,
+	/* LCDC class */
+	&am33xx_lcdc_hwmod,
+	/* gfx/sgx */
+	&am33xx_gfx_hwmod,
+	/* pruss/icss */
+	&am33xx_pruss_hwmod,
+	/* rtc */
+	&am33xx_rtc_hwmod,
 	NULL,
 };
 

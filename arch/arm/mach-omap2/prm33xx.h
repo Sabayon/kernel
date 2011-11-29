@@ -37,10 +37,11 @@
 #define AM33XX_PRM_GFX_MOD		0x1100
 #define AM33XX_PRM_CEFUSE_MOD		0x1200
 
-/* OMAP4 specific register offsets */
+/* Register offsets (used from OMAP4) */
 #define AM33XX_PM_PWSTCTRL		0x0000
 #define AM33XX_PM_PWSTST		0x0004
-
+#define AM33XX_PM_RSTCTRL		0x0008
+#define AM33XX_PM_RSTST			0x000C
 
 /* PRM */
 

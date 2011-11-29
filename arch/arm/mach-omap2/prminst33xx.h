@@ -24,6 +24,10 @@ extern u32 am33xx_prminst_read_inst_reg(s16 inst, u16 idx);
 extern void am33xx_prminst_write_inst_reg(u32 val, s16 inst, u16 idx);
 extern u32 am33xx_prminst_rmw_inst_reg_bits(u32 mask, u32 bits,
 					   s16 inst, s16 idx);
+extern u32 am33xx_prminst_is_hardreset_asserted(s16 domain, s16 idx, u32 mask);
+extern int am33xx_prminst_assert_hardreset(s16 prm_mod, u8 shift);
+extern int am33xx_prminst_deassert_hardreset(s16 prm_mod, u8 rst_shift, u8
+					st_shift);
 
 extern void am33xx_prm_global_warm_sw_reset(void);
 

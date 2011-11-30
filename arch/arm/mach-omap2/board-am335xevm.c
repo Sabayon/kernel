@@ -456,6 +456,10 @@ static struct pinmux_config tsc_pin_mux[] = {
 	{"ain1.ain1",           OMAP_MUX_MODE0 | AM33XX_INPUT_EN},
 	{"ain2.ain2",           OMAP_MUX_MODE0 | AM33XX_INPUT_EN},
 	{"ain3.ain3",           OMAP_MUX_MODE0 | AM33XX_INPUT_EN},
+	{"ain4.ain4",           OMAP_MUX_MODE0 | AM33XX_INPUT_EN},
+	{"ain5.ain5",           OMAP_MUX_MODE0 | AM33XX_INPUT_EN},
+	{"ain6.ain6",           OMAP_MUX_MODE0 | AM33XX_INPUT_EN},
+	{"ain7.ain7",           OMAP_MUX_MODE0 | AM33XX_INPUT_EN},
 	{"vrefp.vrefp",         OMAP_MUX_MODE0 | AM33XX_INPUT_EN},
 	{"vrefn.vrefn",         OMAP_MUX_MODE0 | AM33XX_INPUT_EN},
 	{NULL, 0},
@@ -1537,6 +1541,7 @@ static struct evm_dev_cfg beaglebone_old_dev_cfg[] = {
 	{i2c2_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{boneleds_init,	DEV_ON_BASEBOARD, PROFILE_ALL},
+	{tsc_init, 	DEV_ON_BASEBOARD, PROFILE_ALL},
 	{NULL, 0, 0},
 };
 
@@ -1549,6 +1554,7 @@ static struct evm_dev_cfg beaglebone_dev_cfg[] = {
 	{i2c2_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{boneleds_init,	DEV_ON_BASEBOARD, PROFILE_ALL},
+	{tsc_init, 	DEV_ON_BASEBOARD, PROFILE_ALL},
 	{NULL, 0, 0},
 };
 

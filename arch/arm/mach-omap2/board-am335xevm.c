@@ -20,13 +20,9 @@
 #include <linux/gpio.h>
 #include <linux/spi/spi.h>
 #include <linux/spi/flash.h>
-#ifdef CONFIG_KEYBOARD_GPIO
-#include <linux/gpio_keys.h>
-#endif
-#ifdef CONFIG_KEYBOARD_MATRIX
 #include <linux/input.h>
+#include <linux/gpio_keys.h>
 #include <linux/input/matrix_keypad.h>
-#endif
 #include <linux/mtd/mtd.h>
 #include <linux/mtd/nand.h>
 #include <linux/mtd/partitions.h>

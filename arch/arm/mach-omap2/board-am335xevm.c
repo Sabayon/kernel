@@ -1017,7 +1017,7 @@ static struct mtd_partition am335x_spi_partitions[] = {
 	{
 		.name       = "Kernel",
 		.offset     = MTDPART_OFS_APPEND,
-		.size       = 20 * SZ_128K,
+		.size       = 28 * SZ_128K,
 	},
 	{
 		.name       = "File System",

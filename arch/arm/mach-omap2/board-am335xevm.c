@@ -1124,8 +1124,8 @@ static void mmc1_init(int evm_id, int profile)
 
 	am335x_mmc[1].mmc = 2;
 	am335x_mmc[1].caps = MMC_CAP_4_BIT_DATA;
-	am335x_mmc[1].gpio_cd = GPIO_TO_PIN(3, 15);
-	am335x_mmc[1].gpio_wp = GPIO_TO_PIN(0, 14);
+	am335x_mmc[1].gpio_cd = GPIO_TO_PIN(2, 2);
+	am335x_mmc[1].gpio_wp = GPIO_TO_PIN(1, 29);
 	am335x_mmc[1].ocr_mask = MMC_VDD_32_33 | MMC_VDD_33_34; /* 3V3 */
 
 	/* mmc will be initialized when mmc0_init is called */

@@ -195,6 +195,11 @@ static struct resource tsc_resources[]  = {
 static struct tsc_data am335x_touchscreen_data  = {
 	.wires  = 4,
 	.x_plate_resistance = 200,
+	.mode = TI_TSCADC_TSCMODE,
+};
+
+static struct tsc_data bone_touchscreen_data  = {
+	.mode = TI_TSCADC_GENMODE,
 };
 
 static struct platform_device tsc_device = {
@@ -202,6 +207,16 @@ static struct platform_device tsc_device = {
 	.id     = -1,
 	.dev    = {
 			.platform_data  = &am335x_touchscreen_data,
+	},
+	.num_resources  = ARRAY_SIZE(tsc_resources),
+	.resource       = tsc_resources,
+};
+
+static struct platform_device bone_tsc_device = {
+	.name   = "tsc",
+	.id     = -1,
+	.dev    = {
+			.platform_data  = &bone_touchscreen_data,
 	},
 	.num_resources  = ARRAY_SIZE(tsc_resources),
 	.resource       = tsc_resources,
@@ -927,6 +942,16 @@ static void tsc_init(int evm_id, int profile)
 		pr_err("failed to register touchscreen device\n");
 }
 
+static void bone_tsc_init(int evm_id, int profile)
+{
+	int err;
+	setup_pin_mux(tsc_pin_mux);
+	err = platform_device_register(&bone_tsc_device);
+	if (err)
+		pr_err("failed to register touchscreen device\n");
+}
+
+
 static void boneleds_init(int evm_id, int profile )
 {
 	int err;
@@ -1541,7 +1566,7 @@ static struct evm_dev_cfg beaglebone_old_dev_cfg[] = {
 	{i2c2_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{mmc0_init,	DEV_ON_BASEBOARD, PROFILE_NONE},
 	{boneleds_init,	DEV_ON_BASEBOARD, PROFILE_ALL},
-	{tsc_init, 	DEV_ON_BASEBOARD, PROFILE_ALL},
+	{bone_tsc_init, 	DEV_ON_BASEBOARD, PROFILE_ALL},
 	{NULL, 0, 0},
 };
 

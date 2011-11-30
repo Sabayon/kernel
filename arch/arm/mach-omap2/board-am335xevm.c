@@ -1042,7 +1042,7 @@ static struct spi_board_info am335x_spi0_slave_info[] = {
 		.modalias      = "m25p80",
 		.platform_data = &am335x_spi_flash,
 		.irq           = -1,
-		.max_speed_hz  = 12000000,
+		.max_speed_hz  = 24000000,
 		.bus_num       = 1,
 		.chip_select   = 0,
 	},

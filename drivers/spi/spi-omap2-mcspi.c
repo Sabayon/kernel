@@ -824,10 +824,8 @@ static int omap2_mcspi_setup(struct spi_device *spi)
 
 	if (mcspi_dma->dma_rx_channel == -1
 			|| mcspi_dma->dma_tx_channel == -1) {
-		if (pdata->dma_not_enabled == true)
-			ret = 0;
-		else
-			ret = omap2_mcspi_request_dma(spi);
+		ret = omap2_mcspi_request_dma(spi);
+
 		if (ret < 0)
 			return ret;
 	}
@@ -957,17 +955,11 @@ static void omap2_mcspi_work(struct work_struct *work)
 					__raw_writel(0, cs->base
 							+ OMAP2_MCSPI_TX0);
 
-				if (pdata->dma_not_enabled == true) {
+				if (m->is_dma_mapped || t->len >= DMA_MIN_BYTES)
+					count = omap2_mcspi_txrx_dma(spi, t);
+				else
 					count = omap2_mcspi_txrx_pio(spi, t);
-				} else {
-					if (m->is_dma_mapped || t->len >=
-								DMA_MIN_BYTES)
-						count = omap2_mcspi_txrx_dma(
-									spi, t);
-					else
-						count = omap2_mcspi_txrx_pio(
-									spi, t);
-				}
+
 				m->actual_length += count;
 
 				if (count != t->len) {
@@ -1050,12 +1042,8 @@ static int omap2_mcspi_transfer(struct spi_device *spi, struct spi_message *m)
 			return -EINVAL;
 		}
 
-		if (pdata->dma_not_enabled == true) {
-			continue;
-		} else {
-			if (m->is_dma_mapped || len < DMA_MIN_BYTES)
+		if (m->is_dma_mapped || len < DMA_MIN_BYTES)
 				continue;
-		}
 
 		if (tx_buf != NULL) {
 			t->tx_dma = dma_map_single(&spi->dev, (void *) tx_buf,

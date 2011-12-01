@@ -857,15 +857,12 @@ static int omap_read_page_bch(struct mtd_info *mtd, struct nand_chip *chip,
 	for (i = 0 ; eccsteps; eccsteps--, i += eccbytes, p += eccsize) {
 		int stat;
 
-		if (!(chip->ops.len & 0x7ff)) {
-			stat = chip->ecc.correct(mtd, p, &ecc_code[i],
-					&ecc_calc[i]);
+		stat = chip->ecc.correct(mtd, p, &ecc_code[i], &ecc_calc[i]);
 
-			if (stat < 0)
-				mtd->ecc_stats.failed++;
-			else
-				mtd->ecc_stats.corrected += stat;
-		}
+		if (stat < 0)
+			mtd->ecc_stats.failed++;
+		else
+			mtd->ecc_stats.corrected += stat;
 	}
 	return 0;
 }

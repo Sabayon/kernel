@@ -21,6 +21,7 @@
 
 #ifndef _LINUX_EXYNOS4_TMU_H
 #define _LINUX_EXYNOS4_TMU_H
+#include <linux/cpu_cooling.h>
 
 enum calibration_type {
 	TYPE_ONE_POINT_TRIMMING,
@@ -79,5 +80,8 @@ struct exynos4_tmu_platform_data {
 	u8 reference_voltage;
 
 	enum calibration_type cal_type;
+
+	struct freq_pctg_table freq_tab[4];
+	unsigned int level_count;
 };
 #endif /* _LINUX_EXYNOS4_TMU_H */

@@ -37,6 +37,9 @@
 #include <linux/hwmon-sysfs.h>
 
 #include <linux/platform_data/exynos4_tmu.h>
+#ifdef CONFIG_SAMSUNG_THERMAL_INTERFACE
+#include <linux/exynos_thermal.h>
+#endif
 
 #define EXYNOS4_TMU_REG_TRIMINFO	0x0
 #define EXYNOS4_TMU_REG_CONTROL		0x20
@@ -248,10 +251,13 @@ static void exynos4_tmu_work(struct work_struct *work)
 
 	kobject_uevent(&data->hwmon_dev->kobj, KOBJ_CHANGE);
 
-	enable_irq(data->irq);
 
 	clk_disable(data->clk);
 	mutex_unlock(&data->lock);
+#ifdef CONFIG_SAMSUNG_THERMAL_INTERFACE
+	exynos4_report_trigger();
+#endif
+	enable_irq(data->irq);
 }
 
 static irqreturn_t exynos4_tmu_irq(int irq, void *id)
@@ -264,6 +270,7 @@ static irqreturn_t exynos4_tmu_irq(int irq, void *id)
 	return IRQ_HANDLED;
 }
 
+#ifndef CONFIG_SAMSUNG_THERMAL_INTERFACE
 static ssize_t exynos4_tmu_show_name(struct device *dev,
 		struct device_attribute *attr, char *buf)
 {
@@ -344,6 +351,16 @@ static struct attribute *exynos4_tmu_attributes[] = {
 static const struct attribute_group exynos4_tmu_attr_group = {
 	.attrs = exynos4_tmu_attributes,
 };
+#endif
+/*CONFIG_SAMSUNG_THERMAL_INTERFACE*/
+
+#ifdef CONFIG_SAMSUNG_THERMAL_INTERFACE
+static struct thermal_sensor_info exynos4_sensor_info = {
+	.name			= "exynos4-tmu",
+	.read_temperature	= (int (*)(void *))exynos4_tmu_read,
+};
+#endif
+/*CONFIG_SAMSUNG_THERMAL_INTERFACE*/
 
 static int __devinit exynos4_tmu_probe(struct platform_device *pdev)
 {
@@ -418,11 +435,14 @@ static int __devinit exynos4_tmu_probe(struct platform_device *pdev)
 		goto err_clk;
 	}
 
+#ifndef CONFIG_SAMSUNG_THERMAL_INTERFACE
 	ret = sysfs_create_group(&pdev->dev.kobj, &exynos4_tmu_attr_group);
 	if (ret) {
 		dev_err(&pdev->dev, "Failed to create sysfs group\n");
 		goto err_clk;
 	}
+#endif
+/*CONFIG_SAMSUNG_THERMAL_INTERFACE*/
 
 	data->hwmon_dev = hwmon_device_register(&pdev->dev);
 	if (IS_ERR(data->hwmon_dev)) {
@@ -432,11 +452,18 @@ static int __devinit exynos4_tmu_probe(struct platform_device *pdev)
 	}
 
 	exynos4_tmu_control(pdev, true);
+#ifdef CONFIG_SAMSUNG_THERMAL_INTERFACE
+	(&exynos4_sensor_info)->private_data = data;
+	(&exynos4_sensor_info)->sensor_data = pdata;
+	exynos4_register_temp_sensor(&exynos4_sensor_info);
+#endif
 
 	return 0;
 
 err_create_group:
+#ifndef CONFIG_SAMSUNG_THERMAL_INTERFACE
 	sysfs_remove_group(&pdev->dev.kobj, &exynos4_tmu_attr_group);
+#endif
 err_clk:
 	platform_set_drvdata(pdev, NULL);
 	clk_put(data->clk);
@@ -459,7 +486,9 @@ static int __devexit exynos4_tmu_remove(struct platform_device *pdev)
 	exynos4_tmu_control(pdev, false);
 
 	hwmon_device_unregister(data->hwmon_dev);
+#ifndef CONFIG_SAMSUNG_THERMAL_INTERFACE
 	sysfs_remove_group(&pdev->dev.kobj, &exynos4_tmu_attr_group);
+#endif
 
 	clk_put(data->clk);
 

@@ -17,13 +17,20 @@
 #include <linux/slab.h>
 #include <linux/regulator/consumer.h>
 #include <linux/cpufreq.h>
+#include <linux/suspend.h>
+#include <linux/reboot.h>
 
 #include <mach/map.h>
 #include <mach/regs-clock.h>
 #include <mach/regs-mem.h>
+#include <mach/cpufreq.h>
 
 #include <plat/clock.h>
 #include <plat/pm.h>
+
+static bool exynos4_cpufreq_init_done;
+static DEFINE_MUTEX(set_freq_lock);
+static DEFINE_MUTEX(set_cpu_freq_lock);
 
 static struct clk *cpu_clk;
 static struct clk *moutcore;
@@ -31,28 +38,33 @@ static struct clk *mout_mpll;
 static struct clk *mout_apll;
 
 static struct regulator *arm_regulator;
-static struct regulator *int_regulator;
 
 static struct cpufreq_freqs freqs;
-static unsigned int memtype;
 
-enum exynos4_memory_type {
-	DDR2 = 4,
-	LPDDR2,
-	DDR3,
+struct cpufreq_clkdiv {
+	unsigned int clkdiv;
 };
 
 enum cpufreq_level_index {
-	L0, L1, L2, L3, CPUFREQ_LEVEL_END,
+	L0, L1, L2, L3, L4, CPUFREQ_LEVEL_END,
 };
 
+static struct cpufreq_clkdiv exynos4_clkdiv_table[CPUFREQ_LEVEL_END];
+
 static struct cpufreq_frequency_table exynos4_freq_table[] = {
-	{L0, 1000*1000},
-	{L1, 800*1000},
-	{L2, 400*1000},
-	{L3, 100*1000},
+	{L0, 1200*1000},
+	{L1, 1000*1000},
+	{L2, 800*1000},
+	{L3, 500*1000},
+	{L4, 200*1000},
 	{0, CPUFREQ_TABLE_END},
 };
+
+/* This defines are for cpufreq lock */
+#define CPUFREQ_MIN_LEVEL	(CPUFREQ_LEVEL_END - 1)
+unsigned int cpufreq_lock_id;
+unsigned int cpufreq_lock_val[DVFS_LOCK_ID_END];
+unsigned int cpufreq_lock_level = CPUFREQ_MIN_LEVEL;
 
 static unsigned int clkdiv_cpu0[CPUFREQ_LEVEL_END][7] = {
 	/*
@@ -61,17 +73,20 @@ static unsigned int clkdiv_cpu0[CPUFREQ_LEVEL_END][7] = {
 	 *		DIVATB, DIVPCLK_DBG, DIVAPLL }
 	 */
 
-	/* ARM L0: 1000MHz */
-	{ 0, 3, 7, 3, 3, 0, 1 },
+	/* ARM L0: 1200MHz */
+	{ 0, 3, 7, 3, 4, 1, 7 },
 
-	/* ARM L1: 800MHz */
-	{ 0, 3, 7, 3, 3, 0, 1 },
+	/* ARM L1: 1000MHz */
+	{ 0, 3, 7, 3, 4, 1, 7 },
 
-	/* ARM L2: 400MHz */
-	{ 0, 1, 3, 1, 3, 0, 1 },
+	/* ARM L2: 800MHz */
+	{ 0, 3, 7, 3, 3, 1, 7 },
 
-	/* ARM L3: 100MHz */
-	{ 0, 0, 1, 0, 3, 1, 1 },
+	/* ARM L3: 500MHz */
+	{ 0, 3, 7, 3, 3, 1, 7 },
+
+	/* ARM L4: 200MHz */
+	{ 0, 1, 3, 1, 3, 1, 0 },
 };
 
 static unsigned int clkdiv_cpu1[CPUFREQ_LEVEL_END][2] = {
@@ -80,115 +95,61 @@ static unsigned int clkdiv_cpu1[CPUFREQ_LEVEL_END][2] = {
 	 * { DIVCOPY, DIVHPM }
 	 */
 
-	 /* ARM L0: 1000MHz */
+	 /* ARM L0: 1200MHz */
+	{ 5, 0 },
+
+	/* ARM L1: 1000MHz */
+	{ 4, 0 },
+
+	/* ARM L2: 800MHz */
 	{ 3, 0 },
 
-	/* ARM L1: 800MHz */
+	/* ARM L3: 500MHz */
 	{ 3, 0 },
 
-	/* ARM L2: 400MHz */
+	/* ARM L4: 200MHz */
 	{ 3, 0 },
-
-	/* ARM L3: 100MHz */
-	{ 3, 0 },
-};
-
-static unsigned int clkdiv_dmc0[CPUFREQ_LEVEL_END][8] = {
-	/*
-	 * Clock divider value for following
-	 * { DIVACP, DIVACP_PCLK, DIVDPHY, DIVDMC, DIVDMCD
-	 *		DIVDMCP, DIVCOPY2, DIVCORE_TIMERS }
-	 */
-
-	/* DMC L0: 400MHz */
-	{ 3, 1, 1, 1, 1, 1, 3, 1 },
-
-	/* DMC L1: 400MHz */
-	{ 3, 1, 1, 1, 1, 1, 3, 1 },
-
-	/* DMC L2: 266.7MHz */
-	{ 7, 1, 1, 2, 1, 1, 3, 1 },
-
-	/* DMC L3: 200MHz */
-	{ 7, 1, 1, 3, 1, 1, 3, 1 },
-};
-
-static unsigned int clkdiv_top[CPUFREQ_LEVEL_END][5] = {
-	/*
-	 * Clock divider value for following
-	 * { DIVACLK200, DIVACLK100, DIVACLK160, DIVACLK133, DIVONENAND }
-	 */
-
-	/* ACLK200 L0: 200MHz */
-	{ 3, 7, 4, 5, 1 },
-
-	/* ACLK200 L1: 200MHz */
-	{ 3, 7, 4, 5, 1 },
-
-	/* ACLK200 L2: 160MHz */
-	{ 4, 7, 5, 7, 1 },
-
-	/* ACLK200 L3: 133.3MHz */
-	{ 5, 7, 7, 7, 1 },
-};
-
-static unsigned int clkdiv_lr_bus[CPUFREQ_LEVEL_END][2] = {
-	/*
-	 * Clock divider value for following
-	 * { DIVGDL/R, DIVGPL/R }
-	 */
-
-	/* ACLK_GDL/R L0: 200MHz */
-	{ 3, 1 },
-
-	/* ACLK_GDL/R L1: 200MHz */
-	{ 3, 1 },
-
-	/* ACLK_GDL/R L2: 160MHz */
-	{ 4, 1 },
-
-	/* ACLK_GDL/R L3: 133.3MHz */
-	{ 5, 1 },
 };
 
 struct cpufreq_voltage_table {
 	unsigned int	index;		/* any */
 	unsigned int	arm_volt;	/* uV */
-	unsigned int	int_volt;
 };
 
 static struct cpufreq_voltage_table exynos4_volt_table[CPUFREQ_LEVEL_END] = {
 	{
 		.index		= L0,
-		.arm_volt	= 1200000,
-		.int_volt	= 1100000,
+		.arm_volt	= 1350000,
 	}, {
 		.index		= L1,
-		.arm_volt	= 1100000,
-		.int_volt	= 1100000,
+		.arm_volt	= 1300000,
 	}, {
 		.index		= L2,
-		.arm_volt	= 1000000,
-		.int_volt	= 1000000,
+		.arm_volt	= 1200000,
 	}, {
 		.index		= L3,
-		.arm_volt	= 900000,
-		.int_volt	= 1000000,
+		.arm_volt	= 1100000,
+	}, {
+		.index		= L4,
+		.arm_volt	= 1050000,
 	},
 };
 
 static unsigned int exynos4_apll_pms_table[CPUFREQ_LEVEL_END] = {
-	/* APLL FOUT L0: 1000MHz */
+	/* APLL FOUT L0: 1200MHz */
+	((150 << 16) | (3 << 8) | 1),
+
+	/* APLL FOUT L1: 1000MHz */
 	((250 << 16) | (6 << 8) | 1),
 
-	/* APLL FOUT L1: 800MHz */
+	/* APLL FOUT L2: 800MHz */
 	((200 << 16) | (6 << 8) | 1),
 
-	/* APLL FOUT L2 : 400MHz */
-	((200 << 16) | (6 << 8) | 2),
+	/* APLL FOUT L3: 500MHz */
+	((250 << 16) | (6 << 8) | 2),
 
-	/* APLL FOUT L3: 100MHz */
-	((200 << 16) | (6 << 8) | 4),
+	/* APLL FOUT L4: 200MHz */
+	((200 << 16) | (6 << 8) | 3),
 };
 
 static int exynos4_verify_speed(struct cpufreq_policy *policy)
@@ -207,20 +168,7 @@ static void exynos4_set_clkdiv(unsigned int div_index)
 
 	/* Change Divider - CPU0 */
 
-	tmp = __raw_readl(S5P_CLKDIV_CPU);
-
-	tmp &= ~(S5P_CLKDIV_CPU0_CORE_MASK | S5P_CLKDIV_CPU0_COREM0_MASK |
-		S5P_CLKDIV_CPU0_COREM1_MASK | S5P_CLKDIV_CPU0_PERIPH_MASK |
-		S5P_CLKDIV_CPU0_ATB_MASK | S5P_CLKDIV_CPU0_PCLKDBG_MASK |
-		S5P_CLKDIV_CPU0_APLL_MASK);
-
-	tmp |= ((clkdiv_cpu0[div_index][0] << S5P_CLKDIV_CPU0_CORE_SHIFT) |
-		(clkdiv_cpu0[div_index][1] << S5P_CLKDIV_CPU0_COREM0_SHIFT) |
-		(clkdiv_cpu0[div_index][2] << S5P_CLKDIV_CPU0_COREM1_SHIFT) |
-		(clkdiv_cpu0[div_index][3] << S5P_CLKDIV_CPU0_PERIPH_SHIFT) |
-		(clkdiv_cpu0[div_index][4] << S5P_CLKDIV_CPU0_ATB_SHIFT) |
-		(clkdiv_cpu0[div_index][5] << S5P_CLKDIV_CPU0_PCLKDBG_SHIFT) |
-		(clkdiv_cpu0[div_index][6] << S5P_CLKDIV_CPU0_APLL_SHIFT));
+	tmp = exynos4_clkdiv_table[div_index].clkdiv;
 
 	__raw_writel(tmp, S5P_CLKDIV_CPU);
 
@@ -241,80 +189,6 @@ static void exynos4_set_clkdiv(unsigned int div_index)
 
 	do {
 		tmp = __raw_readl(S5P_CLKDIV_STATCPU1);
-	} while (tmp & 0x11);
-
-	/* Change Divider - DMC0 */
-
-	tmp = __raw_readl(S5P_CLKDIV_DMC0);
-
-	tmp &= ~(S5P_CLKDIV_DMC0_ACP_MASK | S5P_CLKDIV_DMC0_ACPPCLK_MASK |
-		S5P_CLKDIV_DMC0_DPHY_MASK | S5P_CLKDIV_DMC0_DMC_MASK |
-		S5P_CLKDIV_DMC0_DMCD_MASK | S5P_CLKDIV_DMC0_DMCP_MASK |
-		S5P_CLKDIV_DMC0_COPY2_MASK | S5P_CLKDIV_DMC0_CORETI_MASK);
-
-	tmp |= ((clkdiv_dmc0[div_index][0] << S5P_CLKDIV_DMC0_ACP_SHIFT) |
-		(clkdiv_dmc0[div_index][1] << S5P_CLKDIV_DMC0_ACPPCLK_SHIFT) |
-		(clkdiv_dmc0[div_index][2] << S5P_CLKDIV_DMC0_DPHY_SHIFT) |
-		(clkdiv_dmc0[div_index][3] << S5P_CLKDIV_DMC0_DMC_SHIFT) |
-		(clkdiv_dmc0[div_index][4] << S5P_CLKDIV_DMC0_DMCD_SHIFT) |
-		(clkdiv_dmc0[div_index][5] << S5P_CLKDIV_DMC0_DMCP_SHIFT) |
-		(clkdiv_dmc0[div_index][6] << S5P_CLKDIV_DMC0_COPY2_SHIFT) |
-		(clkdiv_dmc0[div_index][7] << S5P_CLKDIV_DMC0_CORETI_SHIFT));
-
-	__raw_writel(tmp, S5P_CLKDIV_DMC0);
-
-	do {
-		tmp = __raw_readl(S5P_CLKDIV_STAT_DMC0);
-	} while (tmp & 0x11111111);
-
-	/* Change Divider - TOP */
-
-	tmp = __raw_readl(S5P_CLKDIV_TOP);
-
-	tmp &= ~(S5P_CLKDIV_TOP_ACLK200_MASK | S5P_CLKDIV_TOP_ACLK100_MASK |
-		S5P_CLKDIV_TOP_ACLK160_MASK | S5P_CLKDIV_TOP_ACLK133_MASK |
-		S5P_CLKDIV_TOP_ONENAND_MASK);
-
-	tmp |= ((clkdiv_top[div_index][0] << S5P_CLKDIV_TOP_ACLK200_SHIFT) |
-		(clkdiv_top[div_index][1] << S5P_CLKDIV_TOP_ACLK100_SHIFT) |
-		(clkdiv_top[div_index][2] << S5P_CLKDIV_TOP_ACLK160_SHIFT) |
-		(clkdiv_top[div_index][3] << S5P_CLKDIV_TOP_ACLK133_SHIFT) |
-		(clkdiv_top[div_index][4] << S5P_CLKDIV_TOP_ONENAND_SHIFT));
-
-	__raw_writel(tmp, S5P_CLKDIV_TOP);
-
-	do {
-		tmp = __raw_readl(S5P_CLKDIV_STAT_TOP);
-	} while (tmp & 0x11111);
-
-	/* Change Divider - LEFTBUS */
-
-	tmp = __raw_readl(S5P_CLKDIV_LEFTBUS);
-
-	tmp &= ~(S5P_CLKDIV_BUS_GDLR_MASK | S5P_CLKDIV_BUS_GPLR_MASK);
-
-	tmp |= ((clkdiv_lr_bus[div_index][0] << S5P_CLKDIV_BUS_GDLR_SHIFT) |
-		(clkdiv_lr_bus[div_index][1] << S5P_CLKDIV_BUS_GPLR_SHIFT));
-
-	__raw_writel(tmp, S5P_CLKDIV_LEFTBUS);
-
-	do {
-		tmp = __raw_readl(S5P_CLKDIV_STAT_LEFTBUS);
-	} while (tmp & 0x11);
-
-	/* Change Divider - RIGHTBUS */
-
-	tmp = __raw_readl(S5P_CLKDIV_RIGHTBUS);
-
-	tmp &= ~(S5P_CLKDIV_BUS_GDLR_MASK | S5P_CLKDIV_BUS_GPLR_MASK);
-
-	tmp |= ((clkdiv_lr_bus[div_index][0] << S5P_CLKDIV_BUS_GDLR_SHIFT) |
-		(clkdiv_lr_bus[div_index][1] << S5P_CLKDIV_BUS_GPLR_SHIFT));
-
-	__raw_writel(tmp, S5P_CLKDIV_RIGHTBUS);
-
-	do {
-		tmp = __raw_readl(S5P_CLKDIV_STAT_RIGHTBUS);
 	} while (tmp & 0x11);
 }
 
@@ -359,14 +233,12 @@ static void exynos4_set_frequency(unsigned int old_index, unsigned int new_index
 	unsigned int tmp;
 
 	if (old_index > new_index) {
-		/* The frequency changing to L0 needs to change apll */
-		if (freqs.new == exynos4_freq_table[L0].frequency) {
-			/* 1. Change the system clock divider values */
-			exynos4_set_clkdiv(new_index);
-
-			/* 2. Change the apll m,p,s value */
-			exynos4_set_apll(new_index);
-		} else {
+		/*
+		 * L1/L3, L2/L4 Level change require
+		 * to only change s divider value
+		 */
+		if (((old_index == L3) && (new_index == L1)) ||
+				((old_index == L4) && (new_index == L2))) {
 			/* 1. Change the system clock divider values */
 			exynos4_set_clkdiv(new_index);
 
@@ -375,24 +247,32 @@ static void exynos4_set_frequency(unsigned int old_index, unsigned int new_index
 			tmp &= ~(0x7 << 0);
 			tmp |= (exynos4_apll_pms_table[new_index] & 0x7);
 			__raw_writel(tmp, S5P_APLL_CON0);
-		}
-	}
-
-	else if (old_index < new_index) {
-		/* The frequency changing from L0 needs to change apll */
-		if (freqs.old == exynos4_freq_table[L0].frequency) {
-			/* 1. Change the apll m,p,s value */
-			exynos4_set_apll(new_index);
-
-			/* 2. Change the system clock divider values */
-			exynos4_set_clkdiv(new_index);
 		} else {
+			/* Clock Configuration Procedure */
+			/* 1. Change the system clock divider values */
+			exynos4_set_clkdiv(new_index);
+			/* 2. Change the apll m,p,s value */
+			exynos4_set_apll(new_index);
+		}
+	} else if (old_index < new_index) {
+		/*
+		 * L1/L3, L2/L4 Level change require
+		 * to only change s divider value
+		 */
+		if (((old_index == L1) && (new_index == L3)) ||
+				((old_index == L2) && (new_index == L4))) {
 			/* 1. Change just s value in apll m,p,s value */
 			tmp = __raw_readl(S5P_APLL_CON0);
 			tmp &= ~(0x7 << 0);
 			tmp |= (exynos4_apll_pms_table[new_index] & 0x7);
 			__raw_writel(tmp, S5P_APLL_CON0);
 
+			/* 2. Change the system clock divider values */
+			exynos4_set_clkdiv(new_index);
+		} else {
+			/* Clock Configuration Procedure */
+			/* 1. Change the apll m,p,s value */
+			exynos4_set_apll(new_index);
 			/* 2. Change the system clock divider values */
 			exynos4_set_clkdiv(new_index);
 		}
@@ -404,51 +284,145 @@ static int exynos4_target(struct cpufreq_policy *policy,
 			  unsigned int relation)
 {
 	unsigned int index, old_index;
-	unsigned int arm_volt, int_volt;
+	unsigned int arm_volt;
+	int ret = 0;
+
+	mutex_lock(&set_freq_lock);
 
 	freqs.old = exynos4_getspeed(policy->cpu);
 
 	if (cpufreq_frequency_table_target(policy, exynos4_freq_table,
-					   freqs.old, relation, &old_index))
-		return -EINVAL;
+					   freqs.old, relation, &old_index)) {
+		ret = -EINVAL;
+		goto out;
+	}
 
 	if (cpufreq_frequency_table_target(policy, exynos4_freq_table,
-					   target_freq, relation, &index))
-		return -EINVAL;
+					   target_freq, relation, &index)) {
+		ret = -EINVAL;
+		goto out;
+	}
 
 	freqs.new = exynos4_freq_table[index].frequency;
 	freqs.cpu = policy->cpu;
 
-	if (freqs.new == freqs.old)
-		return 0;
+	if (freqs.new == freqs.old) {
+		ret = -EINVAL;
+		goto out;
+	}
 
 	/* get the voltage value */
 	arm_volt = exynos4_volt_table[index].arm_volt;
-	int_volt = exynos4_volt_table[index].int_volt;
 
 	cpufreq_notify_transition(&freqs, CPUFREQ_PRECHANGE);
 
 	/* control regulator */
-	if (freqs.new > freqs.old) {
+	if (freqs.new > freqs.old)
 		/* Voltage up */
 		regulator_set_voltage(arm_regulator, arm_volt, arm_volt);
-		regulator_set_voltage(int_regulator, int_volt, int_volt);
-	}
 
 	/* Clock Configuration Procedure */
 	exynos4_set_frequency(old_index, index);
 
+	cpufreq_notify_transition(&freqs, CPUFREQ_POSTCHANGE);
+
 	/* control regulator */
-	if (freqs.new < freqs.old) {
+	if (freqs.new < freqs.old)
 		/* Voltage down */
 		regulator_set_voltage(arm_regulator, arm_volt, arm_volt);
-		regulator_set_voltage(int_regulator, int_volt, int_volt);
-	}
 
-	cpufreq_notify_transition(&freqs, CPUFREQ_POSTCHANGE);
+out:
+	mutex_unlock(&set_freq_lock);
+
+	return ret;
+}
+
+atomic_t exynos4_cpufreq_lock_count;
+
+int exynos4_cpufreq_lock(unsigned int id,
+		enum cpufreq_level_request cpufreq_level)
+{
+	int i, old_idx = 0;
+	unsigned int freq_old, freq_new, arm_volt;
+
+	if (!exynos4_cpufreq_init_done)
+		return 0;
+
+	if (cpufreq_lock_id & (1 << id)) {
+		printk(KERN_ERR "%s:Device [%d] already locked cpufreq\n",
+				__func__,  id);
+		return 0;
+	}
+	mutex_lock(&set_cpu_freq_lock);
+	cpufreq_lock_id |= (1 << id);
+	cpufreq_lock_val[id] = cpufreq_level;
+
+	/* If the requested cpufreq is higher than current min frequency */
+	if (cpufreq_level < cpufreq_lock_level)
+		cpufreq_lock_level = cpufreq_level;
+
+	mutex_unlock(&set_cpu_freq_lock);
+
+	/*
+	 * If current frequency is lower than requested freq,
+	 * it needs to update
+	 */
+	mutex_lock(&set_freq_lock);
+	freq_old = exynos4_getspeed(0);
+	freq_new = exynos4_freq_table[cpufreq_level].frequency;
+	if (freq_old < freq_new) {
+		/* Find out current level index */
+		for (i = 0 ; i < CPUFREQ_LEVEL_END ; i++) {
+			if (freq_old == exynos4_freq_table[i].frequency) {
+				old_idx = exynos4_freq_table[i].index;
+				break;
+			} else if (i == (CPUFREQ_LEVEL_END - 1)) {
+				printk(KERN_ERR "%s: Level not found\n",
+						__func__);
+				mutex_unlock(&set_freq_lock);
+				return -EINVAL;
+			} else {
+				continue;
+			}
+		}
+		freqs.old = freq_old;
+		freqs.new = freq_new;
+		cpufreq_notify_transition(&freqs, CPUFREQ_PRECHANGE);
+
+		/* get the voltage value */
+		arm_volt = exynos4_volt_table[cpufreq_level].arm_volt;
+		regulator_set_voltage(arm_regulator, arm_volt,
+				arm_volt);
+
+		exynos4_set_frequency(old_idx, cpufreq_level);
+		cpufreq_notify_transition(&freqs, CPUFREQ_POSTCHANGE);
+	}
+	mutex_unlock(&set_freq_lock);
 
 	return 0;
 }
+EXPORT_SYMBOL_GPL(exynos4_cpufreq_lock);
+
+void exynos4_cpufreq_lock_free(unsigned int id)
+{
+	int i;
+
+	if (!exynos4_cpufreq_init_done)
+		return;
+
+	mutex_lock(&set_cpu_freq_lock);
+	cpufreq_lock_id &= ~(1 << id);
+	cpufreq_lock_val[id] = CPUFREQ_MIN_LEVEL;
+	cpufreq_lock_level = CPUFREQ_MIN_LEVEL;
+	if (cpufreq_lock_id) {
+		for (i = 0; i < DVFS_LOCK_ID_END; i++) {
+			if (cpufreq_lock_val[i] < cpufreq_lock_level)
+				cpufreq_lock_level = cpufreq_lock_val[i];
+		}
+	}
+	mutex_unlock(&set_cpu_freq_lock);
+}
+EXPORT_SYMBOL_GPL(exynos4_cpufreq_lock_free);
 
 #ifdef CONFIG_PM
 static int exynos4_cpufreq_suspend(struct cpufreq_policy *policy)
@@ -461,6 +435,28 @@ static int exynos4_cpufreq_resume(struct cpufreq_policy *policy)
 	return 0;
 }
 #endif
+
+static int exynos4_cpufreq_notifier_event(struct notifier_block *this,
+		unsigned long event, void *ptr)
+{
+	switch (event) {
+	case PM_SUSPEND_PREPARE:
+		if (exynos4_cpufreq_lock(DVFS_LOCK_ID_PM, CPU_L0))
+			return NOTIFY_BAD;
+		pr_debug("PM_SUSPEND_PREPARE for CPUFREQ\n");
+		return NOTIFY_OK;
+	case PM_POST_RESTORE:
+	case PM_POST_SUSPEND:
+		pr_debug("PM_POST_SUSPEND for CPUFREQ\n");
+		exynos4_cpufreq_lock_free(DVFS_LOCK_ID_PM);
+		return NOTIFY_OK;
+	}
+	return NOTIFY_DONE;
+}
+
+static struct notifier_block exynos4_cpufreq_notifier = {
+	.notifier_call = exynos4_cpufreq_notifier_event,
+};
 
 static int exynos4_cpufreq_cpu_init(struct cpufreq_policy *policy)
 {
@@ -477,10 +473,29 @@ static int exynos4_cpufreq_cpu_init(struct cpufreq_policy *policy)
 	 * Each cpu is bound to the same speed.
 	 * So the affected cpu is all of the cpus.
 	 */
-	cpumask_setall(policy->cpus);
+	if (!cpu_online(1)) {
+		cpumask_copy(policy->related_cpus, cpu_possible_mask);
+		cpumask_copy(policy->cpus, cpu_online_mask);
+	} else {
+		cpumask_setall(policy->cpus);
+	}
 
 	return cpufreq_frequency_table_cpuinfo(policy, exynos4_freq_table);
 }
+
+static int exynos4_cpufreq_reboot_notifier_call(struct notifier_block *this,
+		unsigned long code, void *_cmd)
+{
+	if (exynos4_cpufreq_lock(DVFS_LOCK_ID_PM, CPU_L0))
+		return NOTIFY_BAD;
+
+	printk(KERN_INFO "REBOOT Notifier for CPUFREQ\n");
+	return NOTIFY_DONE;
+}
+
+static struct notifier_block exynos4_cpufreq_reboot_notifier = {
+	.notifier_call = exynos4_cpufreq_reboot_notifier_call,
+};
 
 static struct cpufreq_driver exynos4_driver = {
 	.flags		= CPUFREQ_STICKY,
@@ -497,71 +512,88 @@ static struct cpufreq_driver exynos4_driver = {
 
 static int __init exynos4_cpufreq_init(void)
 {
+	int i;
+	unsigned int tmp;
+
 	cpu_clk = clk_get(NULL, "armclk");
 	if (IS_ERR(cpu_clk))
 		return PTR_ERR(cpu_clk);
 
 	moutcore = clk_get(NULL, "moutcore");
 	if (IS_ERR(moutcore))
-		goto out;
+		goto err_moutcore;
 
 	mout_mpll = clk_get(NULL, "mout_mpll");
 	if (IS_ERR(mout_mpll))
-		goto out;
+		goto err_mout_mpll;
 
 	mout_apll = clk_get(NULL, "mout_apll");
 	if (IS_ERR(mout_apll))
-		goto out;
+		goto err_mout_apll;
 
 	arm_regulator = regulator_get(NULL, "vdd_arm");
 	if (IS_ERR(arm_regulator)) {
 		printk(KERN_ERR "failed to get resource %s\n", "vdd_arm");
-		goto out;
+		goto err_vdd_arm;
 	}
 
-	int_regulator = regulator_get(NULL, "vdd_int");
-	if (IS_ERR(int_regulator)) {
-		printk(KERN_ERR "failed to get resource %s\n", "vdd_int");
-		goto out;
+	register_pm_notifier(&exynos4_cpufreq_notifier);
+	register_reboot_notifier(&exynos4_cpufreq_reboot_notifier);
+
+	exynos4_cpufreq_init_done = true;
+
+	tmp = __raw_readl(S5P_CLKDIV_CPU);
+
+	for (i = L0; i <  CPUFREQ_LEVEL_END; i++) {
+		tmp &= ~(S5P_CLKDIV_CPU0_CORE_MASK |
+			 S5P_CLKDIV_CPU0_COREM0_MASK |
+			 S5P_CLKDIV_CPU0_COREM1_MASK |
+			 S5P_CLKDIV_CPU0_PERIPH_MASK |
+			 S5P_CLKDIV_CPU0_ATB_MASK |
+			 S5P_CLKDIV_CPU0_PCLKDBG_MASK |
+			 S5P_CLKDIV_CPU0_APLL_MASK);
+
+		tmp |= ((clkdiv_cpu0[i][0] << S5P_CLKDIV_CPU0_CORE_SHIFT) |
+			(clkdiv_cpu0[i][1] << S5P_CLKDIV_CPU0_COREM0_SHIFT) |
+			(clkdiv_cpu0[i][2] << S5P_CLKDIV_CPU0_COREM1_SHIFT) |
+			(clkdiv_cpu0[i][3] << S5P_CLKDIV_CPU0_PERIPH_SHIFT) |
+			(clkdiv_cpu0[i][4] << S5P_CLKDIV_CPU0_ATB_SHIFT) |
+			(clkdiv_cpu0[i][5] << S5P_CLKDIV_CPU0_PCLKDBG_SHIFT) |
+			(clkdiv_cpu0[i][6] << S5P_CLKDIV_CPU0_APLL_SHIFT));
+
+		exynos4_clkdiv_table[i].clkdiv = tmp;
 	}
 
-	/*
-	 * Check DRAM type.
-	 * Because DVFS level is different according to DRAM type.
-	 */
-	memtype = __raw_readl(S5P_VA_DMC0 + S5P_DMC0_MEMCON_OFFSET);
-	memtype = (memtype >> S5P_DMC0_MEMTYPE_SHIFT);
-	memtype &= S5P_DMC0_MEMTYPE_MASK;
-
-	if ((memtype < DDR2) && (memtype > DDR3)) {
-		printk(KERN_ERR "%s: wrong memtype= 0x%x\n", __func__, memtype);
-		goto out;
-	} else {
-		printk(KERN_DEBUG "%s: memtype= 0x%x\n", __func__, memtype);
+	if (cpufreq_register_driver(&exynos4_driver)) {
+		pr_err("failed to register cpufreq driver\n");
+		goto err_cpufreq;
 	}
 
-	return cpufreq_register_driver(&exynos4_driver);
-
-out:
-	if (!IS_ERR(cpu_clk))
-		clk_put(cpu_clk);
-
-	if (!IS_ERR(moutcore))
-		clk_put(moutcore);
-
-	if (!IS_ERR(mout_mpll))
-		clk_put(mout_mpll);
-
-	if (!IS_ERR(mout_apll))
-		clk_put(mout_apll);
+	return 0;
+err_cpufreq:
+	unregister_reboot_notifier(&exynos4_cpufreq_reboot_notifier);
+	unregister_pm_notifier(&exynos4_cpufreq_notifier);
 
 	if (!IS_ERR(arm_regulator))
 		regulator_put(arm_regulator);
 
-	if (!IS_ERR(int_regulator))
-		regulator_put(int_regulator);
+err_vdd_arm:
+	if (!IS_ERR(mout_apll))
+		clk_put(mout_apll);
 
-	printk(KERN_ERR "%s: failed initialization\n", __func__);
+err_mout_apll:
+	if (!IS_ERR(mout_mpll))
+		clk_put(mout_mpll);
+
+err_mout_mpll:
+	if (!IS_ERR(moutcore))
+		clk_put(moutcore);
+
+err_moutcore:
+	if (!IS_ERR(cpu_clk))
+		clk_put(cpu_clk);
+
+	pr_debug("%s: failed initialization\n", __func__);
 
 	return -EINVAL;
 }

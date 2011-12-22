@@ -40,11 +40,11 @@ static void tusb_musb_set_vbus(struct musb *musb, int is_on);
  * Checks the revision. We need to use the DMA register as 3.0 does not
  * have correct versions for TUSB_PRCM_REV or TUSB_INT_CTRL_REV.
  */
-u8 tusb_get_revision(struct musb *musb)
+static u16 tusb_get_revision(struct musb *musb)
 {
 	void __iomem	*tbase = musb->ctrl_base;
 	u32		die_id;
-	u8		rev;
+	u16		rev;
 
 	rev = musb_readl(tbase, TUSB_DMA_CTRL_REV) & 0xff;
 	if (TUSB_REV_MAJOR(rev) == 3) {
@@ -60,7 +60,7 @@ u8 tusb_get_revision(struct musb *musb)
 static int tusb_print_revision(struct musb *musb)
 {
 	void __iomem	*tbase = musb->ctrl_base;
-	u8		rev;
+	u16		rev;
 
 	rev = tusb_get_revision(musb);
 
@@ -171,7 +171,8 @@ static inline void tusb_fifo_read_unaligned(void __iomem *fifo,
 	}
 }
 
-void musb_write_fifo(struct musb_hw_ep *hw_ep, u16 len, const u8 *buf)
+static void tusb_musb_write_fifo(struct musb_hw_ep *hw_ep, u16 len,
+		const u8 *buf)
 {
 	struct musb *musb = hw_ep->musb;
 	void __iomem	*ep_conf = hw_ep->conf;
@@ -221,7 +222,7 @@ void musb_write_fifo(struct musb_hw_ep *hw_ep, u16 len, const u8 *buf)
 		tusb_fifo_write_unaligned(fifo, buf, len);
 }
 
-void musb_read_fifo(struct musb_hw_ep *hw_ep, u16 len, u8 *buf)
+static void tusb_musb_read_fifo(struct musb_hw_ep *hw_ep, u16 len, u8 *buf)
 {
 	struct musb *musb = hw_ep->musb;
 	void __iomem	*ep_conf = hw_ep->conf;
@@ -854,7 +855,7 @@ static irqreturn_t tusb_musb_interrupt(int irq, void *__hci)
 
 		dev_dbg(musb->controller, "DMA IRQ %08x\n", dma_src);
 		real_dma_src = ~real_dma_src & dma_src;
-		if (tusb_dma_omap() && real_dma_src) {
+		if (tusb_dma_omap(musb) && real_dma_src) {
 			int	tx_source = (real_dma_src & 0xffff);
 			int	i;
 
@@ -1074,8 +1075,8 @@ static int tusb_musb_init(struct musb *musb)
 	void __iomem		*sync = NULL;
 	int			ret;
 
-	usb_nop_xceiv_register();
-	musb->xceiv = otg_get_transceiver();
+	usb_nop_xceiv_register(musb->id);
+	musb->xceiv = otg_get_transceiver(musb->id);
 	if (!musb->xceiv)
 		return -ENODEV;
 
@@ -1128,7 +1129,7 @@ done:
 			iounmap(sync);
 
 		otg_put_transceiver(musb->xceiv);
-		usb_nop_xceiv_unregister();
+		usb_nop_xceiv_unregister(musb->id);
 	}
 	return ret;
 }
@@ -1144,11 +1145,14 @@ static int tusb_musb_exit(struct musb *musb)
 	iounmap(musb->sync_va);
 
 	otg_put_transceiver(musb->xceiv);
-	usb_nop_xceiv_unregister();
+	usb_nop_xceiv_unregister(musb->id);
 	return 0;
 }
 
 static const struct musb_platform_ops tusb_ops = {
+	.fifo_mode	= 4,
+	.flags		= MUSB_GLUE_TUSB_STYLE |
+				MUSB_GLUE_EP_ADDR_INDEXED_MAPPING,
 	.init		= tusb_musb_init,
 	.exit		= tusb_musb_exit,
 
@@ -1158,8 +1162,15 @@ static const struct musb_platform_ops tusb_ops = {
 	.set_mode	= tusb_musb_set_mode,
 	.try_idle	= tusb_musb_try_idle,
 
+	.get_hw_revision	= tusb_get_revision,
+
 	.vbus_status	= tusb_musb_vbus_status,
 	.set_vbus	= tusb_musb_set_vbus,
+	.read_fifo	= tusb_musb_read_fifo,
+	.write_fifo	= tusb_musb_write_fifo,
+
+	.dma_controller_create = tusb_dma_controller_create,
+	.dma_controller_destroy = tusb_dma_controller_destroy,
 };
 
 static u64 tusb_dmamask = DMA_BIT_MASK(32);

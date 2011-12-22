@@ -39,7 +39,6 @@
 #include <linux/list.h>
 #include <linux/interrupt.h>
 #include <linux/errno.h>
-#include <linux/timer.h>
 #include <linux/clk.h>
 #include <linux/device.h>
 #include <linux/usb/ch9.h>
@@ -61,6 +60,9 @@ struct musb_ep;
 #define MUSB_HWVERS_1800	0x720
 #define MUSB_HWVERS_1900	0x784
 #define MUSB_HWVERS_2000	0x800
+
+extern u8 (*musb_readb)(const void __iomem *addr, unsigned offset);
+extern void (*musb_writeb)(void __iomem *addr, unsigned offset, u8 data);
 
 #include "musb_debug.h"
 #include "musb_dma.h"
@@ -146,15 +148,10 @@ enum musb_g_ep0_state {
 	MUSB_EP0_STAGE_ACKWAIT,		/* after zlp, before statusin */
 } __attribute__ ((packed));
 
-/*
- * OTG protocol constants.  See USB OTG 1.3 spec,
- * sections 5.5 "Device Timings" and 6.6.5 "Timers".
- */
+/* OTG protocol constants */
 #define OTG_TIME_A_WAIT_VRISE	100		/* msec (max) */
-#define OTG_TIME_A_WAIT_BCON	1100		/* min 1 second */
-#define OTG_TIME_A_AIDL_BDIS	200		/* min 200 msec */
-#define OTG_TIME_B_ASE0_BRST	100		/* min 3.125 ms */
-
+#define OTG_TIME_A_WAIT_BCON	0		/* 0=infinite; min 1000 msec */
+#define OTG_TIME_A_IDLE_BDIS	200		/* msec (min) */
 
 /*************************** REGISTER ACCESS ********************************/
 
@@ -162,34 +159,12 @@ enum musb_g_ep0_state {
  * directly with the "flat" model, or after setting up an index register.
  */
 
-#if defined(CONFIG_ARCH_DAVINCI) || defined(CONFIG_SOC_OMAP2430) \
-		|| defined(CONFIG_SOC_OMAP3430) || defined(CONFIG_BLACKFIN) \
-		|| defined(CONFIG_ARCH_OMAP4)
-/* REVISIT indexed access seemed to
- * misbehave (on DaVinci) for at least peripheral IN ...
- */
-#define	MUSB_FLAT_REG
-#endif
+#define musb_ep_select(_musb, _mbase, _epnum) do { \
+	if (_musb->ops->flags & MUSB_GLUE_EP_ADDR_INDEXED_MAPPING) \
+		musb_writeb((_mbase), MUSB_INDEX, (_epnum)); \
+ } while (0)
 
-/* TUSB mapping: "flat" plus ep0 special cases */
-#if defined(CONFIG_USB_MUSB_TUSB6010) || \
-	defined(CONFIG_USB_MUSB_TUSB6010_MODULE)
-#define musb_ep_select(_mbase, _epnum) \
-	musb_writeb((_mbase), MUSB_INDEX, (_epnum))
-#define	MUSB_EP_OFFSET			MUSB_TUSB_OFFSET
-
-/* "flat" mapping: each endpoint has its own i/o address */
-#elif	defined(MUSB_FLAT_REG)
-#define musb_ep_select(_mbase, _epnum)	(((void)(_mbase)), ((void)(_epnum)))
-#define	MUSB_EP_OFFSET			MUSB_FLAT_OFFSET
-
-/* "indexed" mapping: INDEX register controls register bank select */
-#else
-#define musb_ep_select(_mbase, _epnum) \
-	musb_writeb((_mbase), MUSB_INDEX, (_epnum))
-#define	MUSB_EP_OFFSET			MUSB_INDEXED_OFFSET
-#endif
-
+#define	MUSB_EP_OFFSET	MUSB_OFFSET
 /****************************** FUNCTIONS ********************************/
 
 #define MUSB_HST_MODE(_musb)\
@@ -204,25 +179,49 @@ enum musb_g_ep0_state {
 
 /******************************** TYPES *************************************/
 
+#define     MUSB_GLUE_TUSB_STYLE   0x0001
+#define     MUSB_GLUE_EP_ADDR_FLAT_MAPPING	0x0002
+#define     MUSB_GLUE_EP_ADDR_INDEXED_MAPPING	0x0004
+#define		MUSB_GLUE_DMA_INVENTRA				0x0008
+#define		MUSB_GLUE_DMA_CPPI					0x0010
+#define		MUSB_GLUE_DMA_TUSB					0x0020
+#define		MUSB_GLUE_DMA_UX500					0x0040
+#define		MUSB_GLUE_DMA_CPPI41					0x0080
+
+
 /**
  * struct musb_platform_ops - Operations passed to musb_core by HW glue layer
+ * @fifo_mode: which fifo_mode is taken by me
+ * @flags:	each hw glue difference information will be here
  * @init:	turns on clocks, sets up platform-specific registers, etc
  * @exit:	undoes @init
+ * @read_fifo: read data from musb fifo in PIO
+ * @write_fifo: write data into musb fifo in PIO
  * @set_mode:	forcefully changes operating mode
  * @try_ilde:	tries to idle the IP
+ * @get_hw_revision: get hardware revision
  * @vbus_status: returns vbus status if possible
  * @set_vbus:	forces vbus status
  * @adjust_channel_params: pre check for standard dma channel_program func
+ * @dma_controller_create: create dma controller for me
+ * @dma_controller_destroy: destroy dma controller
  */
 struct musb_platform_ops {
+	short	fifo_mode;
+	unsigned short	flags;
 	int	(*init)(struct musb *musb);
 	int	(*exit)(struct musb *musb);
 
 	void	(*enable)(struct musb *musb);
 	void	(*disable)(struct musb *musb);
 
+	void (*read_fifo)(struct musb_hw_ep *hw_ep, u16 len, u8 *buf);
+	void (*write_fifo)(struct musb_hw_ep *hw_ep, u16 len, const u8 *buf);
+
 	int	(*set_mode)(struct musb *musb, u8 mode);
 	void	(*try_idle)(struct musb *musb, unsigned long timeout);
+
+	u16  (*get_hw_revision)(struct musb *musb);
 
 	int	(*vbus_status)(struct musb *musb);
 	void	(*set_vbus)(struct musb *musb, int on);
@@ -230,6 +229,10 @@ struct musb_platform_ops {
 	int	(*adjust_channel_params)(struct dma_channel *channel,
 				u16 packet_sz, u8 *mode,
 				dma_addr_t *dma_addr, u32 *len);
+	struct dma_controller* (*dma_controller_create)(struct musb *,
+		void __iomem *);
+	void (*dma_controller_destroy)(struct dma_controller *);
+	int (*simulate_babble_intr)(struct musb *musb);
 };
 
 /*
@@ -242,10 +245,8 @@ struct musb_hw_ep {
 	void __iomem		*fifo;
 	void __iomem		*regs;
 
-#if defined(CONFIG_USB_MUSB_TUSB6010) || \
-	defined(CONFIG_USB_MUSB_TUSB6010_MODULE)
+	/*Fixme: the following field is only used by tusb*/
 	void __iomem		*conf;
-#endif
 
 	/* index in musb->endpoints[]  */
 	u8			epnum;
@@ -260,13 +261,13 @@ struct musb_hw_ep {
 	struct dma_channel	*tx_channel;
 	struct dma_channel	*rx_channel;
 
-#if defined(CONFIG_USB_MUSB_TUSB6010) || \
-	defined(CONFIG_USB_MUSB_TUSB6010_MODULE)
-	/* TUSB has "asynchronous" and "synchronous" dma modes */
+	/*
+	 * TUSB has "asynchronous" and "synchronous" dma modes
+	 * Fixme: the following three fields are only valid for TUSB.
+	 * */
 	dma_addr_t		fifo_async;
 	dma_addr_t		fifo_sync;
 	void __iomem		*fifo_sync_va;
-#endif
 
 	void __iomem		*target_regs;
 
@@ -327,6 +328,8 @@ struct musb {
 
 	irqreturn_t		(*isr)(int, void *);
 	struct work_struct	irq_work;
+	struct work_struct	work;
+	u8			enable_babble_work;
 	u16			hwvers;
 
 /* this hub status bit is reserved by USB 2.0 and not seen by usbcore */
@@ -350,21 +353,24 @@ struct musb {
 	struct list_head	in_bulk;	/* of musb_qh */
 	struct list_head	out_bulk;	/* of musb_qh */
 
-	struct timer_list	otg_timer;
+	struct workqueue_struct *gb_queue;
+	struct work_struct      gb_work;
+	spinlock_t              gb_lock;
+	struct list_head        gb_list;        /* of urbs */
+
 	struct notifier_block	nb;
 
 	struct dma_controller	*dma_controller;
 
 	struct device		*controller;
 	void __iomem		*ctrl_base;
+	phys_addr_t		ctrl_phys_base;
 	void __iomem		*mregs;
 
-#if defined(CONFIG_USB_MUSB_TUSB6010) || \
-	defined(CONFIG_USB_MUSB_TUSB6010_MODULE)
+	/*Fixme: the three fields below are only used by tusb*/
 	dma_addr_t		async;
 	dma_addr_t		sync;
 	void __iomem		*sync_va;
-#endif
 
 	/* passed down from chip/board specific irq handlers */
 	u8			int_usb;
@@ -454,6 +460,17 @@ struct musb {
 #ifdef MUSB_CONFIG_PROC_FS
 	struct proc_dir_entry *proc_entry;
 #endif
+	/* id for multiple musb instances */
+	u8			id;
+	struct	timer_list	otg_workaround;
+	unsigned long		last_timer;
+	int			first;
+	int			old_state;
+	struct	timer_list	otg_timer;
+#ifndef CONFIG_MUSB_PIO_ONLY
+	u64			*orig_dma_mask;
+#endif
+	short			fifo_mode;
 };
 
 static inline struct musb *gadget_to_musb(struct usb_gadget *g)
@@ -496,7 +513,7 @@ static inline int musb_read_fifosize(struct musb *musb,
 	u8 reg = 0;
 
 	/* read from core using indexed model */
-	reg = musb_readb(mbase, MUSB_EP_OFFSET(epnum, MUSB_FIFOSIZE));
+	reg = musb_readb(mbase, MUSB_EP_OFFSET(musb, epnum, MUSB_FIFOSIZE));
 	/* 0's returned when no more endpoints */
 	if (!reg)
 		return -ENODEV;
@@ -543,6 +560,9 @@ extern void musb_load_testpacket(struct musb *);
 extern irqreturn_t musb_interrupt(struct musb *);
 
 extern void musb_hnp_stop(struct musb *musb);
+
+extern void musb_restore_context(struct musb *musb);
+extern void musb_save_context(struct musb *musb);
 
 static inline void musb_platform_set_vbus(struct musb *musb, int is_on)
 {
@@ -601,4 +621,45 @@ static inline int musb_platform_exit(struct musb *musb)
 	return musb->ops->exit(musb);
 }
 
+static inline u16 musb_platform_get_hw_revision(struct musb *musb)
+{
+	if (!musb->ops->get_hw_revision)
+		return musb_readw(musb->mregs, MUSB_HWVERS);
+
+	return musb->ops->get_hw_revision(musb);
+}
+
+static inline int musb_simulate_babble_intr(struct musb *musb)
+{
+	if (!musb->ops->simulate_babble_intr)
+		return -EINVAL;
+
+	return musb->ops->simulate_babble_intr(musb);
+}
+
+static inline const char *get_dma_name(struct musb *musb)
+{
+#ifdef CONFIG_MUSB_PIO_ONLY
+	return "pio";
+#else
+	if (musb->ops->flags & MUSB_GLUE_DMA_INVENTRA)
+		return "dma-inventra";
+	else if (musb->ops->flags & MUSB_GLUE_DMA_CPPI)
+		return "dma-cppi3";
+	else if (musb->ops->flags & MUSB_GLUE_DMA_CPPI41)
+		return "dma-cppi41";
+	else if (musb->ops->flags & MUSB_GLUE_DMA_TUSB)
+		return "dma-tusb-omap";
+	else
+		return "?dma?";
+#endif
+}
+
+extern void musb_gb_work(struct work_struct *data);
+/*-------------------------- ProcFS definitions ---------------------*/
+
+struct proc_dir_entry;
+
+extern struct proc_dir_entry *musb_debug_create(char *name, struct musb *data);
+extern void musb_debug_delete(char *name, struct musb *data);
 #endif	/* __MUSB_CORE_H__ */

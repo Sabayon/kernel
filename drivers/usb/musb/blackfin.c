@@ -34,7 +34,8 @@ struct bfin_glue {
 /*
  * Load an endpoint's FIFO
  */
-void musb_write_fifo(struct musb_hw_ep *hw_ep, u16 len, const u8 *src)
+static void bfin_musb_write_fifo(struct musb_hw_ep *hw_ep, u16 len,
+				const u8 *src)
 {
 	struct musb *musb = hw_ep->musb;
 	void __iomem *fifo = hw_ep->fifo;
@@ -98,7 +99,7 @@ void musb_write_fifo(struct musb_hw_ep *hw_ep, u16 len, const u8 *src)
 /*
  * Unload an endpoint's FIFO
  */
-void musb_read_fifo(struct musb_hw_ep *hw_ep, u16 len, u8 *dst)
+static void bfin_musb_read_fifo(struct musb_hw_ep *hw_ep, u16 len, u8 *dst)
 {
 	struct musb *musb = hw_ep->musb;
 	void __iomem *fifo = hw_ep->fifo;
@@ -414,8 +415,8 @@ static int bfin_musb_init(struct musb *musb)
 	}
 	gpio_direction_output(musb->config->gpio_vrsel, 0);
 
-	usb_nop_xceiv_register();
-	musb->xceiv = otg_get_transceiver();
+	usb_nop_xceiv_register(musb->id);
+	musb->xceiv = otg_get_transceiver(musb->id);
 	if (!musb->xceiv) {
 		gpio_free(musb->config->gpio_vrsel);
 		return -ENODEV;
@@ -441,16 +442,22 @@ static int bfin_musb_exit(struct musb *musb)
 	gpio_free(musb->config->gpio_vrsel);
 
 	otg_put_transceiver(musb->xceiv);
-	usb_nop_xceiv_unregister();
+	usb_nop_xceiv_unregister(musb->id);
 	return 0;
 }
 
 static const struct musb_platform_ops bfin_ops = {
+	.fifo_mode	= 2,
+	.flags		= MUSB_GLUE_EP_ADDR_FLAT_MAPPING |
+				MUSB_GLUE_DMA_INVENTRA,
 	.init		= bfin_musb_init,
 	.exit		= bfin_musb_exit,
 
 	.enable		= bfin_musb_enable,
 	.disable	= bfin_musb_disable,
+
+	.read_fifo      = bfin_musb_read_fifo,
+	.write_fifo     = bfin_musb_write_fifo,
 
 	.set_mode	= bfin_musb_set_mode,
 	.try_idle	= bfin_musb_try_idle,
@@ -459,6 +466,9 @@ static const struct musb_platform_ops bfin_ops = {
 	.set_vbus	= bfin_musb_set_vbus,
 
 	.adjust_channel_params = bfin_musb_adjust_channel_params,
+
+	.dma_controller_create = inventra_dma_controller_create,
+	.dma_controller_destroy = inventra_dma_controller_destroy,
 };
 
 static u64 bfin_dmamask = DMA_BIT_MASK(32);

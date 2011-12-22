@@ -16,8 +16,8 @@
 #include <linux/init.h>
 
 /*
- * Memory entry used for the DEBUG_LL UART configuration. See also
- * uncompress.h and debug-macro.S.
+ * Memory entry used for the DEBUG_LL UART configuration, relative to
+ * start of RAM. See also uncompress.h and debug-macro.S.
  *
  * Note that using a memory location for storing the UART configuration
  * has at least two limitations:
@@ -27,7 +27,7 @@
  * 2. We assume printascii is called at least once before paging_init,
  *    and addruart has a chance to read OMAP_UART_INFO
  */
-#define OMAP_UART_INFO		(PLAT_PHYS_OFFSET + 0x3ffc)
+#define OMAP_UART_INFO_OFS	0x3ffc
 
 /* OMAP1 serial ports */
 #define OMAP1_UART1_BASE	0xfffb0000
@@ -58,6 +58,14 @@
 
 /* AM3505/3517 UART4 */
 #define AM35XX_UART4_BASE	0x4809E000	/* Only on AM3505/3517 */
+
+/* AM33XX serial port */
+#define AM33XX_UART1_BASE	0x44E09000
+#define AM33XX_UART2_BASE	0x48022000
+#define AM33XX_UART3_BASE	0x48024000
+#define AM33XX_UART4_BASE	0x481A6000
+#define AM33XX_UART5_BASE	0x481A8000
+#define AM33XX_UART6_BASE	0x481AA000
 
 /* External port on Zoom2/3 */
 #define ZOOM_UART_BASE		0x10000000
@@ -92,6 +100,8 @@
 #define TI816XUART1		81
 #define TI816XUART2		82
 #define TI816XUART3		83
+#define AM33XXUART1		84
+#define AM33XXUART4		85
 #define ZOOM_UART		95		/* Only on zoom2/3 */
 
 /* This is only used by 8250.c for omap1510 */

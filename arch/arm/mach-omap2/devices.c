@@ -16,12 +16,24 @@
 #include <linux/clk.h>
 #include <linux/err.h>
 #include <linux/slab.h>
+#include <linux/of.h>
+#include <linux/davinci_emac.h>
+#include <linux/cpsw.h>
+#include <linux/etherdevice.h>
+#include <linux/dma-mapping.h>
 
 #include <mach/hardware.h>
 #include <mach/irqs.h>
+#include <mach/board-am335xevm.h>
 #include <asm/mach-types.h>
 #include <asm/mach/map.h>
 #include <asm/pmu.h>
+
+#ifdef	CONFIG_OMAP3_EDMA
+#include <mach/edma.h>
+#endif
+
+#include <asm/hardware/asp.h>
 
 #include <plat/tc.h>
 #include <plat/board.h>
@@ -33,6 +45,9 @@
 #include <plat/omap_device.h>
 #include <plat/omap4-keypad.h>
 
+/* LCD controller similar DA8xx */
+#include <video/da8xx-fb.h>
+
 #include "mux.h"
 #include "control.h"
 #include "devices.h"
@@ -40,11 +55,13 @@
 #define L3_MODULES_MAX_LEN 12
 #define L3_MODULES 3
 
+void am33xx_cpsw_init(void);
+
 static int __init omap3_l3_init(void)
 {
 	int l;
 	struct omap_hwmod *oh;
-	struct omap_device *od;
+	struct platform_device *pdev;
 	char oh_name[L3_MODULES_MAX_LEN];
 
 	/*
@@ -61,12 +78,12 @@ static int __init omap3_l3_init(void)
 	if (!oh)
 		pr_err("could not look up %s\n", oh_name);
 
-	od = omap_device_build("omap_l3_smx", 0, oh, NULL, 0,
+	pdev = omap_device_build("omap_l3_smx", 0, oh, NULL, 0,
 							   NULL, 0, 0);
 
-	WARN(IS_ERR(od), "could not build omap_device for %s\n", oh_name);
+	WARN(IS_ERR(pdev), "could not build omap_device for %s\n", oh_name);
 
-	return IS_ERR(od) ? PTR_ERR(od) : 0;
+	return IS_ERR(pdev) ? PTR_ERR(pdev) : 0;
 }
 postcore_initcall(omap3_l3_init);
 
@@ -74,8 +91,12 @@ static int __init omap4_l3_init(void)
 {
 	int l, i;
 	struct omap_hwmod *oh[3];
-	struct omap_device *od;
+	struct platform_device *pdev;
 	char oh_name[L3_MODULES_MAX_LEN];
+
+	/* If dtb is there, the devices will be created dynamically */
+	if (of_have_populated_dt())
+		return -ENODEV;
 
 	/*
 	 * To avoid code running on other OMAPs in
@@ -92,12 +113,12 @@ static int __init omap4_l3_init(void)
 			pr_err("could not look up %s\n", oh_name);
 	}
 
-	od = omap_device_build_ss("omap_l3_noc", 0, oh, 3, NULL,
+	pdev = omap_device_build_ss("omap_l3_noc", 0, oh, 3, NULL,
 						     0, NULL, 0, 0);
 
-	WARN(IS_ERR(od), "could not build omap_device for %s\n", oh_name);
+	WARN(IS_ERR(pdev), "could not build omap_device for %s\n", oh_name);
 
-	return IS_ERR(od) ? PTR_ERR(od) : 0;
+	return IS_ERR(pdev) ? PTR_ERR(pdev) : 0;
 }
 postcore_initcall(omap4_l3_init);
 
@@ -121,6 +142,94 @@ static struct platform_device omap2cam_device = {
 	.num_resources	= ARRAY_SIZE(omap2cam_resources),
 	.resource	= omap2cam_resources,
 };
+#endif
+#define L4_PER_LCDC_PHYS        0x4830E000
+
+static struct resource am33xx_lcdc_resources[] = {
+	[0] = { /* registers */
+		.start  = L4_PER_LCDC_PHYS,
+		.end    = L4_PER_LCDC_PHYS + SZ_4K - 1,
+		.flags  = IORESOURCE_MEM,
+	},
+	[1] = { /* interrupt */
+		.start  = AM33XX_IRQ_LCD,
+		.end    = AM33XX_IRQ_LCD,
+		.flags  = IORESOURCE_IRQ,
+	},
+};
+
+static struct platform_device am33xx_lcdc_device = {
+	.name		= "da8xx_lcdc",
+	.id		= 0,
+	.num_resources	= ARRAY_SIZE(am33xx_lcdc_resources),
+	.resource	= am33xx_lcdc_resources,
+};
+
+void __init am33xx_register_lcdc(struct da8xx_lcdc_platform_data *pdata)
+{
+	int ret;
+
+	am33xx_lcdc_device.dev.platform_data = pdata;
+
+	ret = platform_device_register(&am33xx_lcdc_device);
+	if (ret)
+		pr_warning("am33xx_register_lcdc: lcdc registration failed: %d\n",
+				ret);
+
+}
+
+#if defined (CONFIG_SND_AM335X_SOC_EVM)
+static struct resource am335x_mcasp1_resource[] = {
+	{
+		.name = "mcasp1",
+		.start = AM33XX_ASP1_BASE,
+		.end = AM33XX_ASP1_BASE + (SZ_1K * 12) - 1,
+		.flags = IORESOURCE_MEM,
+	},
+	/* TX event */
+	{
+		.start = AM33XX_DMA_MCASP1_X,
+		.end = AM33XX_DMA_MCASP1_X,
+		.flags = IORESOURCE_DMA,
+	},
+	/* RX event */
+	{
+		.start = AM33XX_DMA_MCASP1_R,
+		.end = AM33XX_DMA_MCASP1_R,
+		.flags = IORESOURCE_DMA,
+	},
+};
+
+static struct platform_device am335x_mcasp1_device = {
+	.name = "davinci-mcasp",
+	.id = 1,
+	.num_resources = ARRAY_SIZE(am335x_mcasp1_resource),
+	.resource = am335x_mcasp1_resource,
+};
+
+void __init am335x_register_mcasp1(struct snd_platform_data *pdata)
+{
+	am335x_mcasp1_device.dev.platform_data = pdata;
+	platform_device_register(&am335x_mcasp1_device);
+}
+
+#else
+void __init am335x_register_mcasp1(struct snd_platform_data *pdata) {}
+#endif
+
+#if defined(CONFIG_SND_AM33XX_SOC)
+struct platform_device am33xx_pcm_device = {
+	.name		= "davinci-pcm-audio",
+	.id		= -1,
+};
+
+static void am33xx_init_pcm(void)
+{
+	platform_device_register(&am33xx_pcm_device);
+}
+
+#else
+static inline void am33xx_init_pcm(void) {}
 #endif
 
 static struct resource omap3isp_resources[] = {
@@ -221,18 +330,10 @@ static inline void omap_init_camera(void)
 #endif
 }
 
-struct omap_device_pm_latency omap_keyboard_latency[] = {
-	{
-		.deactivate_func = omap_device_idle_hwmods,
-		.activate_func   = omap_device_enable_hwmods,
-		.flags = OMAP_DEVICE_LATENCY_AUTO_ADJUST,
-	},
-};
-
 int __init omap4_keyboard_init(struct omap4_keypad_platform_data
 			*sdp4430_keypad_data, struct omap_board_data *bdata)
 {
-	struct omap_device *od;
+	struct platform_device *pdev;
 	struct omap_hwmod *oh;
 	struct omap4_keypad_platform_data *keypad_data;
 	unsigned int id = -1;
@@ -247,15 +348,13 @@ int __init omap4_keyboard_init(struct omap4_keypad_platform_data
 
 	keypad_data = sdp4430_keypad_data;
 
-	od = omap_device_build(name, id, oh, keypad_data,
-			sizeof(struct omap4_keypad_platform_data),
-			omap_keyboard_latency,
-			ARRAY_SIZE(omap_keyboard_latency), 0);
+	pdev = omap_device_build(name, id, oh, keypad_data,
+			sizeof(struct omap4_keypad_platform_data), NULL, 0, 0);
 
-	if (IS_ERR(od)) {
+	if (IS_ERR(pdev)) {
 		WARN(1, "Can't build omap_device for %s:%s.\n",
 						name, oh->name);
-		return PTR_ERR(od);
+		return PTR_ERR(pdev);
 	}
 	oh->mux = omap_hwmod_mux_init(bdata->pads, bdata->pads_cnt);
 
@@ -263,18 +362,10 @@ int __init omap4_keyboard_init(struct omap4_keypad_platform_data
 }
 
 #if defined(CONFIG_OMAP_MBOX_FWK) || defined(CONFIG_OMAP_MBOX_FWK_MODULE)
-static struct omap_device_pm_latency mbox_latencies[] = {
-	[0] = {
-		.activate_func = omap_device_enable_hwmods,
-		.deactivate_func = omap_device_idle_hwmods,
-		.flags = OMAP_DEVICE_LATENCY_AUTO_ADJUST,
-	},
-};
-
 static inline void omap_init_mbox(void)
 {
 	struct omap_hwmod *oh;
-	struct omap_device *od;
+	struct platform_device *pdev;
 
 	oh = omap_hwmod_lookup("mailbox");
 	if (!oh) {
@@ -282,10 +373,9 @@ static inline void omap_init_mbox(void)
 		return;
 	}
 
-	od = omap_device_build("omap-mailbox", -1, oh, NULL, 0,
-				mbox_latencies, ARRAY_SIZE(mbox_latencies), 0);
-	WARN(IS_ERR(od), "%s: could not build device, err %ld\n",
-						__func__, PTR_ERR(od));
+	pdev = omap_device_build("omap-mailbox", -1, oh, NULL, 0, NULL, 0, 0);
+	WARN(IS_ERR(pdev), "%s: could not build device, err %ld\n",
+						__func__, PTR_ERR(pdev));
 }
 #else
 static inline void omap_init_mbox(void) { }
@@ -334,17 +424,9 @@ static inline void omap_init_audio(void) {}
 
 #include <plat/mcspi.h>
 
-struct omap_device_pm_latency omap_mcspi_latency[] = {
-	[0] = {
-		.deactivate_func = omap_device_idle_hwmods,
-		.activate_func   = omap_device_enable_hwmods,
-		.flags		 = OMAP_DEVICE_LATENCY_AUTO_ADJUST,
-	},
-};
-
 static int omap_mcspi_init(struct omap_hwmod *oh, void *unused)
 {
-	struct omap_device *od;
+	struct platform_device *pdev;
 	char *name = "omap2_mcspi";
 	struct omap2_mcspi_platform_config *pdata;
 	static int spi_num;
@@ -364,6 +446,8 @@ static int omap_mcspi_init(struct omap_hwmod *oh, void *unused)
 			break;
 	case OMAP4_MCSPI_REV:
 			pdata->regs_offset = OMAP4_MCSPI_REG_OFFSET;
+			if (cpu_is_am33xx())
+				pdata->dma_not_enabled = true;
 			break;
 	default:
 			pr_err("Invalid McSPI Revision value\n");
@@ -371,10 +455,9 @@ static int omap_mcspi_init(struct omap_hwmod *oh, void *unused)
 	}
 
 	spi_num++;
-	od = omap_device_build(name, spi_num, oh, pdata,
-				sizeof(*pdata),	omap_mcspi_latency,
-				ARRAY_SIZE(omap_mcspi_latency), 0);
-	WARN(IS_ERR(od), "Can't build omap_device for %s:%s\n",
+	pdev = omap_device_build(name, spi_num, oh, pdata,
+				sizeof(*pdata),	NULL, 0, 0);
+	WARN(IS_ERR(pdev), "Can't build omap_device for %s:%s\n",
 				name, oh->name);
 	kfree(pdata);
 	return 0;
@@ -674,6 +757,249 @@ static void omap_init_vout(void)
 static inline void omap_init_vout(void) {}
 #endif
 
+#if defined(CONFIG_SOC_OMAPAM33XX) && defined(CONFIG_OMAP3_EDMA)
+
+#define AM33XX_TPCC_BASE		0x49000000
+#define AM33XX_TPTC0_BASE		0x49800000
+#define AM33XX_TPTC1_BASE		0x49900000
+#define AM33XX_TPTC2_BASE		0x49a00000
+
+#define AM33XX_SCM_BASE_EDMA		0x00000f90
+
+static struct resource am33xx_edma_resources[] = {
+	{
+		.name	= "edma_cc0",
+		.start	= AM33XX_TPCC_BASE,
+		.end	= AM33XX_TPCC_BASE + SZ_32K - 1,
+		.flags	= IORESOURCE_MEM,
+	},
+	{
+		.name	= "edma_tc0",
+		.start	= AM33XX_TPTC0_BASE,
+		.end	= AM33XX_TPTC0_BASE + SZ_1K - 1,
+		.flags	= IORESOURCE_MEM,
+	},
+	{
+		.name	= "edma_tc1",
+		.start	= AM33XX_TPTC1_BASE,
+		.end	= AM33XX_TPTC1_BASE + SZ_1K - 1,
+		.flags	= IORESOURCE_MEM,
+	},
+	{
+		.name	= "edma_tc2",
+		.start	= AM33XX_TPTC2_BASE,
+		.end	= AM33XX_TPTC2_BASE + SZ_1K - 1,
+		.flags	= IORESOURCE_MEM,
+	},
+	{
+		.name	= "edma0",
+		.start	= AM33XX_IRQ_TPCC0_INT_PO0,
+		.flags	= IORESOURCE_IRQ,
+	},
+	{
+		.name	= "edma0_err",
+		.start	= AM33XX_IRQ_TPCC0_ERRINT_PO,
+		.flags	= IORESOURCE_IRQ,
+	},
+};
+
+static const s16 am33xx_dma_rsv_chans[][2] = {
+	/* (offset, number) */
+	{0, 2},
+	{14, 2},
+	{26, 6},
+	{48, 4},
+	{56, 8},
+	{-1, -1}
+};
+
+static const s16 am33xx_dma_rsv_slots[][2] = {
+	/* (offset, number) */
+	{0, 2},
+	{14, 2},
+	{26, 6},
+	{48, 4},
+	{56, 8},
+	{64, 127},
+	{-1, -1}
+};
+
+/* Three Transfer Controllers on AM33XX */
+static const s8 am33xx_queue_tc_mapping[][2] = {
+	/* {event queue no, TC no} */
+	{0, 0},
+	{1, 1},
+	{2, 2},
+	{-1, -1}
+};
+
+static const s8 am33xx_queue_priority_mapping[][2] = {
+	/* {event queue no, Priority} */
+	{0, 0},
+	{1, 1},
+	{2, 2},
+	{-1, -1}
+};
+
+static struct event_to_channel_map am33xx_xbar_event_mapping[] = {
+	/* {xbar event no, Channel} */
+	{1, 12},	/* SDTXEVT1 -> MMCHS2 */
+	{2, 13},	/* SDRXEVT1 -> MMCHS2 */
+	{3, -1},
+	{4, -1},
+	{5, -1},
+	{6, -1},
+	{7, -1},
+	{8, -1},
+	{9, -1},
+	{10, -1},
+	{11, -1},
+	{12, -1},
+	{13, -1},
+	{14, -1},
+	{15, -1},
+	{16, -1},
+	{17, -1},
+	{18, -1},
+	{19, -1},
+	{20, -1},
+	{21, -1},
+	{22, -1},
+	{23, -1},
+	{24, -1},
+	{25, -1},
+	{26, -1},
+	{27, -1},
+	{28, -1},
+	{29, -1},
+	{30, -1},
+	{31, -1},
+	{-1, -1}
+};
+
+/**
+ * map_xbar_event_to_channel - maps a crossbar event to a DMA channel
+ * according to the configuration provided
+ * @event: the event number for which mapping is required
+ * @channel: channel being activated
+ * @xbar_event_mapping: array that has the event to channel map
+ *
+ * Events that are routed by default are not mapped. Only events that
+ * are crossbar mapped are routed to available channels according to
+ * the configuration provided
+ *
+ * Returns zero on success, else negative errno.
+ */
+int map_xbar_event_to_channel(unsigned event, unsigned *channel,
+			struct event_to_channel_map *xbar_event_mapping)
+{
+	unsigned ctrl = 0;
+	unsigned xbar_evt_no = 0;
+	unsigned val = 0;
+	unsigned offset = 0;
+	unsigned mask = 0;
+
+	ctrl = EDMA_CTLR(event);
+	xbar_evt_no = event - (edma_info[ctrl]->num_channels);
+
+	if (event < edma_info[ctrl]->num_channels) {
+		*channel = event;
+	} else if (event < edma_info[ctrl]->num_events) {
+		*channel = xbar_event_mapping[xbar_evt_no].channel_no;
+		/* confirm the range */
+		if (*channel < EDMA_MAX_DMACH)
+			clear_bit(*channel, edma_info[ctrl]->edma_unused);
+		mask = (*channel)%4;
+		offset = (*channel)/4;
+		offset *= 4;
+		offset += mask;
+		val = (unsigned)__raw_readl(AM33XX_CTRL_REGADDR(
+					AM33XX_SCM_BASE_EDMA + offset));
+		val = val & (~(0xFF));
+		val = val | (xbar_event_mapping[xbar_evt_no].xbar_event_no);
+		__raw_writel(val,
+			AM33XX_CTRL_REGADDR(AM33XX_SCM_BASE_EDMA + offset));
+		return 0;
+	} else {
+		return -EINVAL;
+	}
+
+	return 0;
+}
+EXPORT_SYMBOL(map_xbar_event_to_channel);
+
+static struct edma_soc_info am33xx_edma_info[] = {
+	{
+		.n_channel		= 64,
+		.n_region		= 4,
+		.n_slot			= 256,
+		.n_tc			= 3,
+		.n_cc			= 1,
+		.rsv_chans		= am33xx_dma_rsv_chans,
+		.rsv_slots		= am33xx_dma_rsv_slots,
+		.queue_tc_mapping	= am33xx_queue_tc_mapping,
+		.queue_priority_mapping	= am33xx_queue_priority_mapping,
+		.is_xbar		= 1,
+		.n_events		= 95,
+		.xbar_event_mapping	= am33xx_xbar_event_mapping,
+		.map_xbar_channel	= map_xbar_event_to_channel,
+	},
+};
+
+static struct platform_device am33xx_edma_device = {
+	.name		= "edma",
+	.id		= -1,
+	.dev = {
+		.platform_data = am33xx_edma_info,
+	},
+	.num_resources	= ARRAY_SIZE(am33xx_edma_resources),
+	.resource	= am33xx_edma_resources,
+};
+
+int __init am33xx_register_edma(void)
+{
+	struct platform_device *pdev;
+	static struct clk *edma_clk;
+
+	if (cpu_is_am33xx())
+		pdev = &am33xx_edma_device;
+	else {
+		pr_err("%s: platform not supported\n", __func__);
+		return -ENODEV;
+	}
+
+	edma_clk = clk_get(NULL, "tpcc_ick");
+	if (IS_ERR(edma_clk)) {
+		printk(KERN_ERR "EDMA: Failed to get clock\n");
+		return -EBUSY;
+	}
+	clk_enable(edma_clk);
+	edma_clk = clk_get(NULL, "tptc0_ick");
+	if (IS_ERR(edma_clk)) {
+		printk(KERN_ERR "EDMA: Failed to get clock\n");
+		return -EBUSY;
+	}
+	clk_enable(edma_clk);
+	edma_clk = clk_get(NULL, "tptc1_ick");
+	if (IS_ERR(edma_clk)) {
+		printk(KERN_ERR "EDMA: Failed to get clock\n");
+		return -EBUSY;
+	}
+	clk_enable(edma_clk);
+	edma_clk = clk_get(NULL, "tptc2_ick");
+	if (IS_ERR(edma_clk)) {
+		printk(KERN_ERR "EDMA: Failed to get clock\n");
+		return -EBUSY;
+	}
+	clk_enable(edma_clk);
+
+	return platform_device_register(pdev);
+}
+
+#else
+static inline void am33xx_register_edma(void) {}
+#endif
+
 /*-------------------------------------------------------------------------*/
 
 static int __init omap2_init_devices(void)
@@ -692,24 +1018,215 @@ static int __init omap2_init_devices(void)
 	omap_init_sham();
 	omap_init_aes();
 	omap_init_vout();
+	am33xx_register_edma();
+	am33xx_init_pcm();
 
 	return 0;
 }
 arch_initcall(omap2_init_devices);
 
-#if defined(CONFIG_OMAP_WATCHDOG) || defined(CONFIG_OMAP_WATCHDOG_MODULE)
-static struct omap_device_pm_latency omap_wdt_latency[] = {
-	[0] = {
-		.deactivate_func = omap_device_idle_hwmods,
-		.activate_func   = omap_device_enable_hwmods,
-		.flags		 = OMAP_DEVICE_LATENCY_AUTO_ADJUST,
+#define AM33XX_CPSW_BASE		(0x4A100000)
+#define AM33XX_CPSW_MDIO_BASE		(0x4A101000)
+#define AM33XX_CPSW_SS_BASE		(0x4A101200)
+#define AM33XX_EMAC_MDIO_FREQ		(1000000)
+
+static u64 am33xx_cpsw_dmamask = DMA_BIT_MASK(32);
+/* TODO : Verify the offsets */
+static struct cpsw_slave_data am33xx_cpsw_slaves[] = {
+	{
+		.slave_reg_ofs  = 0x208,
+		.sliver_reg_ofs = 0xd80,
+		.phy_id		= "0:00",
+	},
+	{
+		.slave_reg_ofs  = 0x308,
+		.sliver_reg_ofs = 0xdc0,
+		.phy_id		= "0:01",
 	},
 };
 
+static struct cpsw_platform_data am33xx_cpsw_pdata = {
+	.ss_reg_ofs		= 0x1200,
+	.channels		= 8,
+	.cpdma_reg_ofs		= 0x800,
+	.slaves			= 2,
+	.slave_data		= am33xx_cpsw_slaves,
+	.ale_reg_ofs		= 0xd00,
+	.ale_entries		= 1024,
+	.host_port_reg_ofs      = 0x108,
+	.hw_stats_reg_ofs       = 0x900,
+	.bd_ram_ofs		= 0x2000,
+	.bd_ram_size		= SZ_8K,
+	.rx_descs               = 64,
+	.mac_control            = BIT(5), /* MIIEN */
+	.gigabit_en		= 1,
+	.host_port_num		= 0,
+	.no_bd_ram		= false,
+	.version		= CPSW_VERSION_2,
+};
+
+static struct mdio_platform_data am33xx_cpsw_mdiopdata = {
+	.bus_freq       = AM33XX_EMAC_MDIO_FREQ,
+};
+
+static struct resource am33xx_cpsw_mdioresources[] = {
+	{
+		.start  = AM33XX_CPSW_MDIO_BASE,
+		.end    = AM33XX_CPSW_MDIO_BASE + SZ_256 - 1,
+		.flags  = IORESOURCE_MEM,
+	},
+};
+
+static struct platform_device am33xx_cpsw_mdiodevice = {
+	.name           = "davinci_mdio",
+	.id             = 0,
+	.num_resources  = ARRAY_SIZE(am33xx_cpsw_mdioresources),
+	.resource       = am33xx_cpsw_mdioresources,
+	.dev.platform_data = &am33xx_cpsw_mdiopdata,
+};
+
+static struct resource am33xx_cpsw_resources[] = {
+	{
+		.start  = AM33XX_CPSW_BASE,
+		.end    = AM33XX_CPSW_BASE + SZ_2K - 1,
+		.flags  = IORESOURCE_MEM,
+	},
+	{
+		.start  = AM33XX_CPSW_SS_BASE,
+		.end    = AM33XX_CPSW_SS_BASE + SZ_256 - 1,
+		.flags  = IORESOURCE_MEM,
+	},
+	{
+		.start	= AM33XX_IRQ_CPSW_C0_RX,
+		.end	= AM33XX_IRQ_CPSW_C0_RX,
+		.flags	= IORESOURCE_IRQ,
+	},
+	{
+		.start	= AM33XX_IRQ_CPSW_RX,
+		.end	= AM33XX_IRQ_CPSW_RX,
+		.flags	= IORESOURCE_IRQ,
+	},
+	{
+		.start	= AM33XX_IRQ_CPSW_TX,
+		.end	= AM33XX_IRQ_CPSW_TX,
+		.flags	= IORESOURCE_IRQ,
+	},
+	{
+		.start	= AM33XX_IRQ_CPSW_C0,
+		.end	= AM33XX_IRQ_CPSW_C0,
+		.flags	= IORESOURCE_IRQ,
+	},
+};
+
+static struct platform_device am33xx_cpsw_device = {
+	.name		=	"cpsw",
+	.id		=	0,
+	.num_resources	=	ARRAY_SIZE(am33xx_cpsw_resources),
+	.resource	=	am33xx_cpsw_resources,
+	.dev		=	{
+					.platform_data	= &am33xx_cpsw_pdata,
+					.dma_mask	= &am33xx_cpsw_dmamask,
+					.coherent_dma_mask = DMA_BIT_MASK(32),
+				},
+};
+
+static unsigned char  am33xx_macid0[ETH_ALEN];
+static unsigned char  am33xx_macid1[ETH_ALEN];
+static unsigned int   am33xx_evmid;
+
+/*
+* am33xx_evmid_fillup - set up board evmid
+* @evmid - evm id which needs to be configured
+*
+* This function is called to configure board evm id.
+* IA Motor Control EVM needs special setting of MAC PHY Id.
+* This function is called when IA Motor Control EVM is detected
+* during boot-up.
+*/
+void am33xx_evmid_fillup(unsigned int evmid)
+{
+	am33xx_evmid = evmid;
+	return;
+}
+
+/*
+* am33xx_cpsw_macidfillup - setup mac adrresses
+* @eeprommacid0 - mac id 0 which needs to be configured
+* @eeprommacid1 - mac id 1 which needs to be configured
+*
+* This function is called to configure mac addresses.
+* Mac addresses are read from eeprom and this function is called
+* to store those mac adresses in am33xx_macid0 and am33xx_macid1.
+* In case, mac address read from eFuse are invalid, mac addresses
+* stored in these variable are used.
+*/
+void am33xx_cpsw_macidfillup(char *eeprommacid0, char *eeprommacid1)
+{
+	u32 i;
+
+	/* Fillup these mac addresses with the mac adresses from eeprom */
+	for (i = 0; i < ETH_ALEN; i++) {
+		am33xx_macid0[i] = eeprommacid0[i];
+		am33xx_macid1[i] = eeprommacid1[i];
+	}
+
+	return;
+}
+
+void am33xx_cpsw_init(void)
+{
+	u32 mac_lo, mac_hi;
+	u32 i;
+
+	mac_lo = omap_ctrl_readl(TI81XX_CONTROL_MAC_ID0_LO);
+	mac_hi = omap_ctrl_readl(TI81XX_CONTROL_MAC_ID0_HI);
+	am33xx_cpsw_slaves[0].mac_addr[0] = mac_hi & 0xFF;
+	am33xx_cpsw_slaves[0].mac_addr[1] = (mac_hi & 0xFF00) >> 8;
+	am33xx_cpsw_slaves[0].mac_addr[2] = (mac_hi & 0xFF0000) >> 16;
+	am33xx_cpsw_slaves[0].mac_addr[3] = (mac_hi & 0xFF000000) >> 24;
+	am33xx_cpsw_slaves[0].mac_addr[4] = mac_lo & 0xFF;
+	am33xx_cpsw_slaves[0].mac_addr[5] = (mac_lo & 0xFF00) >> 8;
+
+	/* Read MACID0 from eeprom if eFuse MACID is invalid */
+	if (!is_valid_ether_addr(am33xx_cpsw_slaves[0].mac_addr)) {
+		for (i = 0; i < ETH_ALEN; i++)
+			am33xx_cpsw_slaves[0].mac_addr[i] = am33xx_macid0[i];
+	}
+
+	mac_lo = omap_ctrl_readl(TI81XX_CONTROL_MAC_ID1_LO);
+	mac_hi = omap_ctrl_readl(TI81XX_CONTROL_MAC_ID1_HI);
+	am33xx_cpsw_slaves[1].mac_addr[0] = mac_hi & 0xFF;
+	am33xx_cpsw_slaves[1].mac_addr[1] = (mac_hi & 0xFF00) >> 8;
+	am33xx_cpsw_slaves[1].mac_addr[2] = (mac_hi & 0xFF0000) >> 16;
+	am33xx_cpsw_slaves[1].mac_addr[3] = (mac_hi & 0xFF000000) >> 24;
+	am33xx_cpsw_slaves[1].mac_addr[4] = mac_lo & 0xFF;
+	am33xx_cpsw_slaves[1].mac_addr[5] = (mac_lo & 0xFF00) >> 8;
+
+	/* Read MACID1 from eeprom if eFuse MACID is invalid */
+	if (!is_valid_ether_addr(am33xx_cpsw_slaves[1].mac_addr)) {
+		for (i = 0; i < ETH_ALEN; i++)
+			am33xx_cpsw_slaves[1].mac_addr[i] = am33xx_macid1[i];
+	}
+
+	if (am33xx_evmid == IND_AUT_MTR_EVM) {
+		am33xx_cpsw_slaves[0].phy_id = "0:1e";
+		am33xx_cpsw_slaves[1].phy_id = "0:00";
+	}
+
+	memcpy(am33xx_cpsw_pdata.mac_addr,
+			am33xx_cpsw_slaves[0].mac_addr, ETH_ALEN);
+	platform_device_register(&am33xx_cpsw_mdiodevice);
+	platform_device_register(&am33xx_cpsw_device);
+	clk_add_alias(NULL, dev_name(&am33xx_cpsw_mdiodevice.dev),
+			NULL, &am33xx_cpsw_device.dev);
+}
+
+
+#if defined(CONFIG_OMAP_WATCHDOG) || defined(CONFIG_OMAP_WATCHDOG_MODULE)
 static int __init omap_init_wdt(void)
 {
 	int id = -1;
-	struct omap_device *od;
+	struct platform_device *pdev;
 	struct omap_hwmod *oh;
 	char *oh_name = "wd_timer2";
 	char *dev_name = "omap_wdt";
@@ -723,10 +1240,8 @@ static int __init omap_init_wdt(void)
 		return -EINVAL;
 	}
 
-	od = omap_device_build(dev_name, id, oh, NULL, 0,
-				omap_wdt_latency,
-				ARRAY_SIZE(omap_wdt_latency), 0);
-	WARN(IS_ERR(od), "Can't build omap_device for %s:%s.\n",
+	pdev = omap_device_build(dev_name, id, oh, NULL, 0, NULL, 0, 0);
+	WARN(IS_ERR(pdev), "Can't build omap_device for %s:%s.\n",
 				dev_name, oh->name);
 	return 0;
 }

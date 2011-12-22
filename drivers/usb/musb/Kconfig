@@ -8,6 +8,7 @@ config USB_MUSB_HDRC
 	depends on USB && USB_GADGET
 	depends on (ARM || (BF54x && !BF544) || (BF52x && !BF522 && !BF523))
 	select NOP_USB_XCEIV if (ARCH_DAVINCI || MACH_OMAP3EVM || BLACKFIN)
+	select NOP_USB_XCEIV if (SOC_OMAPTI81XX || SOC_OMAPAM33XX)
 	select TWL4030_USB if MACH_OMAP_3430SDP
 	select TWL6030_USB if MACH_OMAP_4430SDP || MACH_OMAP4_PANDA
 	select USB_OTG_UTILS
@@ -30,44 +31,78 @@ config USB_MUSB_HDRC
 	  To compile this driver as a module, choose M here; the
 	  module will be called "musb-hdrc".
 
-choice
-	prompt "Platform Glue Layer"
+comment "Platform Glue Layer"
 	depends on USB_MUSB_HDRC
 
-config USB_MUSB_DAVINCI
+config USB_MUSB_DAVINCI_GLUE
+	select USB_MUSB_DAVINCI
 	tristate "DaVinci"
-	depends on ARCH_DAVINCI_DMx
+	depends on ARCH_DAVINCI_DMx && USB_MUSB_HDRC
 
-config USB_MUSB_DA8XX
+config USB_MUSB_DA8XX_GLUE
+	select USB_MUSB_DA8XX
 	tristate "DA8xx/OMAP-L1x"
-	depends on ARCH_DAVINCI_DA8XX
+	depends on ARCH_DAVINCI_DA8XX && USB_MUSB_HDRC
 
-config USB_MUSB_TUSB6010
+config USB_MUSB_TUSB6010_GLUE
+	select USB_MUSB_TUSB6010
 	tristate "TUSB6010"
-	depends on ARCH_OMAP
+	depends on ARCH_OMAP && USB_MUSB_HDRC
 
-config USB_MUSB_OMAP2PLUS
+config USB_MUSB_OMAP2PLUS_GLUE
+	select USB_MUSB_OMAP2PLUS
 	tristate "OMAP2430 and onwards"
-	depends on ARCH_OMAP2PLUS
+	depends on ARCH_OMAP2PLUS && USB_MUSB_HDRC
 
-config USB_MUSB_AM35X
+config USB_MUSB_AM35X_GLUE
+	select USB_MUSB_AM35X
 	tristate "AM35x"
-	depends on ARCH_OMAP
+	depends on ARCH_OMAP && USB_MUSB_HDRC
 
-config USB_MUSB_BLACKFIN
+config USB_MUSB_TI81XX_GLUE
+	select USB_MUSB_TI81XX
+	tristate "TI81XX onward"
+	depends on (SOC_OMAPTI81XX || SOC_OMAPAM33XX) && USB_MUSB_HDRC
+
+config USB_MUSB_BLACKFIN_GLUE
+	select USB_MUSB_BLACKFIN
 	tristate "Blackfin"
-	depends on (BF54x && !BF544) || (BF52x && ! BF522 && !BF523)
+	depends on ((BF54x && !BF544) || (BF52x && ! BF522 && !BF523)) && USB_MUSB_HDRC
 
-config USB_MUSB_UX500
+config USB_MUSB_UX500_GLUE
+	select USB_MUSB_UX500
 	tristate "U8500 and U5500"
-	depends on (ARCH_U8500 && AB8500_USB) || (ARCH_U5500)
+	depends on ((ARCH_U8500 && AB8500_USB) || ARCH_U5500) && USB_MUSB_HDRC
 
-endchoice
+config USB_MUSB_DAVINCI
+	bool
+	default n
+config USB_MUSB_DA8XX
+	bool
+	default n
+config USB_MUSB_TUSB6010
+	bool
+	default n
+config USB_MUSB_OMAP2PLUS
+	bool
+	default n
+config USB_MUSB_AM35X
+	bool
+	default n
+config USB_MUSB_TI81XX
+	bool
+	default n
+config USB_MUSB_BLACKFIN
+	bool
+	default n
+config USB_MUSB_UX500
+	bool
+	default n
 
 config MUSB_PIO_ONLY
 	bool 'Disable DMA (always use PIO)'
 	depends on USB_MUSB_HDRC
-	default USB_MUSB_TUSB6010 || USB_MUSB_DA8XX || USB_MUSB_AM35X
+	default USB_MUSB_TUSB6010 || USB_MUSB_DA8XX
 	help
 	  All data is copied between memory and FIFO by the CPU.
 	  DMA controllers are ignored.
@@ -77,29 +112,45 @@ config MUSB_PIO_ONLY
 	  you can still disable it at run time using the "use_dma=n" module
 	  parameter.
 
-config USB_UX500_DMA
-	bool
+config USB_UX500_DMA_HW
+	select USB_UX500_DMA
+	tristate
 	depends on USB_MUSB_HDRC && !MUSB_PIO_ONLY
-	default USB_MUSB_UX500
 	help
 	  Enable DMA transfers on UX500 platforms.
 
-config USB_INVENTRA_DMA
-	bool
-	depends on USB_MUSB_HDRC && !MUSB_PIO_ONLY
+config USB_INVENTRA_DMA_HW
+	select USB_INVENTRA_DMA
+	tristate
+	depends on USB_MUSB_HDRC && !MUSB_PIO_ONLY && !USB_MUSB_AM35X
 	default USB_MUSB_OMAP2PLUS || USB_MUSB_BLACKFIN
 	help
 	  Enable DMA transfers using Mentor's engine.
 
-config USB_TI_CPPI_DMA
-	bool
+config USB_TI_CPPI_DMA_HW
+	select USB_TI_CPPI_DMA
+	tristate
 	depends on USB_MUSB_HDRC && !MUSB_PIO_ONLY
 	default USB_MUSB_DAVINCI
 	help
 	  Enable DMA transfers when TI CPPI DMA is available.
 
-config USB_TUSB_OMAP_DMA
-	bool
+config USB_TI_CPPI41_DMA_HW
+	select USB_TI_CPPI41_DMA
+	tristate
+	depends on USB_MUSB_HDRC && !MUSB_PIO_ONLY
+	default ARCH_DAVINCI_DA8XX || USB_MUSB_AM35X || SOC_OMAPTI81XX \
+		|| SOC_OMAPAM33XX
+	select CPPI41
+	help
+	 Configure this option to include the CPPI 4.1 support,
+	 The CPPI 4.1 DMA engine integrated with musb controller
+	 accelarate the usb packet transmission and receception
+	 to/from musb endpoints.
+
+config USB_TUSB_OMAP_DMA_HW
+	select USB_TUSB_OMAP_DMA
+	tristate
 	depends on USB_MUSB_HDRC && !MUSB_PIO_ONLY
 	depends on USB_MUSB_TUSB6010
 	depends on ARCH_OMAP
@@ -107,3 +158,38 @@ config USB_TUSB_OMAP_DMA
 	help
 	  Enable DMA transfers on TUSB 6010 when OMAP DMA is available.
 
+config USB_INVENTRA_DMA
+	bool
+	default n
+
+config MUSB_USE_SYSTEM_DMA_WORKAROUND
+	bool 'Use System DMA for Mentor DMA workaround'
+	depends on USB_MUSB_HDRC && USB_INVENTRA_DMA && ARCH_OMAP
+	default y
+	help
+          MUSB RTL version 1.4 (OMAP34x/35x) has a hardware issue when
+	  TX and RX DMA channels are simultaneously enabled. To work
+	  around this issue, you can choose to use System DMA for RX
+	  channels.
+
+	  Also on Mentor DMA in MUSB RTL version 1.8 (OMAP3630, AM/DM37x)
+	  requires buffers to be aligned on a four byte boundary. This affects
+	  USB CDC/RNDIS class application where buffers are always unaligned.
+	  To work around this issue, you can choose to use System DMA for
+	  unaligned buffers.
+
+config USB_TI_CPPI_DMA
+	bool
+	default n
+
+config USB_TI_CPPI41_DMA
+	bool
+	default n
+
+config USB_TUSB_OMAP_DMA
+	bool
+	default n
+
+config USB_UX500_DMA
+	bool
+	default n

@@ -31,7 +31,7 @@
 #include <mach/time.h>
 #include <mach/serial.h>
 #include <mach/common.h>
-#include <mach/asp.h>
+#include <asm/hardware/asp.h>
 #include <mach/keyscan.h>
 #include <mach/spi.h>
 
@@ -1082,7 +1082,7 @@ static struct davinci_soc_info davinci_soc_info_dm365 = {
 	.gpio_unbanked		= 8,	/* really 16 ... skip muxed GPIOs */
 	.serial_dev		= &dm365_serial_device,
 	.emac_pdata		= &dm365_emac_pdata,
-	.sram_dma		= 0x00010000,
+	.sram_phys		= 0x00010000,
 	.sram_len		= SZ_32K,
 	.reset_device		= &davinci_wdt_device,
 };

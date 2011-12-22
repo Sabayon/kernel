@@ -36,7 +36,13 @@ int uart_shift;
  */
 static void set_omap_uart_info(unsigned char port)
 {
-	*(volatile u32 *)OMAP_UART_INFO = port;
+	/*
+	 * Get address of some.bss variable and round it down
+	 * a la CONFIG_AUTO_ZRELADDR.
+	 */
+	u32 ram_start = (u32)&uart_shift & 0xf8000000;
+	u32 *uart_info = (u32 *)(ram_start + OMAP_UART_INFO_OFS);
+	*uart_info = port;
 }
 
 static void putc(int c)
@@ -97,6 +103,10 @@ static inline void flush(void)
 	_DEBUG_LL_ENTRY(mach, TI816X_UART##p##_BASE, OMAP_PORT_SHIFT,	\
 		TI816XUART##p)
 
+#define DEBUG_LL_AM33XX(p, mach)					\
+	_DEBUG_LL_ENTRY(mach, AM33XX_UART##p##_BASE, OMAP_PORT_SHIFT,	\
+		AM33XXUART##p)
+
 static inline void __arch_decomp_setup(unsigned long arch_id)
 {
 	int port = 0;
@@ -151,6 +161,7 @@ static inline void __arch_decomp_setup(unsigned long arch_id)
 		DEBUG_LL_OMAP3(3, cm_t3730);
 		DEBUG_LL_OMAP3(3, craneboard);
 		DEBUG_LL_OMAP3(3, devkit8000);
+		DEBUG_LL_OMAP3(3, encore);
 		DEBUG_LL_OMAP3(3, igep0020);
 		DEBUG_LL_OMAP3(3, igep0030);
 		DEBUG_LL_OMAP3(3, nokia_rm680);
@@ -165,6 +176,7 @@ static inline void __arch_decomp_setup(unsigned long arch_id)
 		/* omap4 based boards using UART3 */
 		DEBUG_LL_OMAP4(3, omap_4430sdp);
 		DEBUG_LL_OMAP4(3, omap4_panda);
+		DEBUG_LL_OMAP4(3, pcm049);
 
 		/* zoom2/3 external uart */
 		DEBUG_LL_ZOOM(omap_zoom2);
@@ -173,6 +185,11 @@ static inline void __arch_decomp_setup(unsigned long arch_id)
 		/* TI8168 base boards using UART3 */
 		DEBUG_LL_TI816X(3, ti8168evm);
 
+		/* AM33XX base boards using UART1 */
+		DEBUG_LL_AM33XX(1, am335xevm);
+
+		/* AM33XX IA boards using UART4 */
+		DEBUG_LL_AM33XX(4, am335xiaevm);
 	} while (0);
 }
 

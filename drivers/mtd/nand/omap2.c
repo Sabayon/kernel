@@ -94,6 +94,9 @@
 #define P4e_s(a)	(TF(a & NAND_Ecc_P4e)		<< 0)
 #define P4o_s(a)	(TF(a & NAND_Ecc_P4o)		<< 1)
 
+#define MAX_HWECC_BYTES_OOB_64     24
+#define JFFS2_CLEAN_MARKER_OFFSET  0x2
+
 static const char *part_probes[] = { "cmdlinepart", NULL };
 
 /* oob info generated runtime depending on ecc algorithm and layout selected */
@@ -1077,22 +1080,43 @@ static int __devinit omap_nand_probe(struct platform_device *pdev)
 		}
 	}
 
-	/* rom code layout */
-	if (pdata->ecc_opt == OMAP_ECC_HAMMING_CODE_HW_ROMCODE) {
+	/* select ecc lyout */
+	if (info->nand.ecc.mode != NAND_ECC_SOFT) {
 
 		if (info->nand.options & NAND_BUSWIDTH_16)
-			offset = 2;
+			offset = JFFS2_CLEAN_MARKER_OFFSET;
 		else {
-			offset = 1;
+			offset = JFFS2_CLEAN_MARKER_OFFSET;
 			info->nand.badblock_pattern = &bb_descrip_flashbased;
 		}
-		omap_oobinfo.eccbytes = 3 * (info->mtd.oobsize/16);
+
+		if (info->mtd.oobsize == 64)
+			omap_oobinfo.eccbytes = info->nand.ecc.bytes *
+						2048/info->nand.ecc.size;
+		else
+			omap_oobinfo.eccbytes = info->nand.ecc.bytes;
+
+		if (pdata->ecc_opt == OMAP_ECC_HAMMING_CODE_HW_ROMCODE) {
+			omap_oobinfo.oobfree->offset =
+						offset + omap_oobinfo.eccbytes;
+			omap_oobinfo.oobfree->length = info->mtd.oobsize -
+				(offset + omap_oobinfo.eccbytes);
+		} else {
+			omap_oobinfo.oobfree->offset = offset;
+			omap_oobinfo.oobfree->length = info->mtd.oobsize -
+						offset - omap_oobinfo.eccbytes;
+			/*
+			offset is calculated considering the following :
+			1) 12 bytes ECC for 512 byte access and 24 bytes ECC for
+			256 byte access in OOB_64 can be supported
+			2)Ecc bytes lie to the end of OOB area.
+			3)Ecc layout must match with u-boot's ECC layout.
+			*/
+			offset = info->mtd.oobsize - MAX_HWECC_BYTES_OOB_64;
+		}
+
 		for (i = 0; i < omap_oobinfo.eccbytes; i++)
 			omap_oobinfo.eccpos[i] = i+offset;
-
-		omap_oobinfo.oobfree->offset = offset + omap_oobinfo.eccbytes;
-		omap_oobinfo.oobfree->length = info->mtd.oobsize -
-					(offset + omap_oobinfo.eccbytes);
 
 		info->nand.ecc.layout = &omap_oobinfo;
 	}
@@ -1139,6 +1163,7 @@ static int omap_nand_remove(struct platform_device *pdev)
 	/* Release NAND device, its internal structures and partitions */
 	nand_release(&info->mtd);
 	iounmap(info->nand.IO_ADDR_R);
+	release_mem_region(info->phys_base, NAND_IO_SIZE);
 	kfree(&info->mtd);
 	return 0;
 }

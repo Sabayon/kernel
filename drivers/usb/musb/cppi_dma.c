@@ -104,7 +104,7 @@ static void cppi_reset_tx(struct cppi_tx_stateram __iomem *tx, u32 ptr)
 	musb_writel(&tx->tx_complete, 0, ptr);
 }
 
-static void __init cppi_pool_init(struct cppi *cppi, struct cppi_channel *c)
+static void __devinit cppi_pool_init(struct cppi *cppi, struct cppi_channel *c)
 {
 	int	j;
 
@@ -149,7 +149,7 @@ static void cppi_pool_free(struct cppi_channel *c)
 	c->last_processed = NULL;
 }
 
-static int __init cppi_controller_start(struct dma_controller *c)
+static int __devinit cppi_controller_start(struct dma_controller *c)
 {
 	struct cppi	*controller;
 	void __iomem	*tibase;
@@ -359,8 +359,9 @@ cppi_dump_rx(int level, struct cppi_channel *c, const char *tag)
 {
 	void __iomem			*base = c->controller->mregs;
 	struct cppi_rx_stateram __iomem	*rx = c->state_ram;
+	struct musb		*musb = c->controller->musb;
 
-	musb_ep_select(base, c->index + 1);
+	musb_ep_select(musb, base, c->index + 1);
 
 	dev_dbg(c->controller->musb->controller,
 		"RX DMA%d%s: %d left, csr %04x, "
@@ -390,8 +391,9 @@ cppi_dump_tx(int level, struct cppi_channel *c, const char *tag)
 {
 	void __iomem			*base = c->controller->mregs;
 	struct cppi_tx_stateram __iomem	*tx = c->state_ram;
+	struct musb		*musb = c->controller->musb;
 
-	musb_ep_select(base, c->index + 1);
+	musb_ep_select(musb, base, c->index + 1);
 
 	dev_dbg(c->controller->musb->controller,
 		"TX DMA%d%s: csr %04x, "
@@ -1117,7 +1119,7 @@ static bool cppi_rx_scan(struct cppi *cppi, unsigned ch)
 			 */
 			WARN_ON(rx->head);
 		}
-		musb_ep_select(cppi->mregs, rx->index + 1);
+		musb_ep_select(cppi->musb, cppi->mregs, rx->index + 1);
 		csr = musb_readw(regs, MUSB_RXCSR);
 		if (csr & MUSB_RXCSR_DMAENAB) {
 			dev_dbg(musb->controller, "list%d %p/%p, last %llx%s, csr %04x\n",
@@ -1315,8 +1317,8 @@ irqreturn_t cppi_interrupt(int irq, void *dev_id)
 }
 
 /* Instantiate a software object representing a DMA controller. */
-struct dma_controller *__init
-dma_controller_create(struct musb *musb, void __iomem *mregs)
+struct dma_controller *__devinit
+cppi_dma_controller_create(struct musb *musb, void __iomem *mregs)
 {
 	struct cppi		*controller;
 	struct device		*dev = musb->controller;
@@ -1355,7 +1357,7 @@ dma_controller_create(struct musb *musb, void __iomem *mregs)
 	if (irq > 0) {
 		if (request_irq(irq, cppi_interrupt, 0, "cppi-dma", musb)) {
 			dev_err(dev, "request_irq %d failed!\n", irq);
-			dma_controller_destroy(&controller->controller);
+			cppi_dma_controller_destroy(&controller->controller);
 			return NULL;
 		}
 		controller->irq = irq;
@@ -1363,11 +1365,12 @@ dma_controller_create(struct musb *musb, void __iomem *mregs)
 
 	return &controller->controller;
 }
+EXPORT_SYMBOL(cppi_dma_controller_create);
 
 /*
  *  Destroy a previously-instantiated DMA controller.
  */
-void dma_controller_destroy(struct dma_controller *c)
+void cppi_dma_controller_destroy(struct dma_controller *c)
 {
 	struct cppi	*cppi;
 
@@ -1381,6 +1384,7 @@ void dma_controller_destroy(struct dma_controller *c)
 
 	kfree(cppi);
 }
+EXPORT_SYMBOL(cppi_dma_controller_destroy);
 
 /*
  * Context: controller irqlocked, endpoint selected
@@ -1428,7 +1432,7 @@ static int cppi_channel_abort(struct dma_channel *channel)
 	 * and caller should rely on us not changing it.
 	 * peripheral code is safe ... check host too.
 	 */
-	musb_ep_select(mbase, cppi_ch->index + 1);
+	musb_ep_select(controller->musb, mbase, cppi_ch->index + 1);
 
 	if (cppi_ch->transmit) {
 		struct cppi_tx_stateram __iomem *tx_ram;
@@ -1561,3 +1565,16 @@ static int cppi_channel_abort(struct dma_channel *channel)
  * Power Management ... probably turn off cppi during suspend, restart;
  * check state ram?  Clocking is presumably shared with usb core.
  */
+MODULE_DESCRIPTION("CPPI dma controller driver for musb");
+MODULE_LICENSE("GPL v2");
+
+static int __init cppi_dma_init(void)
+{
+	return 0;
+}
+module_init(cppi_dma_init);
+
+static void __exit cppi_dma__exit(void)
+{
+}
+module_exit(cppi_dma__exit);

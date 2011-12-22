@@ -147,6 +147,7 @@
 
 #include "cm2xxx_3xxx.h"
 #include "cminst44xx.h"
+#include "cminst33xx.h"
 #include "prm2xxx_3xxx.h"
 #include "prm44xx.h"
 #include "prminst44xx.h"
@@ -689,7 +690,7 @@ static void _disable_optional_clocks(struct omap_hwmod *oh)
 static void _enable_module(struct omap_hwmod *oh)
 {
 	/* The module mode does not exist prior OMAP4 */
-	if (cpu_is_omap24xx() || cpu_is_omap34xx())
+	if (!cpu_is_am33xx() && (cpu_is_omap24xx() || cpu_is_omap34xx()))
 		return;
 
 	if (!oh->clkdm || !oh->prcm.omap4.modulemode)
@@ -698,7 +699,13 @@ static void _enable_module(struct omap_hwmod *oh)
 	pr_debug("omap_hwmod: %s: _enable_module: %d\n",
 		 oh->name, oh->prcm.omap4.modulemode);
 
-	omap4_cminst_module_enable(oh->prcm.omap4.modulemode,
+	if (cpu_is_am33xx())
+		am33xx_cminst_module_enable(oh->prcm.omap4.modulemode,
+				   oh->clkdm->cm_inst,
+				   oh->clkdm->clkdm_offs,
+				   oh->prcm.omap4.clkctrl_offs);
+	else
+		omap4_cminst_module_enable(oh->prcm.omap4.modulemode,
 				   oh->clkdm->prcm_partition,
 				   oh->clkdm->cm_inst,
 				   oh->clkdm->clkdm_offs,
@@ -715,7 +722,7 @@ static void _enable_module(struct omap_hwmod *oh)
 static void _disable_module(struct omap_hwmod *oh)
 {
 	/* The module mode does not exist prior OMAP4 */
-	if (cpu_is_omap24xx() || cpu_is_omap34xx())
+	if (!cpu_is_am33xx() && (cpu_is_omap24xx() || cpu_is_omap34xx()))
 		return;
 
 	if (!oh->clkdm || !oh->prcm.omap4.modulemode)
@@ -723,7 +730,12 @@ static void _disable_module(struct omap_hwmod *oh)
 
 	pr_debug("omap_hwmod: %s: _disable_module\n", oh->name);
 
-	omap4_cminst_module_disable(oh->clkdm->prcm_partition,
+	if (cpu_is_am33xx())
+		am33xx_cminst_module_disable(oh->clkdm->cm_inst,
+				    oh->clkdm->clkdm_offs,
+				    oh->prcm.omap4.clkctrl_offs);
+	else
+		omap4_cminst_module_disable(oh->clkdm->prcm_partition,
 				    oh->clkdm->cm_inst,
 				    oh->clkdm->clkdm_offs,
 				    oh->prcm.omap4.clkctrl_offs);
@@ -1051,7 +1063,7 @@ static struct omap_hwmod *_lookup(const char *name)
  */
 static int _init_clkdm(struct omap_hwmod *oh)
 {
-	if (cpu_is_omap24xx() || cpu_is_omap34xx())
+	if (cpu_is_omap24xx() || (cpu_is_omap34xx() && !cpu_is_am33xx()))
 		return 0;
 
 	if (!oh->clkdm_name) {
@@ -1134,9 +1146,14 @@ static int _wait_target_ready(struct omap_hwmod *oh)
 	/* XXX check clock enable states */
 
 	if (cpu_is_omap24xx() || cpu_is_omap34xx()) {
-		ret = omap2_cm_wait_module_ready(oh->prcm.omap2.module_offs,
-						 oh->prcm.omap2.idlest_reg_id,
-						 oh->prcm.omap2.idlest_idle_bit);
+		if (cpu_is_am33xx())
+			ret = am33xx_cm_wait_module_ready(oh->clkdm->cm_inst,
+						oh->prcm.omap4.clkctrl_offs);
+		else
+			ret = omap2_cm_wait_module_ready(
+						oh->prcm.omap2.module_offs,
+						oh->prcm.omap2.idlest_reg_id,
+						oh->prcm.omap2.idlest_idle_bit);
 	} else if (cpu_is_omap44xx()) {
 		if (!oh->clkdm)
 			return -EINVAL;
@@ -1164,7 +1181,7 @@ static int _wait_target_ready(struct omap_hwmod *oh)
 static int _wait_target_disable(struct omap_hwmod *oh)
 {
 	/* TODO: For now just handle OMAP4+ */
-	if (cpu_is_omap24xx() || cpu_is_omap34xx())
+	if (!cpu_is_am33xx() && (cpu_is_omap24xx() || cpu_is_omap34xx()))
 		return 0;
 
 	if (!oh)
@@ -1176,7 +1193,12 @@ static int _wait_target_disable(struct omap_hwmod *oh)
 	if (oh->flags & HWMOD_NO_IDLEST)
 		return 0;
 
-	return omap4_cminst_wait_module_idle(oh->clkdm->prcm_partition,
+	if (cpu_is_am33xx())
+		return am33xx_cminst_wait_module_idle(oh->clkdm->cm_inst,
+					     oh->clkdm->clkdm_offs,
+					     oh->prcm.omap4.clkctrl_offs);
+	else
+		return omap4_cminst_wait_module_idle(oh->clkdm->prcm_partition,
 					     oh->clkdm->cm_inst,
 					     oh->clkdm->clkdm_offs,
 					     oh->prcm.omap4.clkctrl_offs);
@@ -1954,9 +1976,6 @@ int __init omap_hwmod_register(struct omap_hwmod **ohs)
 
 	i = 0;
 	do {
-		if (!omap_chip_is(ohs[i]->omap_chip))
-			continue;
-
 		r = _register(ohs[i]);
 		WARN(r, "omap_hwmod: %s: _register returned %d\n", ohs[i]->name,
 		     r);
@@ -2628,7 +2647,7 @@ ohsps_unlock:
  * Returns the context loss count of the powerdomain assocated with @oh
  * upon success, or zero if no powerdomain exists for @oh.
  */
-u32 omap_hwmod_get_context_loss_count(struct omap_hwmod *oh)
+int omap_hwmod_get_context_loss_count(struct omap_hwmod *oh)
 {
 	struct powerdomain *pwrdm;
 	int ret = 0;

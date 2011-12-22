@@ -287,7 +287,7 @@ static irqreturn_t davinci_musb_interrupt(int irq, void *__hci)
 	 * mask, state, "vector", and EOI registers.
 	 */
 	cppi = container_of(musb->dma_controller, struct cppi, controller);
-	if (is_cppi_enabled() && musb->dma_controller && !cppi->irq)
+	if (is_cppi_enabled(musb) && musb->dma_controller && !cppi->irq)
 		retval = cppi_interrupt(irq, __hci);
 
 	/* ack and handle non-CPPI interrupts */
@@ -385,8 +385,8 @@ static int davinci_musb_init(struct musb *musb)
 	void __iomem	*tibase = musb->ctrl_base;
 	u32		revision;
 
-	usb_nop_xceiv_register();
-	musb->xceiv = otg_get_transceiver();
+	usb_nop_xceiv_register(musb->id);
+	musb->xceiv = otg_get_transceiver(musb->id);
 	if (!musb->xceiv)
 		return -ENODEV;
 
@@ -446,7 +446,7 @@ static int davinci_musb_init(struct musb *musb)
 
 fail:
 	otg_put_transceiver(musb->xceiv);
-	usb_nop_xceiv_unregister();
+	usb_nop_xceiv_unregister(musb->id);
 	return -ENODEV;
 }
 
@@ -495,12 +495,14 @@ static int davinci_musb_exit(struct musb *musb)
 	phy_off();
 
 	otg_put_transceiver(musb->xceiv);
-	usb_nop_xceiv_unregister();
+	usb_nop_xceiv_unregister(musb->id);
 
 	return 0;
 }
 
 static const struct musb_platform_ops davinci_ops = {
+	.fifo_mode	= 2,
+	.flags		= MUSB_GLUE_EP_ADDR_FLAT_MAPPING | MUSB_GLUE_DMA_CPPI,
 	.init		= davinci_musb_init,
 	.exit		= davinci_musb_exit,
 
@@ -510,6 +512,12 @@ static const struct musb_platform_ops davinci_ops = {
 	.set_mode	= davinci_musb_set_mode,
 
 	.set_vbus	= davinci_musb_set_vbus,
+
+	.read_fifo	= musb_read_fifo,
+	.write_fifo	= musb_write_fifo,
+
+	.dma_controller_create = cppi_dma_controller_create,
+	.dma_controller_destroy = cppi_dma_controller_destroy,
 };
 
 static u64 davinci_dmamask = DMA_BIT_MASK(32);

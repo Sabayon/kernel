@@ -836,11 +836,9 @@ complete:
 				~(OMAP_I2C_STAT_RRDY | OMAP_I2C_STAT_RDR |
 				OMAP_I2C_STAT_XRDY | OMAP_I2C_STAT_XDR));
 
-		if (stat & OMAP_I2C_STAT_NACK) {
+		if (stat & OMAP_I2C_STAT_NACK)
 			err |= OMAP_I2C_STAT_NACK;
-			omap_i2c_write_reg(dev, OMAP_I2C_CON_REG,
-					   OMAP_I2C_CON_STP);
-		}
+
 		if (stat & OMAP_I2C_STAT_AL) {
 			dev_err(dev->dev, "Arbitration lost\n");
 			err |= OMAP_I2C_STAT_AL;
@@ -1029,12 +1027,12 @@ omap_i2c_probe(struct platform_device *pdev)
 
 	if (cpu_is_omap7xx())
 		dev->reg_shift = 1;
-	else if (cpu_is_omap44xx())
+	else if (cpu_is_omap44xx() || cpu_is_am33xx())
 		dev->reg_shift = 0;
 	else
 		dev->reg_shift = 2;
 
-	if (cpu_is_omap44xx())
+	if (cpu_is_omap44xx() || cpu_is_am33xx())
 		dev->regs = (u8 *) omap4_reg_map;
 	else
 		dev->regs = (u8 *) reg_map;

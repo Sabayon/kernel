@@ -2202,7 +2202,7 @@ config FB_SH7760
 
 config FB_DA8XX
 	tristate "DA8xx/OMAP-L1xx Framebuffer support"
-	depends on FB && ARCH_DAVINCI_DA8XX
+	depends on FB && (ARCH_DAVINCI_DA8XX || MACH_AM335XEVM)
 	select FB_CFB_FILLRECT
 	select FB_CFB_COPYAREA
 	select FB_CFB_IMAGEBLIT
@@ -2210,6 +2210,17 @@ config FB_DA8XX
 	  This is the frame buffer device driver for the TI LCD controller
 	  found on DA8xx/OMAP-L1xx SoCs.
 	  If unsure, say N.
+
+config FB_DA8XX_CONSISTENT_DMA_SIZE
+	int "Consistent DMA memory size (MB)"
+	depends on (FB_DA8XX && MACH_AM335XEVM)
+	range 1 14
+	default 4
+	help
+	  Increase the DMA consistent memory size according to your video
+	  memory needs, for example if you want to use multiple planes.
+	  The size must be 2MB aligned.
+	  If unsure say 1.
 
 config FB_VIRTUAL
 	tristate "Virtual Frame Buffer support (ONLY FOR TESTING!)"
@@ -2381,6 +2392,17 @@ config FB_PUV3_UNIGFX
 	help
 	  Choose this option if you want to use the Unigfx device as a
 	  framebuffer device. Without the support of PCI & AGP.
+
+config FB_ST7735
+	tristate "ST7735 framebuffer support"
+	depends on FB && SPI
+	select FB_SYS_FILLRECT
+	select FB_SYS_COPYAREA
+	select FB_SYS_IMAGEBLIT
+	select FB_SYS_FOPS
+	select FB_DEFERRED_IO
+	help
+	  Framebuffer support for the ST7735 display controller in SPI mode.
 
 source "drivers/video/omap/Kconfig"
 source "drivers/video/omap2/Kconfig"

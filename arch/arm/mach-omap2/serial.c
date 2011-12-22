@@ -107,28 +107,6 @@ struct omap_uart_state {
 static LIST_HEAD(uart_list);
 static u8 num_uarts;
 
-static int uart_idle_hwmod(struct omap_device *od)
-{
-	omap_hwmod_idle(od->hwmods[0]);
-
-	return 0;
-}
-
-static int uart_enable_hwmod(struct omap_device *od)
-{
-	omap_hwmod_enable(od->hwmods[0]);
-
-	return 0;
-}
-
-static struct omap_device_pm_latency omap_uart_latency[] = {
-	{
-		.deactivate_func = uart_idle_hwmod,
-		.activate_func	 = uart_enable_hwmod,
-		.flags = OMAP_DEVICE_LATENCY_AUTO_ADJUST,
-	},
-};
-
 static inline unsigned int __serial_read_reg(struct uart_port *up,
 					     int offset)
 {
@@ -486,7 +464,7 @@ static void omap_uart_idle_init(struct omap_uart_state *uart)
 		mod_timer(&uart->timer, jiffies + uart->timeout);
 	omap_uart_smart_idle_enable(uart, 0);
 
-	if (cpu_is_omap34xx() && !cpu_is_ti816x()) {
+	if (cpu_is_omap34xx() && !(cpu_is_ti816x() || cpu_is_am33xx())) {
 		u32 mod = (uart->num > 1) ? OMAP3430_PER_MOD : CORE_MOD;
 		u32 wk_mask = 0;
 		u32 padconf = 0;
@@ -711,7 +689,7 @@ void __init omap_serial_init_port(struct omap_board_data *bdata)
 {
 	struct omap_uart_state *uart;
 	struct omap_hwmod *oh;
-	struct omap_device *od;
+	struct platform_device *pdev;
 	void *pdata = NULL;
 	u32 pdata_size = 0;
 	char *name;
@@ -768,7 +746,7 @@ void __init omap_serial_init_port(struct omap_board_data *bdata)
 	 */
 	uart->regshift = p->regshift;
 	uart->membase = p->membase;
-	if (cpu_is_omap44xx() || cpu_is_ti816x())
+	if (cpu_is_omap44xx() || cpu_is_ti816x() || cpu_is_am33xx())
 		uart->errata |= UART_ERRATA_FIFO_FULL_ABORT;
 	else if ((serial_read_reg(uart, UART_OMAP_MVER) & 0xFF)
 			>= UART_OMAP_NO_EMPTY_FIFO_READ_IP_REV)
@@ -799,20 +777,19 @@ void __init omap_serial_init_port(struct omap_board_data *bdata)
 	if (WARN_ON(!oh))
 		return;
 
-	od = omap_device_build(name, uart->num, oh, pdata, pdata_size,
-			       omap_uart_latency,
-			       ARRAY_SIZE(omap_uart_latency), false);
-	WARN(IS_ERR(od), "Could not build omap_device for %s: %s.\n",
+	pdev = omap_device_build(name, uart->num, oh, pdata, pdata_size,
+				 NULL, 0, false);
+	WARN(IS_ERR(pdev), "Could not build omap_device for %s: %s.\n",
 	     name, oh->name);
 
-	omap_device_disable_idle_on_suspend(od);
+	omap_device_disable_idle_on_suspend(pdev);
 	oh->mux = omap_hwmod_mux_init(bdata->pads, bdata->pads_cnt);
 
 	uart->irq = oh->mpu_irqs[0].irq;
 	uart->regshift = 2;
 	uart->mapbase = oh->slaves[0]->addr->pa_start;
 	uart->membase = omap_hwmod_get_mpu_rt_va(oh);
-	uart->pdev = &od->pdev;
+	uart->pdev = pdev;
 
 	oh->dev_attr = uart;
 
@@ -846,12 +823,12 @@ void __init omap_serial_init_port(struct omap_board_data *bdata)
 
 	if ((cpu_is_omap34xx() && uart->padconf) ||
 	    (uart->wk_en && uart->wk_mask)) {
-		device_init_wakeup(&od->pdev.dev, true);
-		DEV_CREATE_FILE(&od->pdev.dev, &dev_attr_sleep_timeout);
+		device_init_wakeup(&pdev->dev, true);
+		DEV_CREATE_FILE(&pdev->dev, &dev_attr_sleep_timeout);
 	}
 
 	/* Enable the MDR1 errata for OMAP3 */
-	if (cpu_is_omap34xx() && !cpu_is_ti816x())
+	if (cpu_is_omap34xx() && !(cpu_is_ti816x() || cpu_is_am33xx()))
 		uart->errata |= UART_ERRATA_i202_MDR1_ACCESS;
 }
 

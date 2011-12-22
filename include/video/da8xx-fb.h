@@ -13,7 +13,8 @@
 #define DA8XX_FB_H
 
 enum panel_type {
-	QVGA = 0
+	QVGA = 0,
+	WVGA,
 };
 
 enum panel_shade {
@@ -28,7 +29,7 @@ enum raster_load_mode {
 };
 
 struct display_panel {
-	enum panel_type panel_type; /* QVGA */
+	enum panel_type panel_type;
 	int max_bpp;
 	int min_bpp;
 	enum panel_shade panel_shade;
@@ -82,6 +83,9 @@ struct lcd_ctrl_config {
 
 	/* Raster Data Order Select: 1=Most-to-least 0=Least-to-most */
 	unsigned char raster_order;
+
+	/* DMA FIFO threshold */
+	int fifo_th;
 };
 
 struct lcd_sync_arg {
@@ -99,6 +103,10 @@ struct lcd_sync_arg {
 #define FBIPUT_COLOR		_IOW('F', 6, int)
 #define FBIPUT_HSYNC		_IOW('F', 9, int)
 #define FBIPUT_VSYNC		_IOW('F', 10, int)
+
+typedef void (*vsync_callback_t)(void *arg);
+int register_vsync_cb(vsync_callback_t handler, void *arg, int idx);
+int unregister_vsync_cb(vsync_callback_t handler, void *arg, int idx);
 
 #endif  /* ifndef DA8XX_FB_H */
 

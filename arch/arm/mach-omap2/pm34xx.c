@@ -55,7 +55,7 @@
 static suspend_state_t suspend_state = PM_SUSPEND_ON;
 static inline bool is_suspending(void)
 {
-	return (suspend_state != PM_SUSPEND_ON);
+	return (suspend_state != PM_SUSPEND_ON) && console_suspend_enabled;
 }
 #else
 static inline bool is_suspending(void)
@@ -678,7 +678,9 @@ static void __init prcm_setup_regs(void)
 					OMAP3630_GRPSEL_UART4_MASK : 0;
 
 	/* XXX This should be handled by hwmod code or SCM init code */
-	omap_ctrl_writel(OMAP3430_AUTOIDLE_MASK, OMAP2_CONTROL_SYSCONFIG);
+	/* This causes MUSB failure on AM3517 so disable it. */
+	if (!cpu_is_omap3517() && !cpu_is_omap3505())
+		omap_ctrl_writel(OMAP3430_AUTOIDLE_MASK, OMAP2_CONTROL_SYSCONFIG);
 
 	/*
 	 * Enable control of expternal oscillator through
@@ -867,7 +869,7 @@ static int __init omap3_pm_init(void)
 	struct clockdomain *neon_clkdm, *per_clkdm, *mpu_clkdm, *core_clkdm;
 	int ret;
 
-	if (!cpu_is_omap34xx())
+	if (!cpu_is_omap34xx() || cpu_is_am33xx())
 		return -ENODEV;
 
 	pm_errata_configure();

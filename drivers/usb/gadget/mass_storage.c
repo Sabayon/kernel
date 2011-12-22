@@ -60,7 +60,9 @@
 #include "composite.c"
 #include "usbstring.c"
 #include "config.c"
+#ifdef CONFIG_USB_MASS_STORAGE_MODULE
 #include "epautoconf.c"
+#endif
 #include "f_mass_storage.c"
 
 /*-------------------------------------------------------------------------*/

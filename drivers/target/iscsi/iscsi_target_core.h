@@ -57,6 +57,9 @@
 #define TA_PROD_MODE_WRITE_PROTECT	0
 #define TA_CACHE_CORE_NPS		0
 
+
+#define ISCSI_IOV_DATA_BUFFER		5
+
 enum tpg_np_network_transport_table {
 	ISCSI_TCP				= 0,
 	ISCSI_SCTP_TCP				= 1,
@@ -395,7 +398,6 @@ struct iscsi_cmd {
 	u32			pdu_send_order;
 	/* Current struct iscsi_pdu in struct iscsi_cmd->pdu_list */
 	u32			pdu_start;
-	u32			residual_count;
 	/* Next struct iscsi_seq to send in struct iscsi_cmd->seq_list */
 	u32			seq_send_order;
 	/* Number of struct iscsi_seq in struct iscsi_cmd->seq_list */
@@ -425,7 +427,6 @@ struct iscsi_cmd {
 	/* Number of times struct iscsi_cmd is present in immediate queue */
 	atomic_t		immed_queue_count;
 	atomic_t		response_queue_count;
-	atomic_t		transport_sent;
 	spinlock_t		datain_lock;
 	spinlock_t		dataout_timeout_lock;
 	/* spinlock for protecting struct iscsi_cmd->i_state */
@@ -533,7 +534,6 @@ struct iscsi_conn {
 	atomic_t		connection_exit;
 	atomic_t		connection_recovery;
 	atomic_t		connection_reinstatement;
-	atomic_t		connection_wait;
 	atomic_t		connection_wait_rcfr;
 	atomic_t		sleep_on_conn_wait_comp;
 	atomic_t		transport_failed;
@@ -641,7 +641,6 @@ struct iscsi_session {
 	atomic_t		session_reinstatement;
 	atomic_t		session_stop_active;
 	atomic_t		sleep_on_sess_wait_comp;
-	atomic_t		transport_wait_cmds;
 	/* connection list */
 	struct list_head	sess_conn_list;
 	struct list_head	cr_active_list;

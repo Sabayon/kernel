@@ -40,6 +40,7 @@
 #include <mach/mmc.h>
 
 #include <mach/dma.h>
+#include <mach/hardware.h>
 
 #define DRIVER_NAME "mxc-mmc"
 
@@ -731,6 +732,7 @@ static void mxcmci_set_ios(struct mmc_host *mmc, struct mmc_ios *ios)
 				"failed to config DMA channel. Falling back to PIO\n");
 			dma_release_channel(host->dma);
 			host->do_dma = 0;
+			host->dma = NULL;
 		}
 	}
 
@@ -842,7 +844,7 @@ static int mxcmci_probe(struct platform_device *pdev)
 	int ret = 0, irq;
 	dma_cap_mask_t mask;
 
-	printk(KERN_INFO "i.MX SDHC driver\n");
+	pr_info("i.MX SDHC driver\n");
 
 	iores = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	irq = platform_get_irq(pdev, 0);

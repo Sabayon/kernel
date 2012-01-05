@@ -22,6 +22,7 @@
 #include <linux/hardirq.h>
 #include <linux/kthread.h>
 #include <linux/uaccess.h>
+#include <linux/module.h>
 #include <linux/ftrace.h>
 #include <linux/sysctl.h>
 #include <linux/slab.h>
@@ -151,7 +152,6 @@ void clear_ftrace_function(void)
 	ftrace_pid_function = ftrace_stub;
 }
 
-#undef CONFIG_HAVE_FUNCTION_TRACE_MCOUNT_TEST
 #ifndef CONFIG_HAVE_FUNCTION_TRACE_MCOUNT_TEST
 /*
  * For those archs that do not test ftrace_trace_stop in their
@@ -1211,7 +1211,9 @@ ftrace_hash_move(struct ftrace_ops *ops, int enable,
 	if (!src->count) {
 		free_ftrace_hash_rcu(*dst);
 		rcu_assign_pointer(*dst, EMPTY_HASH);
-		return 0;
+		/* still need to update the function records */
+		ret = 0;
+		goto out;
 	}
 
 	/*
@@ -3860,6 +3862,14 @@ void ftrace_kill(void)
 	ftrace_disabled = 1;
 	ftrace_enabled = 0;
 	clear_ftrace_function();
+}
+
+/**
+ * Test if ftrace is dead or not.
+ */
+int ftrace_is_dead(void)
+{
+	return ftrace_disabled;
 }
 
 /**

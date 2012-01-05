@@ -15,17 +15,19 @@
 #include "../../fs/internal.h"
 
 /**
- * tomoyo_encode: Convert binary string to ascii string.
+ * tomoyo_encode2 - Encode binary string to ascii string.
  *
- * @str: String in binary format.
+ * @str:     String in binary format.
+ * @str_len: Size of @str in byte.
  *
  * Returns pointer to @str in ascii format on success, NULL otherwise.
  *
  * This function uses kzalloc(), so caller must kfree() if this function
  * didn't return NULL.
  */
-char *tomoyo_encode(const char *str)
+char *tomoyo_encode2(const char *str, int str_len)
 {
+	int i;
 	int len = 0;
 	const char *p = str;
 	char *cp;
@@ -33,8 +35,9 @@ char *tomoyo_encode(const char *str)
 
 	if (!p)
 		return NULL;
-	while (*p) {
-		const unsigned char c = *p++;
+	for (i = 0; i < str_len; i++) {
+		const unsigned char c = p[i];
+
 		if (c == '\\')
 			len += 2;
 		else if (c > ' ' && c < 127)
@@ -49,8 +52,8 @@ char *tomoyo_encode(const char *str)
 		return NULL;
 	cp0 = cp;
 	p = str;
-	while (*p) {
-		const unsigned char c = *p++;
+	for (i = 0; i < str_len; i++) {
+		const unsigned char c = p[i];
 
 		if (c == '\\') {
 			*cp++ = '\\';
@@ -65,6 +68,21 @@ char *tomoyo_encode(const char *str)
 		}
 	}
 	return cp0;
+}
+
+/**
+ * tomoyo_encode - Encode binary string to ascii string.
+ *
+ * @str: String in binary format.
+ *
+ * Returns pointer to @str in ascii format on success, NULL otherwise.
+ *
+ * This function uses kzalloc(), so caller must kfree() if this function
+ * didn't return NULL.
+ */
+char *tomoyo_encode(const char *str)
+{
+	return str ? tomoyo_encode2(str, strlen(str)) : NULL;
 }
 
 /**
@@ -83,9 +101,8 @@ static char *tomoyo_get_absolute_path(struct path *path, char * const buffer,
 {
 	char *pos = ERR_PTR(-ENOMEM);
 	if (buflen >= 256) {
-		struct path ns_root = { };
 		/* go to whatever namespace root we are under */
-		pos = __d_path(path, &ns_root, buffer, buflen - 1);
+		pos = d_absolute_path(path, buffer, buflen - 1);
 		if (!IS_ERR(pos) && *pos == '/' && pos[1]) {
 			struct inode *inode = path->dentry->d_inode;
 			if (inode && S_ISDIR(inode->i_mode)) {
@@ -276,8 +293,16 @@ char *tomoyo_realpath_from_path(struct path *path)
 			pos = tomoyo_get_local_path(path->dentry, buf,
 						    buf_len - 1);
 		/* Get absolute name for the rest. */
-		else
+		else {
 			pos = tomoyo_get_absolute_path(path, buf, buf_len - 1);
+			/*
+			 * Fall back to local name if absolute name is not
+			 * available.
+			 */
+			if (pos == ERR_PTR(-EINVAL))
+				pos = tomoyo_get_local_path(path->dentry, buf,
+							    buf_len - 1);
+		}
 encode:
 		if (IS_ERR(pos))
 			continue;

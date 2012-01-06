@@ -36,6 +36,8 @@ void au_warn_loopback(struct super_block *h_sb);
 
 int au_loopback_init(void);
 void au_loopback_fin(void);
+
+struct file *aufs_real_loop(struct file *file);
 #else
 AuStubInt0(au_test_loopback_overlap, struct super_block *sb,
 	   struct dentry *h_adding)
@@ -44,6 +46,8 @@ AuStubVoid(au_warn_loopback, struct super_block *h_sb)
 
 AuStubInt0(au_loopback_init, void)
 AuStubVoid(au_loopback_fin, void)
+
+AuStub(struct file *, aufs_real_loop, return NULL, struct file *file)
 #endif /* BLK_DEV_LOOP */
 
 #endif /* __KERNEL__ */

@@ -357,7 +357,7 @@ static ssize_t aufs_splice_read(struct file *file, loff_t *ppos,
 	err = -EINVAL;
 	h_file = au_hf_top(file);
 	get_file(h_file);
-	if (au_test_loopback_kthread()) {
+	if (0 && au_test_loopback_kthread()) {
 		au_warn_loopback(h_file->f_dentry->d_sb);
 		if (file->f_mapping != h_file->f_mapping) {
 			file->f_mapping = h_file->f_mapping;

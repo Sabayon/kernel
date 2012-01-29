@@ -3271,10 +3271,10 @@
 /* or SDVOB */
 #define HDMIB   0xe1140
 #define  PORT_ENABLE    (1 << 31)
-#define  TRANSCODER_A   (0)
-#define  TRANSCODER_B   (1 << 30)
-#define  TRANSCODER(pipe)	((pipe) << 30)
-#define  TRANSCODER_MASK   (1 << 30)
+#define  TRANSCODER(pipe)       ((pipe) << 30)
+#define  TRANSCODER_CPT(pipe)   ((pipe) << 29)
+#define  TRANSCODER_MASK        (1 << 30)
+#define  TRANSCODER_MASK_CPT    (3 << 29)
 #define  COLOR_FORMAT_8bpc      (0)
 #define  COLOR_FORMAT_12bpc     (3 << 26)
 #define  SDVOB_HOTPLUG_ENABLE   (1 << 23)
@@ -3400,6 +3400,10 @@
 
 #define  GT_FIFO_FREE_ENTRIES			0x120008
 #define    GT_FIFO_NUM_RESERVED_ENTRIES		20
+
+#define GEN6_UCGCTL2				0x9404
+# define GEN6_RCPBUNIT_CLOCK_GATE_DISABLE		(1 << 12)
+# define GEN6_RCCUNIT_CLOCK_GATE_DISABLE		(1 << 11)
 
 #define GEN6_RPNSWREQ				0xA008
 #define   GEN6_TURBO_DISABLE			(1<<31)

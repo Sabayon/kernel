@@ -214,6 +214,7 @@ struct sigmatel_spec {
 	unsigned int gpio_mute;
 	unsigned int gpio_led;
 	unsigned int gpio_led_polarity;
+	unsigned int vref_mute_led_nid; /* pin NID for mute-LED vref control */
 	unsigned int vref_led;
 
 	/* stream */
@@ -4298,13 +4299,32 @@ static void stac_store_hints(struct hda_codec *codec)
 		spec->eapd_switch = val;
 	get_int_hint(codec, "gpio_led_polarity", &spec->gpio_led_polarity);
 	if (get_int_hint(codec, "gpio_led", &spec->gpio_led)) {
-		if (spec->gpio_led <= 8) {
-			spec->gpio_mask |= spec->gpio_led;
-			spec->gpio_dir |= spec->gpio_led;
-			if (spec->gpio_led_polarity)
-				spec->gpio_data |= spec->gpio_led;
-		}
+		spec->gpio_mask |= spec->gpio_led;
+		spec->gpio_dir |= spec->gpio_led;
+		if (spec->gpio_led_polarity)
+			spec->gpio_data |= spec->gpio_led;
 	}
+}
+
+static void stac_issue_unsol_events(struct hda_codec *codec, int num_pins,
+				    const hda_nid_t *pins)
+{
+	while (num_pins--)
+		stac_issue_unsol_event(codec, *pins++);
+}
+
+/* fake event to set up pins */
+static void stac_fake_hp_events(struct hda_codec *codec)
+{
+	struct sigmatel_spec *spec = codec->spec;
+
+	if (spec->autocfg.hp_outs)
+		stac_issue_unsol_events(codec, spec->autocfg.hp_outs,
+					spec->autocfg.hp_pins);
+	if (spec->autocfg.line_outs &&
+	    spec->autocfg.line_out_pins[0] != spec->autocfg.hp_pins[0])
+		stac_issue_unsol_events(codec, spec->autocfg.line_outs,
+					spec->autocfg.line_out_pins);
 }
 
 static int stac92xx_init(struct hda_codec *codec)
@@ -4357,10 +4377,7 @@ static int stac92xx_init(struct hda_codec *codec)
 		stac92xx_auto_set_pinctl(codec, spec->autocfg.line_out_pins[0],
 				AC_PINCTL_OUT_EN);
 		/* fake event to set up pins */
-		if (cfg->hp_pins[0])
-			stac_issue_unsol_event(codec, cfg->hp_pins[0]);
-		else if (cfg->line_out_pins[0])
-			stac_issue_unsol_event(codec, cfg->line_out_pins[0]);
+		stac_fake_hp_events(codec);
 	} else {
 		stac92xx_auto_init_multi_out(codec);
 		stac92xx_auto_init_hp_out(codec);
@@ -4893,8 +4910,14 @@ static int find_mute_led_gpio(struct hda_codec *codec, int default_polarity)
 			if (sscanf(dev->name, "HP_Mute_LED_%d_%x",
 				  &spec->gpio_led_polarity,
 				  &spec->gpio_led) == 2) {
-				if (spec->gpio_led < 4)
+				unsigned int max_gpio;
+				max_gpio = snd_hda_param_read(codec, codec->afg,
+							      AC_PAR_GPIO_CAP);
+				max_gpio &= AC_GPIO_IO_COUNT;
+				if (spec->gpio_led < max_gpio)
 					spec->gpio_led = 1 << spec->gpio_led;
+				else
+					spec->vref_mute_led_nid = spec->gpio_led;
 				return 1;
 			}
 			if (sscanf(dev->name, "HP_Mute_LED_%d",
@@ -4995,19 +5018,11 @@ static void stac927x_proc_hook(struct snd_info_buffer *buffer,
 #ifdef CONFIG_PM
 static int stac92xx_resume(struct hda_codec *codec)
 {
-	struct sigmatel_spec *spec = codec->spec;
-
 	stac92xx_init(codec);
 	snd_hda_codec_resume_amp(codec);
 	snd_hda_codec_resume_cache(codec);
 	/* fake event to set up pins again to override cached values */
-	if (spec->hp_detect) {
-		if (spec->autocfg.hp_pins[0])
-			stac_issue_unsol_event(codec, spec->autocfg.hp_pins[0]);
-		else if (spec->autocfg.line_out_pins[0])
-			stac_issue_unsol_event(codec,
-					       spec->autocfg.line_out_pins[0]);
-	}
+	stac_fake_hp_events(codec);
 	return 0;
 }
 
@@ -5023,29 +5038,12 @@ static int stac92xx_pre_resume(struct hda_codec *codec)
 	struct sigmatel_spec *spec = codec->spec;
 
 	/* sync mute LED */
-	if (spec->gpio_led) {
-		if (spec->gpio_led <= 8) {
-			stac_gpio_set(codec, spec->gpio_mask,
-					spec->gpio_dir, spec->gpio_data);
-		} else {
-			stac_vrefout_set(codec,
-					spec->gpio_led, spec->vref_led);
-		}
-	}
-	return 0;
-}
-
-static int stac92xx_post_suspend(struct hda_codec *codec)
-{
-	struct sigmatel_spec *spec = codec->spec;
-	if (spec->gpio_led > 8) {
-		/* with vref-out pin used for mute led control
-		 * codec AFG is prevented from D3 state, but on
-		 * system suspend it can (and should) be used
-		 */
-		snd_hda_codec_read(codec, codec->afg, 0,
-				AC_VERB_SET_POWER_STATE, AC_PWRST_D3);
-	}
+	if (spec->vref_mute_led_nid)
+		stac_vrefout_set(codec, spec->vref_mute_led_nid,
+				 spec->vref_led);
+	else if (spec->gpio_led)
+		stac_gpio_set(codec, spec->gpio_mask,
+			      spec->gpio_dir, spec->gpio_data);
 	return 0;
 }
 
@@ -5056,7 +5054,7 @@ static void stac92xx_set_power_state(struct hda_codec *codec, hda_nid_t fg,
 	struct sigmatel_spec *spec = codec->spec;
 
 	if (power_state == AC_PWRST_D3) {
-		if (spec->gpio_led > 8) {
+		if (spec->vref_mute_led_nid) {
 			/* with vref-out pin used for mute led control
 			 * codec AFG is prevented from D3 state
 			 */
@@ -5109,7 +5107,7 @@ static int stac92xx_update_led_status(struct hda_codec *codec)
 		}
 	}
 	/*polarity defines *not* muted state level*/
-	if (spec->gpio_led <= 8) {
+	if (!spec->vref_mute_led_nid) {
 		if (muted)
 			spec->gpio_data &= ~spec->gpio_led; /* orange */
 		else
@@ -5127,7 +5125,8 @@ static int stac92xx_update_led_status(struct hda_codec *codec)
 		muted_lvl = spec->gpio_led_polarity ?
 				AC_PINCTL_VREF_GRD : AC_PINCTL_VREF_HIZ;
 		spec->vref_led = muted ? muted_lvl : notmtd_lvl;
-		stac_vrefout_set(codec,	spec->gpio_led, spec->vref_led);
+		stac_vrefout_set(codec,	spec->vref_mute_led_nid,
+				 spec->vref_led);
 	}
 	return 0;
 }
@@ -5648,15 +5647,13 @@ again:
 
 #ifdef CONFIG_SND_HDA_POWER_SAVE
 	if (spec->gpio_led) {
-		if (spec->gpio_led <= 8) {
+		if (!spec->vref_mute_led_nid) {
 			spec->gpio_mask |= spec->gpio_led;
 			spec->gpio_dir |= spec->gpio_led;
 			spec->gpio_data |= spec->gpio_led;
 		} else {
 			codec->patch_ops.set_power_state =
 					stac92xx_set_power_state;
-			codec->patch_ops.post_suspend =
-					stac92xx_post_suspend;
 		}
 		codec->patch_ops.pre_resume = stac92xx_pre_resume;
 		codec->patch_ops.check_power_status =
@@ -5971,15 +5968,13 @@ again:
 
 #ifdef CONFIG_SND_HDA_POWER_SAVE
 	if (spec->gpio_led) {
-		if (spec->gpio_led <= 8) {
+		if (!spec->vref_mute_led_nid) {
 			spec->gpio_mask |= spec->gpio_led;
 			spec->gpio_dir |= spec->gpio_led;
 			spec->gpio_data |= spec->gpio_led;
 		} else {
 			codec->patch_ops.set_power_state =
 					stac92xx_set_power_state;
-			codec->patch_ops.post_suspend =
-					stac92xx_post_suspend;
 		}
 		codec->patch_ops.pre_resume = stac92xx_pre_resume;
 		codec->patch_ops.check_power_status =

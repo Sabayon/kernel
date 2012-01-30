@@ -1,0 +1,23 @@
+#!/bin/sh
+
+#set home path
+#HOME=/home/<user>
+
+#set environment variables
+export DISCIMAGE=/home/prabu/gfx10/
+#export KERNELDIR=/home/prabu/AM35x-OMAP35x-PSP-SDK-03.00.00.04/src/kernel/linux-03.00.00.04
+
+export KERNELDIR=/home/prabu/linux-omap3
+
+export PATH=$PATH:/opt/cslite/arm-2009q1/bin
+export CROSS_COMPILE=arm-none-linux-gnueabi-
+
+#clean the build
+make clean
+
+#uncomment this to perform debug build
+#make BUILD=debug
+ 
+#Perform Release Build
+make
+

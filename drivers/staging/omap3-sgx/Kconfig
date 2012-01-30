@@ -1,0 +1,9 @@
+#
+# SGX Driver Support
+#
+
+config OMAP3_SGX
+	bool "OMAP3 SGX support (TI: 4.03.00.02)"
+	depends on OMAP2_DSS && m
+	help
+	  This is TI's OMAP3 SGX Kernel Modules 4.03.00.02

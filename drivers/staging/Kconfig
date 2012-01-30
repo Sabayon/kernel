@@ -132,4 +132,6 @@ source "drivers/staging/nvec/Kconfig"
 
 source "drivers/staging/media/Kconfig"
 
+source "drivers/staging/omap3-sgx/Kconfig"
+
 endif # STAGING

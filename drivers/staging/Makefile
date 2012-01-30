@@ -42,6 +42,7 @@ obj-$(CONFIG_WLAGS49_H2)	+= wlags49_h2/
 obj-$(CONFIG_WLAGS49_H25)	+= wlags49_h25/
 obj-$(CONFIG_FB_SM7XX)		+= sm7xx/
 obj-$(CONFIG_CRYSTALHD)		+= crystalhd/
+obj-$(CONFIG_OMAP3_SGX) 	+= omap3-sgx/
 obj-$(CONFIG_CXT1E1)		+= cxt1e1/
 obj-$(CONFIG_FB_XGI)		+= xgifb/
 obj-$(CONFIG_TIDSPBRIDGE)	+= tidspbridge/

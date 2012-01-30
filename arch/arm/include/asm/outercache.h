@@ -32,6 +32,7 @@ struct outer_cache_fns {
 	void (*disable)(void);
 #ifdef CONFIG_OUTER_CACHE_SYNC
 	void (*sync)(void);
+	void (*clean_all)(void);
 #endif
 	void (*set_debug)(unsigned long);
 	void (*resume)(void);
@@ -101,8 +102,15 @@ static inline void outer_sync(void)
 	if (outer_cache.sync)
 		outer_cache.sync();
 }
+static inline void outer_clean_all(void)
+{
+	if (outer_cache.clean_all)
+		outer_cache.clean_all();
+}
 #else
 static inline void outer_sync(void)
+{ }
+static inline void outer_clean_all(void)
 { }
 #endif
 

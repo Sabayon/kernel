@@ -515,6 +515,8 @@ struct overlay_cache_data {
 
 	u32 fifo_low;
 	u32 fifo_high;
+
+	bool manual_update;
 };
 
 struct manager_cache_data {
@@ -528,6 +530,7 @@ struct manager_cache_data {
 
 	struct omap_overlay_manager_info info;
 
+	bool manual_upd_display;
 	bool manual_update;
 	bool do_manual_update;
 
@@ -636,15 +639,24 @@ static int dss_mgr_wait_for_go(struct omap_overlay_manager *mgr)
 	if (!dssdev || dssdev->state != OMAP_DSS_DISPLAY_ACTIVE)
 		return 0;
 
-	if (dssdev->caps & OMAP_DSS_DISPLAY_CAP_MANUAL_UPDATE)
-		return 0;
-
 	if (dssdev->type == OMAP_DISPLAY_TYPE_VENC
 			|| dssdev->type == OMAP_DISPLAY_TYPE_HDMI) {
 		irq = DISPC_IRQ_EVSYNC_ODD | DISPC_IRQ_EVSYNC_EVEN;
 	} else {
-		irq = (dssdev->manager->id == OMAP_DSS_CHANNEL_LCD) ?
-			DISPC_IRQ_VSYNC : DISPC_IRQ_VSYNC2;
+		if (dssdev->caps & OMAP_DSS_DISPLAY_CAP_MANUAL_UPDATE) {
+			enum omap_dss_update_mode mode;
+			mode = dssdev->driver->get_update_mode(dssdev);
+			if (mode != OMAP_DSS_UPDATE_AUTO)
+				return 0;
+
+			irq = (dssdev->manager->id == OMAP_DSS_CHANNEL_LCD) ?
+				DISPC_IRQ_FRAMEDONE
+				: DISPC_IRQ_FRAMEDONE2;
+		} else {
+			irq = (dssdev->manager->id == OMAP_DSS_CHANNEL_LCD) ?
+				DISPC_IRQ_VSYNC
+				: DISPC_IRQ_VSYNC2;
+		}
 	}
 
 	mc = &dss_cache.manager_cache[mgr->id];
@@ -705,15 +717,24 @@ int dss_mgr_wait_for_go_ovl(struct omap_overlay *ovl)
 	if (!dssdev || dssdev->state != OMAP_DSS_DISPLAY_ACTIVE)
 		return 0;
 
-	if (dssdev->caps & OMAP_DSS_DISPLAY_CAP_MANUAL_UPDATE)
-		return 0;
-
 	if (dssdev->type == OMAP_DISPLAY_TYPE_VENC
 			|| dssdev->type == OMAP_DISPLAY_TYPE_HDMI) {
 		irq = DISPC_IRQ_EVSYNC_ODD | DISPC_IRQ_EVSYNC_EVEN;
 	} else {
-		irq = (dssdev->manager->id == OMAP_DSS_CHANNEL_LCD) ?
-			DISPC_IRQ_VSYNC : DISPC_IRQ_VSYNC2;
+		if (dssdev->caps & OMAP_DSS_DISPLAY_CAP_MANUAL_UPDATE) {
+			enum omap_dss_update_mode mode;
+			mode = dssdev->driver->get_update_mode(dssdev);
+			if (mode != OMAP_DSS_UPDATE_AUTO)
+				return 0;
+
+			irq = (dssdev->manager->id == OMAP_DSS_CHANNEL_LCD) ?
+				DISPC_IRQ_FRAMEDONE
+				: DISPC_IRQ_FRAMEDONE2;
+		} else {
+			irq = (dssdev->manager->id == OMAP_DSS_CHANNEL_LCD) ?
+				DISPC_IRQ_VSYNC
+				: DISPC_IRQ_VSYNC2;
+		}
 	}
 
 	oc = &dss_cache.overlay_cache[ovl->id];
@@ -848,7 +869,7 @@ static int configure_overlay(enum omap_plane plane)
 	orig_outw = outw;
 	orig_outh = outh;
 
-	if (mc->manual_update && mc->do_manual_update) {
+	if (c->manual_update && mc->do_manual_update) {
 		unsigned bpp;
 		unsigned scale_x_m = w, scale_x_d = outw;
 		unsigned scale_y_m = h, scale_y_d = outh;
@@ -1010,7 +1031,7 @@ static int configure_dispc(void)
 		if (!oc->dirty)
 			continue;
 
-		if (mc->manual_update && !mc->do_manual_update)
+		if (oc->manual_update && !mc->do_manual_update)
 			continue;
 
 		if (mgr_busy[oc->channel]) {
@@ -1058,7 +1079,7 @@ static int configure_dispc(void)
 		/* We don't need GO with manual update display. LCD iface will
 		 * always be turned off after frame, and new settings will be
 		 * taken in to use at next update */
-		if (!mc->manual_update)
+		if (!mc->manual_upd_display)
 			dispc_mgr_go(i);
 	}
 
@@ -1376,6 +1397,11 @@ static int omap_dss_mgr_apply(struct omap_overlay_manager *mgr)
 
 		oc->enabled = true;
 
+		oc->manual_update =
+			dssdev->caps & OMAP_DSS_DISPLAY_CAP_MANUAL_UPDATE &&
+			dssdev->driver->get_update_mode(dssdev) !=
+				OMAP_DSS_UPDATE_AUTO;
+
 		++num_planes_enabled;
 	}
 
@@ -1402,8 +1428,13 @@ static int omap_dss_mgr_apply(struct omap_overlay_manager *mgr)
 		mc->dirty = true;
 		mc->info = mgr->info;
 
-		mc->manual_update =
+		mc->manual_upd_display =
 			dssdev->caps & OMAP_DSS_DISPLAY_CAP_MANUAL_UPDATE;
+
+		mc->manual_update =
+			dssdev->caps & OMAP_DSS_DISPLAY_CAP_MANUAL_UPDATE &&
+			dssdev->driver->get_update_mode(dssdev) !=
+				OMAP_DSS_UPDATE_AUTO;
 	}
 
 	/* XXX TODO: Try to get fifomerge working. The problem is that it

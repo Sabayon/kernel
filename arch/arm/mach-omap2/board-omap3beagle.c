@@ -21,6 +21,7 @@
 #include <linux/io.h>
 #include <linux/leds.h>
 #include <linux/gpio.h>
+#include <linux/irq.h>
 #include <linux/input.h>
 #include <linux/gpio_keys.h>
 #include <linux/opp.h>
@@ -32,6 +33,7 @@
 
 #include <linux/regulator/machine.h>
 #include <linux/i2c/twl.h>
+#include <linux/i2c/tsc2007.h>
 
 #include <mach/hardware.h>
 #include <asm/mach-types.h>
@@ -83,11 +85,15 @@ static struct {
 	int usb_pwr_level;
 	int reset_gpio;
 	int usr_button_gpio;
+	char *lcd_driver_name;
+	int lcd_pwren;
 } beagle_config = {
 	.mmc1_gpio_wp = -EINVAL,
 	.usb_pwr_level = GPIOF_OUT_INIT_LOW,
 	.reset_gpio = 129,
 	.usr_button_gpio = 4,
+	.lcd_driver_name = "",
+	.lcd_pwren = 156
 };
 
 static struct gpio omap3_beagle_rev_gpios[] __initdata = {
@@ -155,6 +161,93 @@ static void __init omap3_beagle_init_rev(void)
 		omap3_beagle_version = OMAP3BEAGLE_BOARD_UNKN;
 	}
 }
+
+char expansionboard_name[16];
+char expansionboard2_name[16];
+
+#if defined(CONFIG_ENC28J60) || defined(CONFIG_ENC28J60_MODULE)
+
+#include <plat/mcspi.h>
+#include <linux/spi/spi.h>
+
+#define OMAP3BEAGLE_GPIO_ENC28J60_IRQ 157
+
+static struct omap2_mcspi_device_config enc28j60_spi_chip_info = {
+	.turbo_mode	= 0,
+	.single_channel	= 1,	/* 0: slave, 1: master */
+};
+
+static struct spi_board_info omap3beagle_zippy_spi_board_info[] __initdata = {
+	{
+		.modalias		= "enc28j60",
+		.bus_num		= 4,
+		.chip_select		= 0,
+		.max_speed_hz		= 20000000,
+		.controller_data	= &enc28j60_spi_chip_info,
+	},
+};
+
+static void __init omap3beagle_enc28j60_init(void)
+{
+	if ((gpio_request(OMAP3BEAGLE_GPIO_ENC28J60_IRQ, "ENC28J60_IRQ") == 0) &&
+	    (gpio_direction_input(OMAP3BEAGLE_GPIO_ENC28J60_IRQ) == 0)) {
+		gpio_export(OMAP3BEAGLE_GPIO_ENC28J60_IRQ, 0);
+		omap3beagle_zippy_spi_board_info[0].irq	= OMAP_GPIO_IRQ(OMAP3BEAGLE_GPIO_ENC28J60_IRQ);
+		irq_set_irq_type(omap3beagle_zippy_spi_board_info[0].irq, IRQ_TYPE_EDGE_FALLING);
+	} else {
+		printk(KERN_ERR "could not obtain gpio for ENC28J60_IRQ\n");
+		return;
+	}
+
+	spi_register_board_info(omap3beagle_zippy_spi_board_info,
+			ARRAY_SIZE(omap3beagle_zippy_spi_board_info));
+}
+
+#else
+static inline void __init omap3beagle_enc28j60_init(void) { return; }
+#endif
+
+#if defined(CONFIG_KS8851) || defined(CONFIG_KS8851_MODULE)
+
+#include <plat/mcspi.h>
+#include <linux/spi/spi.h>
+
+#define OMAP3BEAGLE_GPIO_KS8851_IRQ 157
+
+static struct omap2_mcspi_device_config ks8851_spi_chip_info = {
+	.turbo_mode	= 0,
+	.single_channel	= 1,	/* 0: slave, 1: master */
+};
+
+static struct spi_board_info omap3beagle_zippy2_spi_board_info[] __initdata = {
+	{
+		.modalias		= "ks8851",
+		.bus_num		= 4,
+		.chip_select		= 0,
+		.max_speed_hz		= 36000000,
+		.controller_data	= &ks8851_spi_chip_info,
+	},
+};
+
+static void __init omap3beagle_ks8851_init(void)
+{
+	if ((gpio_request(OMAP3BEAGLE_GPIO_KS8851_IRQ, "KS8851_IRQ") == 0) &&
+	    (gpio_direction_input(OMAP3BEAGLE_GPIO_KS8851_IRQ) == 0)) {
+		gpio_export(OMAP3BEAGLE_GPIO_KS8851_IRQ, 0);
+		omap3beagle_zippy2_spi_board_info[0].irq = OMAP_GPIO_IRQ(OMAP3BEAGLE_GPIO_KS8851_IRQ);
+		irq_set_irq_type(omap3beagle_zippy2_spi_board_info[0].irq, IRQ_TYPE_EDGE_FALLING);
+	} else {
+		printk(KERN_ERR "could not obtain gpio for KS8851_IRQ\n");
+		return;
+	}
+
+	spi_register_board_info(omap3beagle_zippy2_spi_board_info,
+			ARRAY_SIZE(omap3beagle_zippy2_spi_board_info));
+}
+
+#else
+static inline void __init omap3beagle_ks8851_init(void) { return; }
+#endif
 
 static struct mtd_partition omap3beagle_nand_partitions[] = {
 	/* All the partition sizes are listed in terms of NAND block size */
@@ -225,9 +318,46 @@ static struct omap_dss_device beagle_tv_device = {
 	.phy.venc.type = OMAP_DSS_VENC_TYPE_SVIDEO,
 };
 
+static int beagle_enable_lcd(struct omap_dss_device *dssdev)
+{
+       if (gpio_is_valid(beagle_config.lcd_pwren)) {
+               printk(KERN_INFO "%s: Enabling LCD\n", __FUNCTION__);
+               gpio_set_value(beagle_config.lcd_pwren, 0);
+       } else {
+               printk(KERN_INFO "%s: Invalid LCD enable GPIO: %d\n",
+                       __FUNCTION__, beagle_config.lcd_pwren);
+       }
+
+       return 0;
+}
+
+static void beagle_disable_lcd(struct omap_dss_device *dssdev)
+{
+       if (gpio_is_valid(beagle_config.lcd_pwren)) {
+               printk(KERN_INFO "%s: Disabling LCD\n", __FUNCTION__);
+               gpio_set_value(beagle_config.lcd_pwren, 1);
+       } else {
+               printk(KERN_INFO "%s: Invalid LCD enable GPIO: %d\n",
+                       __FUNCTION__, beagle_config.lcd_pwren);
+       }
+
+       return;
+}
+
+static struct omap_dss_device beagle_lcd_device = {
+	.type                   = OMAP_DISPLAY_TYPE_DPI,
+	.name                   = "lcd",
+	.driver_name		= "tfc_s9700rtwv35tr-01b",
+	.phy.dpi.data_lines     = 24,
+	.platform_enable        = beagle_enable_lcd,
+	.platform_disable       = beagle_disable_lcd,
+	.reset_gpio 		= -EINVAL,
+};
+
 static struct omap_dss_device *beagle_dss_devices[] = {
 	&beagle_dvi_device,
 	&beagle_tv_device,
+	&beagle_lcd_device,
 };
 
 static struct omap_dss_board_info beagle_dss_data = {
@@ -244,6 +374,11 @@ static void __init beagle_display_init(void)
 			     "DVI reset");
 	if (r < 0)
 		printk(KERN_ERR "Unable to get DVI reset GPIO\n");
+
+       r = gpio_request_one(beagle_config.lcd_pwren, GPIOF_OUT_INIT_LOW,
+                            "LCD power");
+       if (r < 0)
+               printk(KERN_ERR "Unable to get LCD power enable GPIO\n");
 }
 
 #include "sdram-micron-mt46h32m32lf-6.h"
@@ -253,6 +388,12 @@ static struct omap2_hsmmc_info mmc[] = {
 		.mmc		= 1,
 		.caps		= MMC_CAP_4_BIT_DATA | MMC_CAP_8_BIT_DATA,
 		.gpio_wp	= -EINVAL,
+	},
+	{
+		.mmc		= 2,
+		.caps       = MMC_CAP_4_BIT_DATA,
+		.transceiver	= true,
+		.ocr_mask	= 0x00100000,	/* 3.3V */
 	},
 	{}	/* Terminator */
 };
@@ -375,6 +516,65 @@ static struct i2c_board_info __initdata beagle_i2c_eeprom[] = {
        },
 };
 
+#if defined(CONFIG_RTC_DRV_DS1307) || \
+	defined(CONFIG_RTC_DRV_DS1307_MODULE)
+
+static struct i2c_board_info __initdata beagle_i2c2_boardinfo[] = {
+	{
+		I2C_BOARD_INFO("ds1307", 0x68),
+	},
+};
+#else
+static struct i2c_board_info __initdata beagle_i2c2_boardinfo[] = {};
+#endif
+
+#if defined(CONFIG_INPUT_TOUCHSCREEN) && \
+	defined(CONFIG_TOUCHSCREEN_TSC2007)
+/* Touchscreen */
+#define OMAP3BEAGLE_TSC2007_GPIO 157
+static int omap3beagle_tsc2007_get_pendown_state(void)
+{
+	return !gpio_get_value(OMAP3BEAGLE_TSC2007_GPIO);
+}
+
+static int omap3beagle_tsc2007_init(void)
+{
+	int gpio = OMAP3BEAGLE_TSC2007_GPIO;
+	int ret = 0;
+	printk(KERN_WARNING "TSC2007_init started");
+	ret = gpio_request(gpio, "tsc2007_pen_down");
+	if (ret < 0) {
+		printk(KERN_ERR "Failed to request GPIO %d for "
+		"tsc2007 pen down IRQ\n", gpio);
+		return ret;
+	}
+
+	omap_mux_init_gpio(OMAP3BEAGLE_TSC2007_GPIO, OMAP_PIN_INPUT_PULLUP);
+	gpio_direction_input(gpio);
+
+	irq_set_irq_type(OMAP_GPIO_IRQ(OMAP3BEAGLE_TSC2007_GPIO), IRQ_TYPE_EDGE_FALLING);
+
+	return ret;
+}
+
+static struct tsc2007_platform_data tsc2007_info = {
+	.model = 2007,
+	.x_plate_ohms = 180,
+	.get_pendown_state = omap3beagle_tsc2007_get_pendown_state,
+	.init_platform_hw = omap3beagle_tsc2007_init,
+};
+
+static struct i2c_board_info __initdata beagle_i2c2_bbtoys_ulcd[] = {
+	{
+		I2C_BOARD_INFO("tsc2007", 0x48),
+		.irq = OMAP_GPIO_IRQ(OMAP3BEAGLE_TSC2007_GPIO),
+		.platform_data = &tsc2007_info,
+	},
+};
+#else
+static struct i2c_board_info __initdata beagle_i2c2_bbtoys_ulcd[] = {};
+#endif
+
 static int __init omap3_beagle_i2c_init(void)
 {
 	omap3_pmic_get_config(&beagle_twldata,
@@ -385,6 +585,16 @@ static int __init omap3_beagle_i2c_init(void)
 	beagle_twldata.vpll2->constraints.name = "VDVI";
 
 	omap3_pmic_init("twl4030", &beagle_twldata);
+	if(!strcmp(expansionboard2_name, "bbtoys-ulcd"))
+	{
+		omap_register_i2c_bus(2, 400,  beagle_i2c2_bbtoys_ulcd,
+							ARRAY_SIZE(beagle_i2c2_bbtoys_ulcd));
+	}
+	else
+	{
+	omap_register_i2c_bus(2, 400, beagle_i2c2_boardinfo, ARRAY_SIZE(beagle_i2c2_boardinfo));
+	}
+
 	/* Bus 3 is attached to the DVI port where devices like the pico DLP
 	 * projector don't work reliably with 400kHz */
 	omap_register_i2c_bus(3, 100, beagle_i2c_eeprom, ARRAY_SIZE(beagle_i2c_eeprom));
@@ -474,6 +684,24 @@ static struct omap_board_mux board_mux[] __initdata = {
 };
 #endif
 
+static int __init expansionboard_setup(char *str)
+{
+	if (!str)
+		return -EINVAL;
+	strncpy(expansionboard_name, str, 16);
+	printk(KERN_INFO "Beagle expansionboard: %s\n", expansionboard_name);
+	return 0;
+}
+
+static int __init expansionboard2_setup(char *str)
+{
+	if (!str)
+		return -EINVAL;
+	strncpy(expansionboard2_name, str, 16);
+	printk(KERN_INFO "Beagle second expansionboard: %s\n", expansionboard2_name);
+	return 0;
+}
+
 static void __init beagle_opp_init(void)
 {
 	int r = 0;
@@ -527,6 +755,10 @@ static void __init omap3_beagle_init(void)
 
 	gpio_buttons[0].gpio = beagle_config.usr_button_gpio;
 
+	/* TODO: set lcd_driver_name by command line or device tree */
+	beagle_config.lcd_driver_name = "tfc_s9700rtwv35tr-01b",
+	//lcd_panel.name = beagle_config.lcd_driver_name;
+
 	platform_add_devices(omap3_beagle_devices,
 			ARRAY_SIZE(omap3_beagle_devices));
 	omap_display_init(&beagle_dss_data);
@@ -537,6 +769,60 @@ static void __init omap3_beagle_init(void)
 	omap_mux_init_gpio(170, OMAP_PIN_INPUT);
 	/* REVISIT leave DVI powered down until it's needed ... */
 	gpio_request_one(170, GPIOF_OUT_INIT_HIGH, "DVI_nPD");
+
+	if(!strcmp(expansionboard_name, "zippy"))
+	{
+		printk(KERN_INFO "Beagle expansionboard: initializing enc28j60\n");
+		omap3beagle_enc28j60_init();
+		printk(KERN_INFO "Beagle expansionboard: assigning GPIO 141 and 162 to MMC1\n");
+		mmc[1].gpio_wp = 141;
+		mmc[1].gpio_cd = 162;
+	}
+
+	if(!strcmp(expansionboard_name, "zippy2"))
+	{
+		printk(KERN_INFO "Beagle expansionboard: initializing ks_8851\n");
+		omap3beagle_ks8851_init();
+		printk(KERN_INFO "Beagle expansionboard: assigning GPIO 141 and 162 to MMC1\n");
+		mmc[1].gpio_wp = 141;
+		mmc[1].gpio_cd = 162;
+	}
+
+	if(!strcmp(expansionboard_name, "trainer"))
+	{
+		printk(KERN_INFO "Beagle expansionboard: exporting GPIOs 130-141,162 to userspace\n");
+		gpio_request(130, "sysfs");
+		gpio_export(130, 1);
+		gpio_request(131, "sysfs");
+		gpio_export(131, 1);
+		gpio_request(132, "sysfs");
+		gpio_export(132, 1);
+		gpio_request(133, "sysfs");
+		gpio_export(133, 1);
+		gpio_request(134, "sysfs");
+		gpio_export(134, 1);
+		gpio_request(135, "sysfs");
+		gpio_export(135, 1);
+		gpio_request(136, "sysfs");
+		gpio_export(136, 1);
+		gpio_request(137, "sysfs");
+		gpio_export(137, 1);
+		gpio_request(138, "sysfs");
+		gpio_export(138, 1);
+		gpio_request(139, "sysfs");
+		gpio_export(139, 1);
+		gpio_request(140, "sysfs");
+		gpio_export(140, 1);
+		gpio_request(141, "sysfs");
+		gpio_export(141, 1);
+		gpio_request(162, "sysfs");
+		gpio_export(162, 1);
+	}
+
+	if(!strcmp(expansionboard2_name, "bbtoys-ulcd"))
+	{
+		printk(KERN_INFO "Beagle second expansionboard: registering bbtoys-ulcd\n");
+	}
 
 	usb_musb_init(NULL);
 	usbhs_init(&usbhs_bdata);
@@ -553,6 +839,9 @@ static void __init omap3_beagle_init(void)
 	beagle_display_init();
 	beagle_opp_init();
 }
+
+early_param("buddy", expansionboard_setup);
+early_param("buddy2", expansionboard2_setup);
 
 MACHINE_START(OMAP3_BEAGLE, "OMAP3 Beagle Board")
 	/* Maintainer: Syed Mohammed Khasim - http://beagleboard.org */

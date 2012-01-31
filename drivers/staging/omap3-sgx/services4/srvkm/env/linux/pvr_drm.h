@@ -27,7 +27,7 @@
 #if !defined(__PVR_DRM_H__)
 #define __PVR_DRM_H__
 
-#include "pvr_drm_shared.h"
+#include "../../../include/env/linux/pvr_drm_shared.h"
 
 #if defined(SUPPORT_DRI_DRM)
 #define	PVR_DRM_MAKENAME_HELPER(x, y) x ## y

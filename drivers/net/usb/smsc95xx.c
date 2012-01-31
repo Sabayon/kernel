@@ -63,6 +63,17 @@ static int turbo_mode = true;
 module_param(turbo_mode, bool, 0644);
 MODULE_PARM_DESC(turbo_mode, "Enable multiple frames per Rx transaction");
 
+static char *boot_ethaddr_mac = NULL;
+
+static int __init ethaddr_setup(char *str)
+{
+	boot_ethaddr_mac = str;
+	return 1;
+}
+
+/* Read "ethaddr=xx:xx:xx:xx:xx:xx" boot command line parameter */
+__setup("ethaddr", ethaddr_setup);
+
 static int smsc95xx_read_reg(struct usbnet *dev, u32 index, u32 *data)
 {
 	u32 *buf = kmalloc(4, GFP_KERNEL);
@@ -602,8 +613,26 @@ static int smsc95xx_ioctl(struct net_device *netdev, struct ifreq *rq, int cmd)
 
 static void smsc95xx_init_mac_address(struct usbnet *dev)
 {
+	int ret;
+
+	if (boot_ethaddr_mac) {
+		/* try to get MAC address from the boot CLI parameters first */
+		ret = sscanf(boot_ethaddr_mac, "=%02x:%02x:%02x:%02x:%02x:%02x",
+			(unsigned int *)&dev->net->dev_addr[0],
+			(unsigned int *)&dev->net->dev_addr[1],
+			(unsigned int *)&dev->net->dev_addr[2],
+			(unsigned int *)&dev->net->dev_addr[3],
+			(unsigned int *)&dev->net->dev_addr[4],
+			(unsigned int *)&dev->net->dev_addr[5]);
+		if (ret > 0)
+		{
+			/* CLI values are valid so use them */
+			netif_dbg(dev, ifup, dev->net, "MAC address read from command line\n");
+			return;
+		}
+	}
 	/* try reading mac address from EEPROM */
-	if (smsc95xx_read_eeprom(dev, EEPROM_MAC_OFFSET, ETH_ALEN,
+	else if (smsc95xx_read_eeprom(dev, EEPROM_MAC_OFFSET, ETH_ALEN,
 			dev->net->dev_addr) == 0) {
 		if (is_valid_ether_addr(dev->net->dev_addr)) {
 			/* eeprom values are valid so use them */

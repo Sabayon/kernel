@@ -965,3 +965,4 @@ int cap_file_mmap(struct file *file, unsigned long reqprot,
 	}
 	return ret;
 }
+EXPORT_SYMBOL(cap_file_mmap);

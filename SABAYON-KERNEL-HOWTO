@@ -1,0 +1,100 @@
+How to cook a Sabayon kernel, in 4 steps:
+
+1. sync origin/master against the new stable kernel sources branch.
+   hrt/allstable.git or Greg KH stable repos are good. Example:
+
+   $ git remote add stable <git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-3.x.y.git>
+   $ git merge stable/<sometag> && git push && git push --tags
+
+   # PLEASE NOTE: it is better to handle bugfix releases separately to avoid
+   # destroying origin/master like lxnay did with 3.0. So, subsequent stable
+   # patches should be applied in respective branches (you'll read about
+   # branches later on in this file)
+
+2. Update Sabayon patches.
+
+   If we want to make a Sabayon Linux 3.0 kernel, do the following:
+
+   # create new 3.0 branch (we are going to track all the 3.0.x stable
+   # releases in there)
+   $ git branch 3.0
+   # switch to it
+   $ git checkout 3.0
+
+   # create the patches directory and stash your patches there
+   $ mkdir sabayon/patches/3.0<-rXX>
+
+   # add the patches to the branch and push it out
+   # (creating the remote branch as well)
+   $ git add -f sabayon/patches && git push origin 3.0
+
+3. Apply patches and test configuration.
+
+   # now apply patches you have in sabayon/patches/<release>
+   $ for p in $(cat sabayon/patches/<release>/series); \
+       do patch -p1 < "sabayon/patches/<release>/${p}" || exit 1; done
+
+   # At this point, use "git status" to determine new files that
+   # must be staged in order to be pushed out.
+
+   # then create new config files in sabayon/config,
+   # either using make oldconfig or menuconfig and selectively
+   # add new options.
+   # you can keep some good previous config files in sabayon/patches
+   # at origin/master if you really want to.
+   # It is very important that these configuration files are named
+   # using the tag we're going to create afterwards.
+   # In this case, our tag for Sabayon 3.0 kernel will be:
+   #    sabayon-3.0
+   # So that the config file names must be:
+   #    sabayon-${PV}-${ARCH}.config
+   # The [-rX] is optional and X must be an integer from 0 to 999.
+   # In fact, successive revisions are going to get -r1, -r2, etc.
+
+   # Test out and update config files (very important)
+   # in this example we'll use an already available 2.6.39-r2 config
+   $ cp sabayon/config/sabayon-2.6.39-amd64.config .config
+   $ make oldconfig
+
+   # test compilation
+   $ make bzImage modules
+   # then copy over
+   $ cp .config sabayon/config/sabayon-3.0-amd64.config
+   # repeat for every kernel profile we have (sabayon-x86, server-{amd64,x86})
+   # and cleanup the generated cruft
+   $ make distclean
+
+   # now commit all!
+   $ git add sabayon/config/* && git commit -a -m "Sabayon Kernel 3.0"
+   # and push
+   $ git push
+
+   # NOW, make SURE that Makefile has SUBLEVEL = 0
+   # if not, change it and commit! This is very important because
+   # Entropy would require users to manually upgrade kernels
+   # across minor (patch) releases. Which is unwanted
+
+   # Now it's time to create the tag out of our current HEAD
+   $ git tag sabayon-3.0 && git push --tags
+
+4. Make the phat tarball!
+
+   # using sabayon-3.0 tag as example (same used below).
+   # don't use the original tarball name to avoid collisions in /usr/portage/distfiles
+   $ git archive --prefix=linux-3.0+sabayon/ --format=tar sabayon-3.0 | bzip2 > linux-3.0+sabayon.tar.bz2
+   # now take the tarball and push it to distfiles.sabayon.org
+   $ scp linux-3.0+sabayon.tar.bz2 <user>@distfiles.sabayon.org:/sabayon/rsync/rsync.sabayon.org/distfiles/sys-kernel/
+   # win!
+
+
+NOTES:
+
+   sys-kernel/linux-server:
+     the kernel config is taken from the standard sabayon kernel,
+     with these changes:
+
+       - paravirtualization support
+       - IO scheduler changes
+       - Server-oriented preemption support
+       - timer frequency: 300Hz
+       - x86: non-standard 32-bit SMP arch support

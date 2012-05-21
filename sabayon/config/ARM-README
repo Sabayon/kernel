@@ -1,0 +1,6 @@
+BeagleBoard xM and PandaBoard share the same config,
+which has been generated using:
+$ make ARCH=arm omap2plus_defconfig
+
+Our current config only differs from the default one
+wrt DVI FB driver, being included in the kernel.

@@ -752,6 +752,8 @@ void __init s5p_i2c_hdmiphy_set_platdata(struct s3c2410_platform_i2c *pd)
 
 		if (soc_is_exynos4210())
 			pd->bus_num = 8;
+		else if (soc_is_exynos4212() || soc_is_exynos4412())
+			pd->bus_num = 8;
 		else if (soc_is_s5pv210())
 			pd->bus_num = 3;
 		else
@@ -770,6 +772,8 @@ void __init s5p_hdmi_set_platdata(struct i2c_board_info *hdmiphy_info,
 	struct s5p_hdmi_platform_data *pd = &s5p_hdmi_def_platdata;
 
 	if (soc_is_exynos4210())
+		pd->hdmiphy_bus = 8;
+	else if (soc_is_exynos4212() || soc_is_exynos4412())
 		pd->hdmiphy_bus = 8;
 	else if (soc_is_s5pv210())
 		pd->hdmiphy_bus = 3;

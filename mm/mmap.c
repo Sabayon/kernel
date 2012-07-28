@@ -233,6 +233,8 @@ static struct vm_area_struct *remove_vma(struct vm_area_struct *vma)
 		vma->vm_ops->close(vma);
 	if (vma->vm_file) {
 		fput(vma->vm_file);
+		if (vma->vm_prfile)
+			fput(vma->vm_prfile);
 		if (vma->vm_flags & VM_EXECUTABLE)
 			removed_exe_file_vma(vma->vm_mm);
 	}
@@ -636,6 +638,8 @@ again:			remove_next = 1 + (end > next->vm_end);
 		if (file) {
 			uprobe_munmap(next, next->vm_start, next->vm_end);
 			fput(file);
+			if (vma->vm_prfile)
+				fput(vma->vm_prfile);
 			if (next->vm_flags & VM_EXECUTABLE)
 				removed_exe_file_vma(mm);
 		}
@@ -1993,6 +1997,8 @@ static int __split_vma(struct mm_struct * mm, struct vm_area_struct * vma,
 
 	if (new->vm_file) {
 		get_file(new->vm_file);
+		if (new->vm_prfile)
+			get_file(new->vm_prfile);
 		if (vma->vm_flags & VM_EXECUTABLE)
 			added_exe_file_vma(mm);
 	}
@@ -2017,6 +2023,8 @@ static int __split_vma(struct mm_struct * mm, struct vm_area_struct * vma,
 		if (vma->vm_flags & VM_EXECUTABLE)
 			removed_exe_file_vma(mm);
 		fput(new->vm_file);
+		if (new->vm_prfile)
+			fput(new->vm_prfile);
 	}
 	unlink_anon_vmas(new);
  out_free_mpol:
@@ -2417,6 +2425,8 @@ struct vm_area_struct *copy_vma(struct vm_area_struct **vmap,
 			new_vma->vm_pgoff = pgoff;
 			if (new_vma->vm_file) {
 				get_file(new_vma->vm_file);
+				if (new_vma->vm_prfile)
+					get_file(new_vma->vm_prfile);
 
 				if (uprobe_mmap(new_vma))
 					goto out_free_mempol;

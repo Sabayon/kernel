@@ -20,6 +20,7 @@
 #include <linux/regulator/machine.h>
 #include <linux/serial_core.h>
 #include <linux/platform_data/s3c-hsotg.h>
+#include <linux/delay.h>
 
 #include <asm/mach/arch.h>
 #include <asm/hardware/gic.h>
@@ -823,11 +824,33 @@ static struct max77686_platform_data hkdk4412_max77686_info = {
 	.buck4_voltage[7] = 900000,	/* 0.9V */
 };
 
+#if defined(CONFIG_USB_HSIC_USB3503)
+#include <linux/platform_data/usb3503.h>
+
+static int usb3503_reset_n(int reset)
+{
+	gpio_set_value(EXYNOS4_GPX3(5), reset);
+
+	return 0;
+}
+
+static struct usb3503_platform_data usb3503_pdata = {
+	.initial_mode	= USB3503_MODE_HUB,
+	.reset_n	= usb3503_reset_n,
+};
+#endif
+
 static struct i2c_board_info hkdk4412_i2c_devs0[] __initdata = {
 	{
 		I2C_BOARD_INFO("max77686", (0x12 >> 1)),
 		.platform_data	= &hkdk4412_max77686_info,
-	}
+	},
+#if defined(CONFIG_USB_HSIC_USB3503)
+	{
+		I2C_BOARD_INFO("usb3503", (0x08)),
+		.platform_data  = &usb3503_pdata,
+	},
+#endif
 };
 
 static struct i2c_board_info hkdk4412_i2c_devs1[] __initdata = {
@@ -933,6 +956,20 @@ static void __init hkdk4412_gpio_init(void)
 {
 	/* Peripheral power enable (P3V3) */
 	gpio_request_one(EXYNOS4_GPA1(1), GPIOF_OUT_INIT_HIGH, "p3v3_en");
+
+#if defined(CONFIG_USB_HSIC_USB3503)
+	/* INT_N must be asserted if interrupt is not used */
+	gpio_request_one(EXYNOS4_GPX3(0), GPIOF_OUT_INIT_HIGH,
+				"usb3503_intn");
+
+	/* Hub will automatically transition to the Hub Communication Stage */
+	gpio_request_one(EXYNOS4_GPX3(4), GPIOF_OUT_INIT_HIGH,
+				"usb3503_connect");
+
+	/* USB3503 - Standby Mode */
+	gpio_request_one(EXYNOS4_GPX3(5), GPIOF_OUT_INIT_LOW,
+				"usb3503_reset_n");
+#endif
 }
 
 static void __init hkdk4412_machine_init(void)

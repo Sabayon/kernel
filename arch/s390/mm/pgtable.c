@@ -33,13 +33,19 @@
 #endif
 
 
-unsigned long *crst_table_alloc(struct mm_struct *mm)
+unsigned long *
+__crst_table_alloc(struct mm_struct *mm, int noexec, gfp_t gfp_mask)
 {
-	struct page *page = alloc_pages(GFP_KERNEL, ALLOC_ORDER);
+	struct page *page = alloc_pages(gfp_mask, ALLOC_ORDER);
 
 	if (!page)
 		return NULL;
 	return (unsigned long *) page_to_phys(page);
+}
+
+unsigned long *crst_table_alloc(struct mm_struct *mm, int noexec)
+{
+	return __crst_table_alloc(mm, noexec, GFP_KERNEL);
 }
 
 void crst_table_free(struct mm_struct *mm, unsigned long *table)
@@ -612,7 +618,7 @@ static inline unsigned int atomic_xor_bits(atomic_t *v, unsigned int bits)
 /*
  * page table entry allocation/free routines.
  */
-unsigned long *page_table_alloc(struct mm_struct *mm, unsigned long vmaddr)
+unsigned long *__page_table_alloc(struct mm_struct *mm, gfp_t gfp_mask)
 {
 	struct page *page;
 	unsigned long *table;
@@ -632,7 +638,7 @@ unsigned long *page_table_alloc(struct mm_struct *mm, unsigned long vmaddr)
 	}
 	if ((mask & FRAG_MASK) == FRAG_MASK) {
 		spin_unlock_bh(&mm->context.list_lock);
-		page = alloc_page(GFP_KERNEL|__GFP_REPEAT);
+		page = alloc_page(gfp_mask);
 		if (!page)
 			return NULL;
 		pgtable_page_ctor(page);
@@ -650,6 +656,11 @@ unsigned long *page_table_alloc(struct mm_struct *mm, unsigned long vmaddr)
 	}
 	spin_unlock_bh(&mm->context.list_lock);
 	return table;
+}
+
+unsigned long *page_table_alloc(struct mm_struct *mm)
+{
+	return __page_table_alloc(mm, GFP_KERNEL | __GFP_REPEAT);
 }
 
 void page_table_free(struct mm_struct *mm, unsigned long *table)

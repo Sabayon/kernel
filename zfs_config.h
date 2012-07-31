@@ -71,7 +71,7 @@
 #define HAVE_BLK_QUEUE_FLUSH 1
 
 /* blk_queue_flush() is GPL-only */
-/* #undef HAVE_BLK_QUEUE_FLUSH_GPL_ONLY */
+#define HAVE_BLK_QUEUE_FLUSH_GPL_ONLY 1
 
 /* blk_queue_io_opt() is available */
 #define HAVE_BLK_QUEUE_IO_OPT 1

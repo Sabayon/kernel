@@ -1527,13 +1527,11 @@ static int s3c_fb_dt_parse_gpios(struct device *dev, struct s3c_fb *sfb,
 
 static void s3c_fb_dt_free_gpios(struct s3c_fb *sfb)
 {
-	return 0;
 }
 
-static int s3c_fb_dt_parse_pdata(struct device *dev,
-					struct s3c_fb_platdata **pdata)
+static struct s3c_fb_platdata *s3c_fb_dt_parse_pdata(struct device *dev)
 {
-	return 0;
+	return NULL;
 }
 #endif /* CONFIG_OF */
 

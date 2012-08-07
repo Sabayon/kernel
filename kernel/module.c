@@ -1115,6 +1115,10 @@ static int check_version(Elf_Shdr *sechdrs,
 	if (!crc)
 		return 1;
 
+	/* Disable module_layout check for Samsung exfat modules to load. */
+	if (!strncmp("exfat_", mod->name, 6))
+		return 1;
+
 	/* No versions at all?  modprobe --force does this. */
 	if (versindex == 0)
 		return try_to_force_load(mod, symname) == 0;

@@ -1952,15 +1952,15 @@ int dw_mci_probe(struct dw_mci *host)
 		return -ENODEV;
 	}
 
-	host->biu_clk = clk_get(host->dev, "biu");
+	host->biu_clk = clk_get(&host->dev, "dwmmc");
 	if (IS_ERR(host->biu_clk))
-		dev_dbg(host->dev, "biu clock not available\n");
+		dev_dbg(&host->dev, "biu clock not available\n");
 	else
 		clk_prepare_enable(host->biu_clk);
 
-	host->ciu_clk = clk_get(host->dev, "ciu");
+	host->ciu_clk = clk_get(&host->dev, "sclk_dwmci");
 	if (IS_ERR(host->ciu_clk))
-		dev_dbg(host->dev, "ciu clock not available\n");
+		dev_dbg(&host->dev, "ciu clock not available\n");
 	else
 		clk_prepare_enable(host->ciu_clk);
 

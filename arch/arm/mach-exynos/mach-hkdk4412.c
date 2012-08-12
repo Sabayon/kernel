@@ -1032,7 +1032,6 @@ static struct s3c_hsotg_plat hkdk4412_hsotg_pdata;
 
 static struct platform_device *hkdk4412_devices[] __initdata = {
 	&s3c_device_hsmmc2,
-	&s3c_device_hsmmc3,
 	&s3c_device_i2c0,
 	&s3c_device_i2c1,
 	&s3c_device_i2c3,
@@ -1152,7 +1151,6 @@ static void __init hkdk4412_machine_init(void)
 				ARRAY_SIZE(hkdk4412_i2c_devs7));
 
 	s3c_sdhci2_set_platdata(&hkdk4412_hsmmc2_pdata);
-	s3c_sdhci3_set_platdata(&hkdk4412_hsmmc3_pdata);
 
 	hkdk4412_ehci_init();
 	hkdk4412_ohci_init();

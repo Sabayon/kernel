@@ -3,43 +3,43 @@ subdir-m += splat
 
 INSTALL=/usr/bin/install
 
-SPL_MODULE_CFLAGS  = -I@abs_top_srcdir@/include
-SPL_MODULE_CFLAGS += -include @abs_top_builddir@/spl_config.h
+SPL_MODULE_CFLAGS  = -I/var/tmp/portage/sys-kernel/spl-9999/work/spl-9999/include
+SPL_MODULE_CFLAGS += -include /var/tmp/portage/sys-kernel/spl-9999/work/spl-9999/spl_config.h
 export SPL_MODULE_CFLAGS
 
 modules:
-	$(MAKE) -C @LINUX_OBJ@ SUBDIRS=`pwd` @KERNELMAKE_PARAMS@ CONFIG_SPL=m $@
+	$(MAKE) -C /lib/modules/3.5.0/build SUBDIRS=`pwd`  O=/lib/modules/3.5.0/build CONFIG_SPL=m $@
 
 clean:
 	@# Only cleanup the kernel build directories when CONFIG_KERNEL
 	@# is defined.  This indicates that kernel modules should be built.
-@CONFIG_KERNEL_TRUE@	$(MAKE) -C @LINUX_OBJ@ SUBDIRS=`pwd` @KERNELMAKE_PARAMS@ $@
+#	$(MAKE) -C /lib/modules/3.5.0/build SUBDIRS=`pwd`  O=/lib/modules/3.5.0/build $@
 
-	if [ -f '@LINUX_SYMBOLS@' ]; then $(RM) '@LINUX_SYMBOLS@'; fi
+	if [ -f 'NONE' ]; then $(RM) 'NONE'; fi
 	if [ -f Module.markers ]; then $(RM) Module.markers; fi
 
 modules_install:
 	@# Install the kernel modules
-	$(MAKE) -C @LINUX_OBJ@ SUBDIRS=`pwd` \
+	$(MAKE) -C /lib/modules/3.5.0/build SUBDIRS=`pwd` \
 		INSTALL_MOD_PATH=$(DESTDIR) \
 		INSTALL_MOD_DIR=addon/spl $@
 	@# Remove extraneous build products when packaging
 	if [ -n "$(DESTDIR)" ]; then \
-		find $(DESTDIR)/lib/modules/@LINUX_VERSION@ \
+		find $(DESTDIR)/lib/modules/3.5.0 \
 			-name 'modules.*' | xargs $(RM); \
 	fi
-	sysmap=$(DESTDIR)/boot/System.map-@LINUX_VERSION@; \
+	sysmap=$(DESTDIR)/boot/System.map-3.5.0; \
 	if [ -f $$sysmap ]; then \
-		depmod -ae -F $$sysmap @LINUX_VERSION@; \
+		depmod -ae -F $$sysmap 3.5.0; \
 	fi
 
 modules_uninstall:
 	@# Uninstall the kernel modules
-	$(RM) -R $(DESTDIR)/lib/modules/@LINUX_VERSION@/addon/spl
+	$(RM) -R $(DESTDIR)/lib/modules/3.5.0/addon/spl
 
 distdir:
 	list='$(subdir-m)'; for subdir in $$list; do \
-		(find @top_srcdir@/module/$$subdir -name '*.c' -o -name '*.h' |\
+		(find ../module/$$subdir -name '*.c' -o -name '*.h' |\
 		 xargs /bin/cp -t $$distdir/$$subdir); \
 	done
 

@@ -1102,15 +1102,7 @@ static struct clksrc_clk exynos4_clksrcs[] = {
 		.sources = &exynos4_clkset_mout_mfc,
 		.reg_src = { .reg = EXYNOS4_CLKSRC_MFC, .shift = 8, .size = 1 },
 		.reg_div = { .reg = EXYNOS4_CLKDIV_MFC, .shift = 0, .size = 4 },
-	}, {
-		.clk	= {
-			.name		= "sclk_dwmmc",
-			.parent		= &exynos4_clk_dout_mmc4.clk,
-			.enable		= exynos4_clksrc_mask_fsys_ctrl,
-			.ctrlbit	= (1 << 16),
-		},
-		.reg_div = { .reg = EXYNOS4_CLKDIV_FSYS3, .shift = 8, .size = 8 },
-	}
+	},
 };
 
 static struct clksrc_clk exynos4_clk_sclk_uart0 = {

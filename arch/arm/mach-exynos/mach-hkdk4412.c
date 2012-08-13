@@ -24,6 +24,7 @@
 #include <linux/platform_data/s3c-hsotg.h>
 #include <linux/delay.h>
 #include <linux/lcd.h>
+#include <linux/clk.h>
 
 #include <asm/mach/arch.h>
 #include <asm/hardware/gic.h>
@@ -48,8 +49,11 @@
 #include <mach/ohci.h>
 #include <mach/map.h>
 #include <mach/regs-pmu.h>
+#include <mach/dwmci.h>
 
 #include "common.h"
+
+extern void exynos4_setup_dwmci_cfg_gpio(struct platfrom_device *dev, int width);
 
 /* Following are default values for UCON, ULCON and UFCON UART registers */
 #define HKDK4412_UCON_DEFAULT	(S3C2410_UCON_TXILEVEL |	\
@@ -94,18 +98,6 @@ static struct s3c2410_uartcfg hkdk4412_uartcfgs[] __initdata = {
 		.ulcon		= HKDK4412_ULCON_DEFAULT,
 		.ufcon		= HKDK4412_UFCON_DEFAULT,
 	},
-};
-
-static struct s3c_sdhci_platdata hkdk4412_hsmmc2_pdata __initdata = {
-	.cd_type	= S3C_SDHCI_CD_INTERNAL,
-#ifdef CONFIG_EXYNOS4_SDHCI_CH2_8BIT
-	.max_width	= 8,
-	.host_caps	= MMC_CAP_8_BIT_DATA,
-#endif
-};
-
-static struct s3c_sdhci_platdata hkdk4412_hsmmc3_pdata __initdata = {
-	.cd_type	= S3C_SDHCI_CD_INTERNAL,
 };
 
 static struct regulator_consumer_supply __initdata max77686_buck1_consumer[] = {
@@ -1084,6 +1076,7 @@ static struct platform_device *hkdk4412_devices[] __initdata = {
 	&hdmi_fixed_voltage,
 #endif
 	&exynos4_device_ohci,
+	&exynos4_device_dwmci,
 	&hkdk4412_leds_gpio,
 #if defined(CONFIG_LCD_LP101WH1)
 	&hkdk4412_lcd_lp101wh1,
@@ -1179,6 +1172,9 @@ static void __init hkdk4412_machine_init(void)
 				ARRAY_SIZE(hkdk4412_i2c_devs7));
 
 	s3c_sdhci2_set_platdata(&hkdk4412_hsmmc2_pdata);
+
+	exynos4_setup_dwmci_cfg_gpio(NULL, 8);
+	exynos4_dwmci_set_platdata(&hkdk4412_dwmci_pdata);
 
 	hkdk4412_ehci_init();
 	hkdk4412_ohci_init();

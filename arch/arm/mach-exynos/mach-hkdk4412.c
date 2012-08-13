@@ -1030,6 +1030,34 @@ static void __init hkdk4412_ohci_init(void)
 /* USB OTG */
 static struct s3c_hsotg_plat hkdk4412_hsotg_pdata;
 
+static struct s3c_sdhci_platdata hkdk4412_hsmmc2_pdata __initdata = {
+	.cd_type	= S3C_SDHCI_CD_INTERNAL,
+#ifdef CONFIG_EXYNOS4_SDHCI_CH2_8BIT
+	.max_width	= 8,
+	.host_caps	= MMC_CAP_8_BIT_DATA,
+#endif
+};
+
+/* DWMMC */
+static int hkdk4412_dwmci_get_bus_wd(u32 slot_id)
+{
+       return 8;
+}
+
+static int hkdk4412_dwmci_init(u32 slot_id, irq_handler_t handler, void *data)
+{
+       return 0;
+}
+
+static struct dw_mci_board hkdk4412_dwmci_pdata = {
+       .num_slots              = 1,
+       .quirks                 = DW_MCI_QUIRK_BROKEN_CARD_DETECTION,
+//       .bus_hz                 = 80 * 1000 * 1000,
+       .detect_delay_ms        = 200,
+       .init                   = hkdk4412_dwmci_init,
+       .get_bus_wd             = hkdk4412_dwmci_get_bus_wd,
+};
+
 static struct platform_device *hkdk4412_devices[] __initdata = {
 	&s3c_device_hsmmc2,
 	&s3c_device_i2c0,

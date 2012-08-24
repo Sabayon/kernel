@@ -86,16 +86,9 @@ static inline void pte_free(struct mm_struct *mm, struct page *pte)
 #define pmd_pgtable(pmd) pmd_page(pmd)
 
 static inline pte_t *
-__pte_alloc_one_kernel(struct mm_struct *mm, unsigned long address, 
-		gfp_t gfp_mask)
-{
-	return pfn_to_kaddr(page_to_pfn(__pte_alloc_one(mm, address, gfp_mask)));
-}
-
-static inline pte_t *
 pte_alloc_one_kernel(struct mm_struct *mm, unsigned long address)
 {
-	return __pte_alloc_one_kernel(mm, address, GFP_KERNEL | __GFP_REPEAT);
+	return pfn_to_kaddr(page_to_pfn(pte_alloc_one(mm, address)));
 }
 
 static inline void pte_free_kernel(struct mm_struct *mm, pte_t *pte)

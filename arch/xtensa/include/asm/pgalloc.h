@@ -42,17 +42,10 @@ static inline void pgd_free(struct mm_struct *mm, pgd_t *pgd)
 
 extern struct kmem_cache *pgtable_cache;
 
-static inline pte_t *
-__pte_alloc_one_kernel(struct mm_struct *mm, unsigned long address, 
-		gfp_t gfp_mask)
-{
-	return kmem_cache_alloc(pgtable_cache, gfp_mask);
-}
-
 static inline pte_t *pte_alloc_one_kernel(struct mm_struct *mm, 
 					 unsigned long address)
 {
-	return __pte_alloc_one_kernel(mm, address, GFP_KERNEL | __GFP_REPEAT);
+	return kmem_cache_alloc(pgtable_cache, GFP_KERNEL|__GFP_REPEAT);
 }
 
 static inline pgtable_t pte_alloc_one(struct mm_struct *mm,

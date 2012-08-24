@@ -35,8 +35,6 @@ extern void pgd_free(struct mm_struct *mm, pgd_t *pgd);
 #endif
 
 extern pte_t *pte_alloc_one_kernel(struct mm_struct *mm, unsigned long addr);
-extern pte_t *__pte_alloc_one_kernel(struct mm_struct *, unsigned long, gfp_t);
-
 extern pgtable_t pte_alloc_one(struct mm_struct *mm, unsigned long addr);
 
 static inline void pgtable_free(void *table, unsigned index_size)

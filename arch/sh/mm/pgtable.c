@@ -45,15 +45,9 @@ void pud_populate(struct mm_struct *mm, pud_t *pud, pmd_t *pmd)
 	set_pud(pud, __pud((unsigned long)pmd));
 }
 
-pmd_t *
-__pmd_alloc_one(struct mm_struct *mm, unsigned long address, gfp_t gfp_mask)
-{
-	return kmem_cache_alloc(pmd_cachep, gfp_mask | __GFP_ZERO);
-}
-
 pmd_t *pmd_alloc_one(struct mm_struct *mm, unsigned long address)
 {
-	return __pmd_alloc_one(mm, address, GFP_KERNEL | __GFP_REPEAT);
+	return kmem_cache_alloc(pmd_cachep, PGALLOC_GFP);
 }
 
 void pmd_free(struct mm_struct *mm, pmd_t *pmd)

@@ -15,15 +15,9 @@
 
 gfp_t __userpte_alloc_gfp = PGALLOC_GFP | PGALLOC_USER_GFP;
 
-pte_t *
-__pte_alloc_one_kernel(struct mm_struct *mm, unsigned long address, gfp_t gfp_mask)
-{
-	return (pte_t *)__get_free_page(gfp_mask | __GFP_NOTRACK | __GFP_ZERO);
-}
-
 pte_t *pte_alloc_one_kernel(struct mm_struct *mm, unsigned long address)
 {
-	return __pte_alloc_one_kernel(mm, address, GFP_KERNEL | __GFP_REPEAT);
+	return (pte_t *)__get_free_page(PGALLOC_GFP);
 }
 
 pgtable_t pte_alloc_one(struct mm_struct *mm, unsigned long address)

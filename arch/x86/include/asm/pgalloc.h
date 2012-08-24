@@ -34,7 +34,6 @@ extern pgd_t *pgd_alloc(struct mm_struct *);
 extern void pgd_free(struct mm_struct *mm, pgd_t *pgd);
 
 extern pte_t *pte_alloc_one_kernel(struct mm_struct *, unsigned long);
-extern pte_t *__pte_alloc_one_kernel(struct mm_struct *, unsigned long, gfp_t);
 extern pgtable_t pte_alloc_one(struct mm_struct *, unsigned long);
 
 /* Should really implement gc for free page table pages. This could be
@@ -79,15 +78,9 @@ static inline void pmd_populate(struct mm_struct *mm, pmd_t *pmd,
 #define pmd_pgtable(pmd) pmd_page(pmd)
 
 #if PAGETABLE_LEVELS > 2
-static inline pmd_t *
-__pmd_alloc_one(struct mm_struct *mm, unsigned long addr, gfp_t gfp_mask)
-{
-	return (pmd_t *)get_zeroed_page(gfp_mask);
-}
-
 static inline pmd_t *pmd_alloc_one(struct mm_struct *mm, unsigned long addr)
 {
-	return __pmd_alloc_one(mm, addr, GFP_KERNEL | __GFP_REPEAT);
+	return (pmd_t *)get_zeroed_page(GFP_KERNEL|__GFP_REPEAT);
 }
 
 static inline void pmd_free(struct mm_struct *mm, pmd_t *pmd)
@@ -121,15 +114,9 @@ static inline void pgd_populate(struct mm_struct *mm, pgd_t *pgd, pud_t *pud)
 	set_pgd(pgd, __pgd(_PAGE_TABLE | __pa(pud)));
 }
 
-static inline pud_t *
-__pud_alloc_one(struct mm_struct *mm, unsigned long addr, gfp_t gfp_mask)
-{
-	return (pud_t *)get_zeroed_page(gfp_mask);
-}
-
 static inline pud_t *pud_alloc_one(struct mm_struct *mm, unsigned long addr)
 {
-	return __pud_alloc_one(mm, addr, GFP_KERNEL | __GFP_REPEAT);
+	return (pud_t *)get_zeroed_page(GFP_KERNEL|__GFP_REPEAT);
 }
 
 static inline void pud_free(struct mm_struct *mm, pud_t *pud)

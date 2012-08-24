@@ -30,16 +30,12 @@ static inline void pgd_free(struct mm_struct *mm, pgd_t *pgd)
 	free_page((unsigned long)pgd);
 }
 
-static __inline__ pte_t *__pte_alloc_one_kernel(struct mm_struct *mm,
-	unsigned long address, gfp_t gfp_mask)
-{
-	return (pte_t *)__get_free_page(gfp_mask | __GFP_ZERO);
-}
-
 static __inline__ pte_t *pte_alloc_one_kernel(struct mm_struct *mm,
 	unsigned long address)
 {
-	return __pte_alloc_one_kernel(mm, address, GFP_KERNEL);
+	pte_t *pte = (pte_t *)__get_free_page(GFP_KERNEL|__GFP_ZERO);
+
+	return pte;
 }
 
 static __inline__ pgtable_t pte_alloc_one(struct mm_struct *mm,
@@ -70,7 +66,6 @@ static inline void pte_free(struct mm_struct *mm, pgtable_t pte)
  * (In the PAE case we free the pmds as part of the pgd.)
  */
 
-#define __pmd_alloc_one(mm, addr,mask)		({ BUG(); ((pmd_t *)2); })
 #define pmd_alloc_one(mm, addr)		({ BUG(); ((pmd_t *)2); })
 #define pmd_free(mm, x)			do { } while (0)
 #define __pmd_free_tlb(tlb, x, addr)	do { } while (0)

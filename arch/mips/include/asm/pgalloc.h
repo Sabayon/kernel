@@ -64,16 +64,14 @@ static inline void pgd_free(struct mm_struct *mm, pgd_t *pgd)
 	free_pages((unsigned long)pgd, PGD_ORDER);
 }
 
-static inline pte_t *__pte_alloc_one_kernel(struct mm_struct *mm,
-	unsigned long address, gfp_t gfp_mask)
-{
-	return (pte_t *) __get_free_pages(gfp_mask | __GFP_ZERO, PTE_ORDER);
-}
-
 static inline pte_t *pte_alloc_one_kernel(struct mm_struct *mm,
 	unsigned long address)
 {
-	return __pte_alloc_one_kernel(mm, address, GFP_KERNEL | __GFP_REPEAT);
+	pte_t *pte;
+
+	pte = (pte_t *) __get_free_pages(GFP_KERNEL|__GFP_REPEAT|__GFP_ZERO, PTE_ORDER);
+
+	return pte;
 }
 
 static inline struct page *pte_alloc_one(struct mm_struct *mm,
@@ -108,20 +106,14 @@ do {							\
 
 #ifndef __PAGETABLE_PMD_FOLDED
 
-static inline pmd_t *
-__pmd_alloc_one(struct mm_struct *mm, unsigned long address, gfp_t gfp_mask)
+static inline pmd_t *pmd_alloc_one(struct mm_struct *mm, unsigned long address)
 {
 	pmd_t *pmd;
 
-	pmd = (pmd_t *) __get_free_pages(gfp_mask, PMD_ORDER);
+	pmd = (pmd_t *) __get_free_pages(GFP_KERNEL|__GFP_REPEAT, PMD_ORDER);
 	if (pmd)
 		pmd_init((unsigned long)pmd, (unsigned long)invalid_pte_table);
 	return pmd;
-}
-
-static inline pmd_t *pmd_alloc_one(struct mm_struct *mm, unsigned long address)
-{
-	return __pmd_alloc_one(mm, address, GFP_KERNEL | __GFP_REPEAT);
 }
 
 static inline void pmd_free(struct mm_struct *mm, pmd_t *pmd)

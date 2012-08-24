@@ -608,9 +608,9 @@ int __pte_alloc(struct mm_struct *mm, struct vm_area_struct *vma,
 	return 0;
 }
 
-int __pte_alloc_kernel(pmd_t *pmd, unsigned long address, gfp_t gfp_mask)
+int __pte_alloc_kernel(pmd_t *pmd, unsigned long address)
 {
-	pte_t *new = __pte_alloc_one_kernel(&init_mm, address, gfp_mask);
+	pte_t *new = pte_alloc_one_kernel(&init_mm, address);
 	if (!new)
 		return -ENOMEM;
 
@@ -3560,10 +3560,9 @@ retry:
  * Allocate page upper directory.
  * We've already handled the fast-path in-line.
  */
-int __pud_alloc(struct mm_struct *mm, pgd_t *pgd, unsigned long address, 
-		gfp_t gfp_mask)
+int __pud_alloc(struct mm_struct *mm, pgd_t *pgd, unsigned long address)
 {
-	pud_t *new = __pud_alloc_one(mm, address, gfp_mask);
+	pud_t *new = pud_alloc_one(mm, address);
 	if (!new)
 		return -ENOMEM;
 
@@ -3584,10 +3583,9 @@ int __pud_alloc(struct mm_struct *mm, pgd_t *pgd, unsigned long address,
  * Allocate page middle directory.
  * We've already handled the fast-path in-line.
  */
-int __pmd_alloc(struct mm_struct *mm, pud_t *pud, unsigned long address, 
-		gfp_t gfp_mask)
+int __pmd_alloc(struct mm_struct *mm, pud_t *pud, unsigned long address)
 {
-	pmd_t *new = __pmd_alloc_one(mm, address, gfp_mask);
+	pmd_t *new = pmd_alloc_one(mm, address);
 	if (!new)
 		return -ENOMEM;
 

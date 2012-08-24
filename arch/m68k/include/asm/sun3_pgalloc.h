@@ -18,7 +18,6 @@
 
 extern const char bad_pmd_string[];
 
-#define __pmd_alloc_one(mm,address,mask)       ({ BUG(); ((pmd_t *)2); })
 #define pmd_alloc_one(mm,address)       ({ BUG(); ((pmd_t *)2); })
 
 
@@ -39,23 +38,16 @@ do {							\
 	tlb_remove_page((tlb), pte);			\
 } while (0)
 
-static inline pte_t *
-__pte_alloc_one_kernel(struct mm_struct *mm, unsigned long address, 
-		gfp_t gfp_mask)
+static inline pte_t *pte_alloc_one_kernel(struct mm_struct *mm,
+					  unsigned long address)
 {
-	unsigned long page = __get_free_page(gfp_mask);
+	unsigned long page = __get_free_page(GFP_KERNEL|__GFP_REPEAT);
 
 	if (!page)
 		return NULL;
 
 	memset((void *)page, 0, PAGE_SIZE);
 	return (pte_t *) (page);
-}
-
-static inline pte_t *pte_alloc_one_kernel(struct mm_struct *mm,
-					  unsigned long address)
-{
-	return __pte_alloc_one_kernel(mm, address, GFP_KERNEL | __GFP_REPEAT);
 }
 
 static inline pgtable_t pte_alloc_one(struct mm_struct *mm,

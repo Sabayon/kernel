@@ -51,15 +51,10 @@ static inline void pgd_free(struct mm_struct *mm, pgd_t *pgd)
 
 #define pgd_populate(MM, PGD, PUD)	pgd_set(PGD, PUD)
 
-static inline pud_t *
-__pud_alloc_one(struct mm_struct *mm, unsigned long addr, gfp_t gfp_mask)
-{
-	return kmem_cache_alloc(PGT_CACHE(PUD_INDEX_SIZE), gfp_mask);
-}
-
 static inline pud_t *pud_alloc_one(struct mm_struct *mm, unsigned long addr)
 {
-	return __pud_alloc_one(mm, addr, GFP_KERNEL | __GFP_REPEAT);
+	return kmem_cache_alloc(PGT_CACHE(PUD_INDEX_SIZE),
+				GFP_KERNEL|__GFP_REPEAT);
 }
 
 static inline void pud_free(struct mm_struct *mm, pud_t *pud)
@@ -94,15 +89,10 @@ static inline void pmd_populate_kernel(struct mm_struct *mm, pmd_t *pmd,
 
 #endif /* CONFIG_PPC_64K_PAGES */
 
-static inline pmd_t *
-__pmd_alloc_one(struct mm_struct *mm, unsigned long addr, gfp_t gfp_mask)
-{
-	return kmem_cache_alloc(PGT_CACHE(PMD_INDEX_SIZE), gfp_mask);
-}
-
 static inline pmd_t *pmd_alloc_one(struct mm_struct *mm, unsigned long addr)
 {
-	return __pmd_alloc_one(mm, addr, GFP_KERNEL | __GFP_REPEAT);
+	return kmem_cache_alloc(PGT_CACHE(PMD_INDEX_SIZE),
+				GFP_KERNEL|__GFP_REPEAT);
 }
 
 static inline void pmd_free(struct mm_struct *mm, pmd_t *pmd)
@@ -110,17 +100,10 @@ static inline void pmd_free(struct mm_struct *mm, pmd_t *pmd)
 	kmem_cache_free(PGT_CACHE(PMD_INDEX_SIZE), pmd);
 }
 
-static inline pte_t *
-__pte_alloc_one_kernel(struct mm_struct *mm, unsigned long address, 
-		gfp_t gfp_mask)
-{
-        return (pte_t *)__get_free_page(gfp_mask | __GFP_ZERO);
-}
-
 static inline pte_t *pte_alloc_one_kernel(struct mm_struct *mm,
 					  unsigned long address)
 {
-	return __pte_alloc_one_kernel(mm, address, GFP_KERNEL | __GFP_REPEAT);
+        return (pte_t *)__get_free_page(GFP_KERNEL | __GFP_REPEAT | __GFP_ZERO);
 }
 
 static inline pgtable_t pte_alloc_one(struct mm_struct *mm,

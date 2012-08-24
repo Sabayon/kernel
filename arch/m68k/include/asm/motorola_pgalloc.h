@@ -5,16 +5,13 @@
 #include <asm/tlbflush.h>
 
 extern pmd_t *get_pointer_table(void);
-extern pmd_t *__get_pointer_table (gfp_t);
 extern int free_pointer_table(pmd_t *);
 
-static inline pte_t *
-__pte_alloc_one_kernel(struct mm_struct *mm, unsigned long address, 
-	gfp_t gfp_mask)
+static inline pte_t *pte_alloc_one_kernel(struct mm_struct *mm, unsigned long address)
 {
 	pte_t *pte;
 
-	pte = (pte_t *)__get_free_page(gfp_mask | __GFP_ZERO);
+	pte = (pte_t *)__get_free_page(GFP_KERNEL|__GFP_REPEAT|__GFP_ZERO);
 	if (pte) {
 		__flush_page_to_ram(pte);
 		flush_tlb_kernel_page(pte);
@@ -22,12 +19,6 @@ __pte_alloc_one_kernel(struct mm_struct *mm, unsigned long address,
 	}
 
 	return pte;
-}
-
-static inline pte_t *
-pte_alloc_one_kernel(struct mm_struct *mm, unsigned long address)
-{
-	return __pte_alloc_one_kernel(mm, address, GFP_KERNEL | __GFP_REPEAT);
 }
 
 static inline void pte_free_kernel(struct mm_struct *mm, pte_t *pte)
@@ -70,15 +61,10 @@ static inline void __pte_free_tlb(struct mmu_gather *tlb, pgtable_t page,
 	__free_page(page);
 }
 
-static inline pmd_t *
-__pmd_alloc_one(struct mm_struct *mm, unsigned long address, gfp_t gfp_mask)
-{
-	return __get_pointer_table(gfp_mask);
-}
 
 static inline pmd_t *pmd_alloc_one(struct mm_struct *mm, unsigned long address)
 {
-	return __pmd_alloc_one(mm, address, GFP_KERNEL);
+	return get_pointer_table();
 }
 
 static inline int pmd_free(struct mm_struct *mm, pmd_t *pmd)

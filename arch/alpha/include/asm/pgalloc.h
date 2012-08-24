@@ -38,15 +38,10 @@ pgd_free(struct mm_struct *mm, pgd_t *pgd)
 }
 
 static inline pmd_t *
-__pmd_alloc_one(struct mm_struct *mm, unsigned long address, gfp_t gfp_mask)
-{
-	return (pmd_t *)__get_free_page(gfp_mask | __GFP_ZERO);
-}
-
-static inline pmd_t *
 pmd_alloc_one(struct mm_struct *mm, unsigned long address)
 {
-	return __pmd_alloc_one(mm, address, GFP_KERNEL | __GFP_REPEAT);
+	pmd_t *ret = (pmd_t *)__get_free_page(GFP_KERNEL|__GFP_REPEAT|__GFP_ZERO);
+	return ret;
 }
 
 static inline void
@@ -56,15 +51,10 @@ pmd_free(struct mm_struct *mm, pmd_t *pmd)
 }
 
 static inline pte_t *
-__pte_alloc_one_kernel(struct mm_struct *mm, unsigned long addressi, gfp_t gfp_mask)
-{
-	return (pte_t *)__get_free_page(gfp_mask | __GFP_ZERO);
-}
-
-static inline pte_t *
 pte_alloc_one_kernel(struct mm_struct *mm, unsigned long address)
 {
-	return __pte_alloc_one_kernel(mm, address, GFP_KERNEL | __GFP_REPEAT);
+	pte_t *pte = (pte_t *)__get_free_page(GFP_KERNEL|__GFP_REPEAT|__GFP_ZERO);
+	return pte;
 }
 
 static inline void

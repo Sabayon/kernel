@@ -236,12 +236,13 @@ unsigned long iopa(unsigned long addr)
 	return pa;
 }
 
-__init_refok pte_t *__pte_alloc_one_kernel(struct mm_struct *mm,
-		unsigned long address, gfp_t gfp_mask)
+__init_refok pte_t *pte_alloc_one_kernel(struct mm_struct *mm,
+		unsigned long address)
 {
 	pte_t *pte;
 	if (mem_init_done) {
-		pte = (pte_t *)__get_free_page(gfp_mask | __GFP_ZERO);
+		pte = (pte_t *)__get_free_page(GFP_KERNEL |
+					__GFP_REPEAT | __GFP_ZERO);
 	} else {
 		pte = (pte_t *)early_get_page();
 		if (pte)
@@ -258,10 +259,4 @@ void __set_fixmap(enum fixed_addresses idx, phys_addr_t phys, pgprot_t flags)
 		BUG();
 
 	map_page(address, phys, pgprot_val(flags));
-}
-
-__init_refok pte_t *pte_alloc_one_kernel(struct mm_struct *mm,
-		unsigned long address)
-{
-	return __pte_alloc_one_kernel(mm, address, GFP_KERNEL | __GFP_REPEAT);
 }

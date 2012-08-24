@@ -18,11 +18,9 @@
 #include <linux/mm.h>
 
 unsigned long *crst_table_alloc(struct mm_struct *);
-unsigned long * __crst_table_alloc(struct mm_struct *, int , gfp_t);
 void crst_table_free(struct mm_struct *, unsigned long *);
 
 unsigned long *page_table_alloc(struct mm_struct *, unsigned long);
-unsigned long *__page_table_alloc(struct mm_struct *, gfp_t);
 void page_table_free(struct mm_struct *, unsigned long *);
 void page_table_free_rcu(struct mmu_gather *, unsigned long *);
 
@@ -57,11 +55,9 @@ static inline unsigned long pgd_entry_type(struct mm_struct *mm)
 	return _SEGMENT_ENTRY_EMPTY;
 }
 
-#define __pud_alloc_one(mm,address,mask)		({ BUG(); ((pud_t *)2); })
 #define pud_alloc_one(mm,address)		({ BUG(); ((pud_t *)2); })
 #define pud_free(mm, x)				do { } while (0)
 
-#define __pmd_alloc_one(mm,address,mask)		({ BUG(); ((pmd_t *)2); })
 #define pmd_alloc_one(mm,address)		({ BUG(); ((pmd_t *)2); })
 #define pmd_free(mm, x)				do { } while (0)
 
@@ -82,33 +78,21 @@ static inline unsigned long pgd_entry_type(struct mm_struct *mm)
 int crst_table_upgrade(struct mm_struct *, unsigned long limit);
 void crst_table_downgrade(struct mm_struct *, unsigned long limit);
 
-static inline pud_t *
-__pud_alloc_one(struct mm_struct *mm, unsigned long address, gfp_t gfp_mask)
+static inline pud_t *pud_alloc_one(struct mm_struct *mm, unsigned long address)
 {
-	unsigned long *table = __crst_table_alloc(mm, mm->context.noexec, gfp_mask);
+	unsigned long *table = crst_table_alloc(mm);
 	if (table)
 		crst_table_init(table, _REGION3_ENTRY_EMPTY);
 	return (pud_t *) table;
 }
-
-static inline pud_t *pud_alloc_one(struct mm_struct *mm, unsigned long address)
-{
-	return __pud_alloc_one(mm, address, GFP_KERNEL);
-}
 #define pud_free(mm, pud) crst_table_free(mm, (unsigned long *) pud)
-
-static inline pmd_t *
-__pmd_alloc_one(struct mm_struct *mm, unsigned long vmaddr, gfp_t gfp_mask)
-{
-	unsigned long *table = __crst_table_alloc(mm, mm->context.noexec, gfp_mask);
-	if (table)
-		crst_table_init(table, _SEGMENT_ENTRY_EMPTY);
-	return (pmd_t *) table;
-}
 
 static inline pmd_t *pmd_alloc_one(struct mm_struct *mm, unsigned long vmaddr)
 {
-	return __pmd_alloc_one(mm, vmaddr, GFP_KERNEL);
+	unsigned long *table = crst_table_alloc(mm);
+	if (table)
+		crst_table_init(table, _SEGMENT_ENTRY_EMPTY);
+	return (pmd_t *) table;
 }
 #define pmd_free(mm, pmd) crst_table_free(mm, (unsigned long *) pmd)
 
@@ -147,11 +131,7 @@ static inline void pmd_populate(struct mm_struct *mm,
 /*
  * page table entry allocation/free routines.
  */
-#define __pte_alloc_one_kernel(mm, vmaddr, mask) \
-	((pte_t *) __page_table_alloc((mm), (mask)))
-#define pte_alloc_one_kernel(mm, vmaddr) \
-	((pte_t *) __pte_alloc_one_kernel((mm), (vmaddr), GFP_KERNEL|__GFP_REPEAT)
-
+#define pte_alloc_one_kernel(mm, vmaddr) ((pte_t *) page_table_alloc(mm, vmaddr))
 #define pte_alloc_one(mm, vmaddr) ((pte_t *) page_table_alloc(mm, vmaddr))
 
 #define pte_free_kernel(mm, pte) page_table_free(mm, (unsigned long *) pte)

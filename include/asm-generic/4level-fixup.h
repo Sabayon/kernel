@@ -10,14 +10,10 @@
 
 #define pud_t				pgd_t
 
-#define pmd_alloc_with_mask(mm, pud, address, mask) \
-	((unlikely(pgd_none(*(pud))) && __pmd_alloc(mm, pud, address, mask))? \
+#define pmd_alloc(mm, pud, address) \
+	((unlikely(pgd_none(*(pud))) && __pmd_alloc(mm, pud, address))? \
  		NULL: pmd_offset(pud, address))
 
-#define pmd_alloc(mm, pud, address) \
-	pmd_alloc_with_mask(mm, pud, address, GFP_KERNEL)
-
-#define pud_alloc_with_mask(mm, pgd, address, mask)	(pgd)
 #define pud_alloc(mm, pgd, address)	(pgd)
 #define pud_offset(pgd, start)		(pgd)
 #define pud_none(pud)			0

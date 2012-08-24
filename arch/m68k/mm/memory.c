@@ -58,7 +58,7 @@ void __init init_pointer_table(unsigned long ptable)
 	return;
 }
 
-pmd_t *__get_pointer_table (gfp_t gfp_mask)
+pmd_t *get_pointer_table (void)
 {
 	ptable_desc *dp = ptable_list.next;
 	unsigned char mask = PD_MARKBITS (dp);
@@ -75,7 +75,7 @@ pmd_t *__get_pointer_table (gfp_t gfp_mask)
 		void *page;
 		ptable_desc *new;
 
-		if (!(page = (void *)get_zeroed_page(gfp_mask)))
+		if (!(page = (void *)get_zeroed_page(GFP_KERNEL)))
 			return NULL;
 
 		flush_tlb_kernel_page(page);
@@ -96,11 +96,6 @@ pmd_t *__get_pointer_table (gfp_t gfp_mask)
 		list_move_tail(dp, &ptable_list);
 	}
 	return (pmd_t *) (page_address(PD_PAGE(dp)) + off);
-}
-
-pmd_t *get_pointer_table (void)
-{
-	return __get_pointer_table(GFP_KERNEL);
 }
 
 int free_pointer_table (pmd_t *ptable)

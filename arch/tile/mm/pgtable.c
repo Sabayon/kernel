@@ -280,11 +280,10 @@ void pgd_free(struct mm_struct *mm, pgd_t *pgd)
 
 #define L2_USER_PGTABLE_PAGES (1 << L2_USER_PGTABLE_ORDER)
 
-struct page *
-__pte_alloc_one(struct mm_struct *mm, unsigned long address, int order,
-		gfp_t gfp_mask)
+struct page *pgtable_alloc_one(struct mm_struct *mm, unsigned long address,
+			       int order)
 {
-	gfp_t flags = gfp_mask|__GFP_REPEAT|__GFP_ZERO;
+	gfp_t flags = GFP_KERNEL|__GFP_REPEAT|__GFP_ZERO;
 	struct page *p;
 	int i;
 
@@ -304,11 +303,6 @@ __pte_alloc_one(struct mm_struct *mm, unsigned long address, int order,
 
 	pgtable_page_ctor(p);
 	return p;
-}
-
-struct page *pte_alloc_one(struct mm_struct *mm, unsigned long address, int order)
-{
-	return __pte_alloc_one(mm, address, GFP_KERNEL);
 }
 
 /*

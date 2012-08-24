@@ -35,10 +35,8 @@ extern pgd_t *pgd_alloc(struct mm_struct *);
 extern void pgd_free(struct mm_struct *mm, pgd_t *);
 
 extern pte_t *pte_alloc_one_kernel(struct mm_struct *, unsigned long);
-extern pte_t *__pte_alloc_one_kernel(struct mm_struct *, unsigned long, gfp_t);
 
 extern pgtable_t pte_alloc_one(struct mm_struct *, unsigned long);
-extern pgtable_t __pte_alloc_one(struct mm_struct *, unsigned long, gfp_t);
 
 static inline void pte_free_kernel(struct mm_struct *mm, pte_t *pte)
 {
@@ -62,7 +60,6 @@ do {							\
  * inside the pgd, so has no extra memory associated with it.
  * (In the PAE case we free the pmds as part of the pgd.)
  */
-#define __pmd_alloc_one(mm, addr,mask)		({ BUG(); ((pmd_t *) 2); })
 #define pmd_alloc_one(mm, addr)		({ BUG(); ((pmd_t *) 2); })
 #define pmd_free(mm, x)			do { } while (0)
 #define __pmd_free_tlb(tlb,x,a)		do { } while (0)

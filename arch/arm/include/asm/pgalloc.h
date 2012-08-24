@@ -48,7 +48,6 @@ static inline void pud_populate(struct mm_struct *mm, pud_t *pud, pmd_t *pmd)
 /*
  * Since we have only two-level page tables, these are trivial
  */
-#define __pmd_alloc_one(mm,addr,mask)	({ BUG(); ((pmd_t *)2); })
 #define pmd_alloc_one(mm,addr)		({ BUG(); ((pmd_t *)2); })
 #define pmd_free(mm, pmd)		do { } while (0)
 #define pud_populate(mm,pmd,pte)	BUG()
@@ -82,21 +81,15 @@ static inline void clean_pte_table(pte_t *pte)
  *  +------------+
  */
 static inline pte_t *
-__pte_alloc_one_kernel(struct mm_struct *mm, unsigned long addr, gfp_t gfp_mask)
+pte_alloc_one_kernel(struct mm_struct *mm, unsigned long addr)
 {
 	pte_t *pte;
 
-	pte = (pte_t *)__get_free_page(gfp_mask | __GFP_NOTRACK | __GFP_ZERO);
+	pte = (pte_t *)__get_free_page(PGALLOC_GFP);
 	if (pte)
 		clean_pte_table(pte);
 
 	return pte;
-}
-
-static inline pte_t *
-pte_alloc_one_kernel(struct mm_struct *mm, unsigned long addr)
-{
-	return __pte_alloc_one_kernel(mm, addr, GFP_KERNEL | __GFP_REPEAT);
 }
 
 static inline pgtable_t

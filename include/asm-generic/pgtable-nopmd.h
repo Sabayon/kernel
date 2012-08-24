@@ -55,8 +55,7 @@ static inline pmd_t * pmd_offset(pud_t * pud, unsigned long address)
  * allocating and freeing a pmd is trivial: the 1-entry pmd is
  * inside the pud, so has no extra memory associated with it.
  */
-#define __pmd_alloc_one(mm, address, mask)		NULL
-#define pmd_alloc_one(mm, address)				NULL
+#define pmd_alloc_one(mm, address)		NULL
 static inline void pmd_free(struct mm_struct *mm, pmd_t *pmd)
 {
 }

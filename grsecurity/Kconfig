@@ -918,6 +918,27 @@ endmenu
 menu "Logging Options"
 depends on GRKERNSEC
 
+config GRKERNSEC_SELINUX_AVC_LOG_IPADDR
+	def_bool n
+	prompt "Add source IP address to SELinux AVC log messages"
+	depends on GRKERNSEC && SECURITY_SELINUX
+	help
+	  If you say Y here, a new field "ipaddr=" will be added to many SELinux
+	  AVC log messages.  The value of this field in any given message
+	  represents the source IP address of the remote machine/user that created
+	  the offending process.
+
+	  This information is sourced from task_struct->curr_ip provided by
+	  grsecurity's GRKERNSEC top-level configuration option.  One limitation
+	  is that only IPv4 is supported.
+
+	  In many instances SELinux AVC log messages already log a superior level
+	  of information that also includes source port and destination ip/port.
+	  Additionally, SELinux's AVC log code supports IPv6.
+
+	  However, grsecurity's task_struct->curr_ip will sometimes (often?) 
+	  provide the offender's IP address where stock SELinux logging fails to.
+
 config GRKERNSEC_FLOODTIME
 	int "Seconds in between log messages (minimum)"
 	default 10

@@ -1098,7 +1098,7 @@ static struct pci_driver i915_pci_driver = {
 static int __init i915_init(void)
 {
 	if (!intel_agp_enabled) {
-		DRM_ERROR("drm/i915 can't work without intel_agp module!\n");
+		DRM_INFO("drm/i915 can't work without intel_agp module!\n");
 		return -ENODEV;
 	}
 

@@ -1,0 +1,37 @@
+diff --git a/fs/aufs/f_op_sp.c b/fs/aufs/f_op_sp.c
+index 48b8aa1..888768a 100644
+--- a/fs/aufs/f_op_sp.c
++++ b/fs/aufs/f_op_sp.c
+@@ -107,7 +107,7 @@ enum {
+ static int aufs_open_sp(struct inode *inode, struct file *file);
+ static struct au_sp_fop {
+ 	int			done;
+-	struct file_operations	fop;	/* not 'const' */
++	file_operations_no_const	fop;	/* not 'const' */
+ 	spinlock_t		spin;
+ } au_sp_fop[AuSp_Last] = {
+ 	[AuSp_FIFO] = {
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index d6ba573..9d71a07 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -621,7 +621,7 @@ struct address_space_operations {
+ 	int (*is_partially_uptodate) (struct page *, read_descriptor_t *,
+ 					unsigned long);
+ 	int (*error_remove_page)(struct address_space *, struct page *);
+-};
++} __no_const;
+diff --git a/include/linux/fsnotify_backend.h b/include/linux/fsnotify_backend.h
+index cdcb717..86abd35 100644
+--- a/include/linux/fsnotify_backend.h
++++ b/include/linux/fsnotify_backend.h
+@@ -104,8 +104,7 @@ struct fsnotify_ops {
+ 	void (*free_group_priv)(struct fsnotify_group *group);
+ 	void (*freeing_mark)(struct fsnotify_mark *mark, struct fsnotify_group *group);
+ 	void (*free_event_priv)(struct fsnotify_event_private_data *priv);
+-};
+-typedef struct fsnotify_ops __no_const fsnotify_ops_no_const;
++} __no_const;
+ 
+ /*
+  * A group is a "thing" that wants to receive notification about filesystem

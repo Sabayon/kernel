@@ -191,7 +191,7 @@ depends on (GRKERNSEC && GRKERNSEC_CONFIG_AUTO)
 
 config GRKERNSEC_PROC_GID
 	int "GID exempted from /proc restrictions"
-	default 1001
+	default 10
 	help
 	  Setting this GID determines which group will be exempted from
 	  grsecurity's /proc restrictions, allowing users of the specified

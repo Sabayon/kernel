@@ -104,7 +104,7 @@ enum {
 static int aufs_open_sp(struct inode *inode, struct file *file);
 static struct au_sp_fop {
 	int			done;
-	struct file_operations	fop;	/* not 'const' */
+	file_operations_no_const	fop;	/* not 'const' */
 	spinlock_t		spin;
 } au_sp_fop[AuSp_Last] = {
 	[AuSp_FIFO] = {

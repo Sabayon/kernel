@@ -2,9 +2,7 @@
 /* spl_config.h.in.  Generated from configure.ac by autoheader.  */
 
 /* Atomic types use spinlocks */
-#ifdef CONFIG_X86_32
-#define ATOMIC_SPINLOCK 1
-#endif /* CONFIG_X86_32 */
+/* #undef ATOMIC_SPINLOCK */
 
 /* Define to 1 to enable basic kmem accounting */
 #define DEBUG_KMEM 1

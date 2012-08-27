@@ -1,7 +1,0 @@
-SPL_MODULE_CFLAGS  = -I$(srctree)/include/spl
-SPL_MODULE_CFLAGS += -include $(srctree)/spl_config.h
-export SPL_MODULE_CFLAGS
-
-obj-$(CONFIG_SPL) :=
-obj-$(CONFIG_SPL) +=  spl/
-obj-$(CONFIG_SPL) +=  splat/

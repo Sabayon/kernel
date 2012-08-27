@@ -9,7 +9,6 @@ config DCACHE_WORD_ACCESS
        bool
 
 if BLOCK
-source "fs/zfs/Kconfig"
 
 source "fs/ext2/Kconfig"
 source "fs/ext3/Kconfig"

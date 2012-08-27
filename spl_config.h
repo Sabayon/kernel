@@ -88,7 +88,7 @@
 #define HAVE_FILES_FDTABLE 1
 
 /* first_online_pgdat() is available */
-/* #undef HAVE_FIRST_ONLINE_PGDAT */
+#define HAVE_FIRST_ONLINE_PGDAT 1
 
 /* fls64() is available */
 #define HAVE_FLS64 1
@@ -106,7 +106,7 @@
 #define HAVE_GLOBAL_PAGE_STATE 1
 
 /* groups_search() is available */
-/* #undef HAVE_GROUPS_SEARCH */
+#define HAVE_GROUPS_SEARCH 1
 
 /* init_utsname() is available */
 #define HAVE_INIT_UTSNAME 1
@@ -130,7 +130,7 @@
 #define HAVE_KERN_PATH_PARENT_HEADER 1
 
 /* kern_path_parent() is available */
-/* #undef HAVE_KERN_PATH_PARENT_SYMBOL */
+#define HAVE_KERN_PATH_PARENT_SYMBOL 1
 
 /* kmalloc_node() is available */
 #define HAVE_KMALLOC_NODE 1
@@ -157,7 +157,7 @@
 #define HAVE_NEXT_ONLINE_PGDAT 1
 
 /* next_zone() is available */
-/* #undef HAVE_NEXT_ZONE */
+#define HAVE_NEXT_ZONE 1
 
 /* struct path used in struct nameidata */
 #define HAVE_PATH_IN_NAMEIDATA 1
@@ -175,7 +175,7 @@
 #define HAVE_PUT_TASK_STRUCT 1
 
 /* set_fs_pwd() is available */
-/* #undef HAVE_SET_FS_PWD */
+#define HAVE_SET_FS_PWD 1
 
 /* set_normalized_timespec() is available as export */
 #define HAVE_SET_NORMALIZED_TIMESPEC_EXPORT 1

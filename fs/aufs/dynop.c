@@ -146,11 +146,22 @@ void au_dy_put(struct au_dykey *key)
 #define DyDbgInc(cnt)		do {} while (0)
 #endif
 
+#define AuGrsecPaxPtr(func, dst, src) do {		\
+	union {						\
+		const void *o;				\
+		char **p;				\
+	} u;						\
+	BUILD_BUG_ON(sizeof(u.o) != sizeof(&dst.func));	\
+	BUILD_BUG_ON(sizeof(*u.p) != sizeof(src.func));	\
+	u.o = (void *)&dst.func;			\
+	*u.p = (void *)src.func;			\
+} while (0)
+
 #define DySet(func, dst, src, h_op, h_sb) do {				\
 	DyDbgInc(cnt);							\
 	if (h_op->func) {						\
 		if (src.func)						\
-			dst.func = src.func;				\
+			AuGrsecPaxPtr(func, dst, src);			\
 		else							\
 			AuDbg("%s %s\n", au_sbtype(h_sb), #func);	\
 	}								\
@@ -159,7 +170,7 @@ void au_dy_put(struct au_dykey *key)
 #define DySetForce(func, dst, src) do {		\
 	AuDebugOn(!src.func);			\
 	DyDbgInc(cnt);				\
-	dst.func = src.func;			\
+	AuGrsecPaxPtr(func, dst, src);		\
 } while (0)
 
 #define DySetAop(func) \
@@ -266,14 +277,21 @@ out:
  */
 static void dy_adx(struct au_dyaop *dyaop, int do_dx)
 {
+	union {
+		void *direct_IO, *get_xip_mem;
+	} grsec_pax_dummy = {
+		.get_xip_mem = NULL
+	};
+
 	if (!do_dx) {
-		dyaop->da_op.direct_IO = NULL;
-		dyaop->da_op.get_xip_mem = NULL;
+		AuGrsecPaxPtr(direct_IO, dyaop->da_op, grsec_pax_dummy);
+		AuGrsecPaxPtr(get_xip_mem, dyaop->da_op, grsec_pax_dummy);
 	} else {
-		dyaop->da_op.direct_IO = aufs_aop.direct_IO;
-		dyaop->da_op.get_xip_mem = aufs_aop.get_xip_mem;
+		AuGrsecPaxPtr(direct_IO, dyaop->da_op, aufs_aop);
+		AuGrsecPaxPtr(get_xip_mem, dyaop->da_op, aufs_aop);
 		if (!dyaop->da_get_xip_mem)
-			dyaop->da_op.get_xip_mem = NULL;
+			AuGrsecPaxPtr(get_xip_mem, dyaop->da_op,
+				      grsec_pax_dummy);
 	}
 }
 

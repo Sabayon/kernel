@@ -50,7 +50,6 @@ am__aclocal_m4_deps =  \
 	$(top_srcdir)/config/kernel-bio-end-io-t-args.m4 \
 	$(top_srcdir)/config/kernel-bio-failfast.m4 \
 	$(top_srcdir)/config/kernel-bio-rw-syncio.m4 \
-	$(top_srcdir)/config/kernel-blk-dev-discard-zeroes-data.m4 \
 	$(top_srcdir)/config/kernel-blk-end-request.m4 \
 	$(top_srcdir)/config/kernel-blk-fetch-request.m4 \
 	$(top_srcdir)/config/kernel-blk-queue-discard.m4 \
@@ -71,6 +70,7 @@ am__aclocal_m4_deps =  \
 	$(top_srcdir)/config/kernel-create-umode-t.m4 \
 	$(top_srcdir)/config/kernel-d-make-root.m4 \
 	$(top_srcdir)/config/kernel-d-obtain-alias.m4 \
+	$(top_srcdir)/config/kernel-discard-granularity.m4 \
 	$(top_srcdir)/config/kernel-encode-fh-inode.m4 \
 	$(top_srcdir)/config/kernel-evict-inode.m4 \
 	$(top_srcdir)/config/kernel-fallocate.m4 \
@@ -186,22 +186,22 @@ am__relativize = \
     dir1=`echo "$$dir1" | sed -e "$$sed_rest"`; \
   done; \
   reldir="$$dir2"
-ACLOCAL = ${SHELL} /var/tmp/portage/sys-fs/zfs-9999/work/zfs-9999/config/missing --run aclocal-1.11
+ACLOCAL = ${SHELL} /var/tmp/portage/sys-fs/zfs-20120903/work/zfs-20120903/zfs-src/config/missing --run aclocal-1.11
 ALIEN = alien
 ALIEN_VERSION = 
-AMTAR = ${SHELL} /var/tmp/portage/sys-fs/zfs-9999/work/zfs-9999/config/missing --run tar
+AMTAR = ${SHELL} /var/tmp/portage/sys-fs/zfs-20120903/work/zfs-20120903/zfs-src/config/missing --run tar
 AM_DEFAULT_VERBOSITY = 1
 AR = x86_64-pc-linux-gnu-ar
-AUTOCONF = ${SHELL} /var/tmp/portage/sys-fs/zfs-9999/work/zfs-9999/config/missing --run autoconf
-AUTOHEADER = ${SHELL} /var/tmp/portage/sys-fs/zfs-9999/work/zfs-9999/config/missing --run autoheader
-AUTOMAKE = ${SHELL} /var/tmp/portage/sys-fs/zfs-9999/work/zfs-9999/config/missing --run automake-1.11
+AUTOCONF = ${SHELL} /var/tmp/portage/sys-fs/zfs-20120903/work/zfs-20120903/zfs-src/config/missing --run autoconf
+AUTOHEADER = ${SHELL} /var/tmp/portage/sys-fs/zfs-20120903/work/zfs-20120903/zfs-src/config/missing --run autoheader
+AUTOMAKE = ${SHELL} /var/tmp/portage/sys-fs/zfs-20120903/work/zfs-20120903/zfs-src/config/missing --run automake-1.11
 AWK = gawk
 CC = x86_64-pc-linux-gnu-gcc
 CCAS = x86_64-pc-linux-gnu-gcc
 CCASDEPMODE = depmode=none
 CCASFLAGS = 
 CCDEPMODE = depmode=none
-CFLAGS = -march=core2 -mtune=core2 -O2 -pipe -O2
+CFLAGS = -O2 -march=x86-64 -pipe
 CPP = x86_64-pc-linux-gnu-gcc -E
 CPPFLAGS = 
 CYGPATH_W = echo
@@ -217,8 +217,8 @@ DEPDIR = .deps
 DLLTOOL = false
 DPKG = dpkg
 DPKGBUILD = dpkg-buildpackage
-DPKGBUILD_VERSION = 1.16.2.
-DPKG_VERSION = 1.16.2
+DPKGBUILD_VERSION = 
+DPKG_VERSION = 
 DSYMUTIL = 
 DUMPBIN = 
 ECHO_C = 
@@ -227,11 +227,11 @@ ECHO_T =
 EGREP = /bin/grep -E
 EXEEXT = 
 FGREP = /bin/grep -F
-FRAME_LARGER_THAN = -Wframe-larger-than=1024
+FRAME_LARGER_THAN = 
 GREP = /bin/grep
 HAVE_ALIEN = no
-HAVE_DPKG = yes
-HAVE_DPKGBUILD = yes
+HAVE_DPKG = no
+HAVE_DPKGBUILD = no
 HAVE_MAKEPKG = 
 HAVE_PACMAN = 
 HAVE_RPM = no
@@ -242,24 +242,24 @@ INSTALL_PROGRAM = ${INSTALL}
 INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
 KERNELCPPFLAGS =  -Wno-unused-but-set-variable -DHAVE_SPL -D_KERNEL -DTEXT_DOMAIN=\"zfs-linux-kernel\" -DNDEBUG 
-KERNELMAKE_PARAMS =  O=/lib/modules/3.5.0/build
+KERNELMAKE_PARAMS = 
 LD = /usr/x86_64-pc-linux-gnu/bin/ld -m elf_x86_64
-LDFLAGS = -Wl,-O1 -Wl,--as-needed -Wl,--sort-common
+LDFLAGS = -Wl,-O1,--as-needed
 LIBBLKID = 
 LIBOBJS = 
-LIBS = -luuid -luuid -lz -lz -lz 
+LIBS = 
 LIBSELINUX = 
 LIBTOOL = $(SHELL) $(top_builddir)/libtool
-LIBUUID = -luuid
-LINUX = /usr/src/linux
-LINUX_OBJ = /lib/modules/3.5.0/build
-LINUX_SYMBOLS = NONE
-LINUX_VERSION = 3.5.0
+LIBUUID = 
+LINUX = /run/media/fabio/0880a32b-0f6f-457f-9e41-6a9139ce15b9/repos/ldd/linux-2.6
+LINUX_OBJ = /run/media/fabio/0880a32b-0f6f-457f-9e41-6a9139ce15b9/repos/ldd/linux-2.6
+LINUX_SYMBOLS = Module.symvers
+LINUX_VERSION = 3.5.2+
 LIPO = 
 LN_S = ln -s
 LTLIBOBJS = 
 MAINT = #
-MAKEINFO = ${SHELL} /var/tmp/portage/sys-fs/zfs-9999/work/zfs-9999/config/missing --run makeinfo
+MAKEINFO = ${SHELL} /var/tmp/portage/sys-fs/zfs-20120903/work/zfs-20120903/zfs-src/config/missing --run makeinfo
 MAKEPKG = 
 MAKEPKG_VERSION = 
 MANIFEST_TOOL = :
@@ -288,17 +288,17 @@ RPMBUILD_VERSION =
 RPM_VERSION = 
 SED = /bin/sed
 SET_MAKE = 
-SHELL = /bin/bash
-SPL = /usr/src/spl-0.6.0-rc9/3.5.0
-SPL_OBJ = /usr/src/spl-0.6.0-rc9/3.5.0
+SHELL = /bin/sh
+SPL = /var/tmp/portage/sys-fs/zfs-20120903/work/zfs-20120903/spl-src
+SPL_OBJ = /var/tmp/portage/sys-fs/zfs-20120903/work/zfs-20120903/spl-src
 SPL_SYMBOLS = Module.symvers
-SPL_VERSION = 0.6.0-rc9
+SPL_VERSION = 0.6.0-rc10
 STRIP = x86_64-pc-linux-gnu-strip
-TARGET_ASM_DIR = asm-x86_64
+TARGET_ASM_DIR = asm-generic
 VENDOR = gentoo
 VERSION = 0.6.0
-ZFS_CONFIG = all
-ZFS_META_ALIAS = zfs-0.6.0-rc9
+ZFS_CONFIG = kernel
+ZFS_META_ALIAS = zfs-0.6.0-rc10
 ZFS_META_AUTHOR = Sun Microsystems/Oracle, Lawrence Livermore National Laboratory
 ZFS_META_DATA = 
 ZFS_META_LICENSE = CDDL
@@ -306,13 +306,13 @@ ZFS_META_LT_AGE =
 ZFS_META_LT_CURRENT = 
 ZFS_META_LT_REVISION = 
 ZFS_META_NAME = zfs
-ZFS_META_RELEASE = rc9
+ZFS_META_RELEASE = rc10
 ZFS_META_VERSION = 0.6.0
-ZLIB = -lz
-abs_builddir = /var/tmp/portage/sys-fs/zfs-9999/work/zfs-9999/include/sys/fm
-abs_srcdir = /var/tmp/portage/sys-fs/zfs-9999/work/zfs-9999/include/sys/fm
-abs_top_builddir = /var/tmp/portage/sys-fs/zfs-9999/work/zfs-9999
-abs_top_srcdir = /var/tmp/portage/sys-fs/zfs-9999/work/zfs-9999
+ZLIB = 
+abs_builddir = /var/tmp/portage/sys-fs/zfs-20120903/work/zfs-20120903/zfs-src/include/sys/fm
+abs_srcdir = /var/tmp/portage/sys-fs/zfs-20120903/work/zfs-20120903/zfs-src/include/sys/fm
+abs_top_builddir = /var/tmp/portage/sys-fs/zfs-20120903/work/zfs-20120903/zfs-src
+abs_top_srcdir = /var/tmp/portage/sys-fs/zfs-20120903/work/zfs-20120903/zfs-src
 ac_ct_AR = 
 ac_ct_CC = 
 ac_ct_DUMPBIN = 
@@ -330,7 +330,7 @@ build_vendor = pc
 builddir = .
 datadir = /usr/share
 datarootdir = ${prefix}/share
-docdir = /usr/share/doc/zfs-9999
+docdir = /usr/share/doc/zfs-20120903
 dvidir = ${docdir}
 exec_prefix = ${prefix}
 host = x86_64-pc-linux-gnu
@@ -341,7 +341,7 @@ host_vendor = pc
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = /usr/share/info
-install_sh = ${SHELL} /var/tmp/portage/sys-fs/zfs-9999/work/zfs-9999/config/install-sh
+install_sh = ${SHELL} /var/tmp/portage/sys-fs/zfs-20120903/work/zfs-20120903/zfs-src/config/install-sh
 libdir = /usr/lib64
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale
@@ -365,8 +365,8 @@ target_vendor = pc
 top_build_prefix = ../../../
 top_builddir = ../../..
 top_srcdir = ../../..
-udevdir = /lib/udev
-udevruledir = ${udevdir}/rules.d
+udevdir = 
+udevruledir = 
 SUBDIRS = fs
 COMMON_H = \
 	$(top_srcdir)/include/sys/fm/protocol.h \
@@ -375,10 +375,10 @@ COMMON_H = \
 KERNEL_H = 
 USER_H = 
 EXTRA_DIST = $(COMMON_H) $(KERNEL_H) $(USER_H)
-libzfsdir = $(includedir)/libzfs/sys/fm
-libzfs_HEADERS = $(COMMON_H) $(USER_H)
-#kerneldir = /usr/src/zfs-$(ZFS_META_VERSION)-$(ZFS_META_RELEASE)/$(LINUX_VERSION)/sys/fm
-#kernel_HEADERS = $(COMMON_H) $(KERNEL_H)
+#libzfsdir = $(includedir)/libzfs/sys/fm
+#libzfs_HEADERS = $(COMMON_H) $(USER_H)
+kerneldir = /usr/src/zfs-$(ZFS_META_VERSION)-$(ZFS_META_RELEASE)/$(LINUX_VERSION)/sys/fm
+kernel_HEADERS = $(COMMON_H) $(KERNEL_H)
 all: all-recursive
 
 .SUFFIXES:

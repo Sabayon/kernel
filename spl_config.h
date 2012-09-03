@@ -2,9 +2,7 @@
 /* spl_config.h.in.  Generated from configure.ac by autoheader.  */
 
 /* Atomic types use spinlocks */
-#ifdef CONFIG_X86_32
-#define ATOMIC_SPINLOCK 1
-#endif /* CONFIG_X86_32 */
+/* #undef ATOMIC_SPINLOCK */
 
 /* Define to 1 to enable basic kmem accounting */
 #define DEBUG_KMEM 1
@@ -154,7 +152,7 @@
 #define HAVE_MUTEX_OWNER_TASK_STRUCT 1
 
 /* next_online_pgdat() is available */
-#define HAVE_NEXT_ONLINE_PGDAT 1
+/* #undef HAVE_NEXT_ONLINE_PGDAT */
 
 /* next_zone() is available */
 /* #undef HAVE_NEXT_ZONE */
@@ -167,9 +165,6 @@
 
 /* pgdat_list is available */
 /* #undef HAVE_PGDAT_LIST */
-
-/* pmd_alloc_with_mask exists */
-#define HAVE_PMD_ALLOC_WITH_MASK 1
 
 /* __put_task_struct() is available */
 #define HAVE_PUT_TASK_STRUCT 1
@@ -214,7 +209,7 @@
 #define HAVE_SYS_TYPES_H 1
 
 /* task_curr() is available */
-#define HAVE_TASK_CURR 1
+/* #undef HAVE_TASK_CURR */
 
 /* timespec_sub() is available */
 #define HAVE_TIMESPEC_SUB 1
@@ -269,7 +264,7 @@
 #define RWSEM_SPINLOCK_IS_RAW 1
 
 /* Define the project alias string. */
-#define SPL_META_ALIAS "spl-0.6.0-rc9"
+#define SPL_META_ALIAS "spl-0.6.0-rc10"
 
 /* Define the project author. */
 /* #undef SPL_META_AUTHOR */
@@ -290,7 +285,7 @@
 #define SPL_META_NAME "spl"
 
 /* Define the project release. */
-#define SPL_META_RELEASE "rc9"
+#define SPL_META_RELEASE "rc10"
 
 /* Define the project version. */
 #define SPL_META_VERSION "0.6.0"

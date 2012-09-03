@@ -52,9 +52,6 @@
 /* blkdev_get_by_path() is available */
 #define HAVE_BLKDEV_GET_BY_PATH 1
 
-/* struct queue_limits with discard_zeroes_data */
-#define HAVE_BLK_DEV_DISCARD_ZEROES_DATA 1
-
 /* blk_end_request() is available */
 #define HAVE_BLK_END_REQUEST 1
 
@@ -124,6 +121,9 @@
 /* xattr_handler->set() wants dentry */
 #define HAVE_DENTRY_XATTR_SET 1
 
+/* ql->discard_granularity is available */
+#define HAVE_DISCARD_GRANULARITY 1
+
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 1
 
@@ -182,7 +182,7 @@
 /* #undef HAVE_IOCTL_IN_STROPTS_H */
 
 /* Define to 1 if ioctl() defined in <sys/ioctl.h> */
-#define HAVE_IOCTL_IN_SYS_IOCTL_H 1
+/* #undef HAVE_IOCTL_IN_SYS_IOCTL_H */
 
 /* Define to 1 if ioctl() defined in <unistd.h> */
 /* #undef HAVE_IOCTL_IN_UNISTD_H */
@@ -197,10 +197,10 @@
 /* #undef HAVE_LIBSELINUX */
 
 /* Define if you have libuuid */
-#define HAVE_LIBUUID 1
+/* #undef HAVE_LIBUUID */
 
 /* Define to 1 if you have the `z' library (-lz). */
-#define HAVE_LIBZ 1
+/* #undef HAVE_LIBZ */
 
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
@@ -257,7 +257,7 @@
 #define HAVE_UNISTD_H 1
 
 /* Define if you have zlib */
-#define HAVE_ZLIB 1
+/* #undef HAVE_ZLIB */
 
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
@@ -271,7 +271,7 @@
 /* #undef ZFS_DEBUG */
 
 /* Define the project alias string. */
-#define ZFS_META_ALIAS "zfs-0.6.0-rc9"
+#define ZFS_META_ALIAS "zfs-0.6.0-rc10"
 
 /* Define the project author. */
 #define ZFS_META_AUTHOR "Sun Microsystems/Oracle, Lawrence Livermore National Laboratory"
@@ -295,7 +295,7 @@
 #define ZFS_META_NAME "zfs"
 
 /* Define the project release. */
-#define ZFS_META_RELEASE "rc9"
+#define ZFS_META_RELEASE "rc10"
 
 /* Define the project version. */
 #define ZFS_META_VERSION "0.6.0"

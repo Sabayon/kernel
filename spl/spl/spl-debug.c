@@ -677,8 +677,6 @@ spl_debug_msg(void *arg, int subsys, int mask, const char *file,
         va_list                  ap;
         int                      i;
 
-	preempt_disable();
-
 	if (subsys == 0)
 		subsys = SS_DEBUG_SUBSYS;
 
@@ -688,9 +686,8 @@ spl_debug_msg(void *arg, int subsys, int mask, const char *file,
         if (strchr(file, '/'))
                 file = strrchr(file, '/') + 1;
 
-        trace_set_debug_header(&header, subsys, mask, line, 0);
-
         tcd = trace_get_tcd();
+        trace_set_debug_header(&header, subsys, mask, line, 0);
         if (tcd == NULL)
                 goto console;
 
@@ -772,7 +769,6 @@ console:
                 /* no console output requested */
                 if (tcd != NULL)
                         trace_put_tcd(tcd);
-		preempt_enable();
                 return 1;
         }
 
@@ -783,7 +779,6 @@ console:
                         cdls->cdls_count++;
                         if (tcd != NULL)
                                 trace_put_tcd(tcd);
-			preempt_enable();
                         return 1;
                 }
 
@@ -837,7 +832,6 @@ console:
                 cdls->cdls_count = 0;
         }
 
-	preempt_enable();
         return 0;
 }
 EXPORT_SYMBOL(spl_debug_msg);

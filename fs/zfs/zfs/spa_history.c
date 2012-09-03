@@ -21,6 +21,7 @@
 
 /*
  * Copyright (c) 2006, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011 by Delphix. All rights reserved.
  */
 
 #include <sys/spa.h>
@@ -101,11 +102,11 @@ spa_history_create_obj(spa_t *spa, dmu_tx_t *tx)
 
 	/*
 	 * Figure out maximum size of history log.  We set it at
-	 * 1% of pool size, with a max of 32MB and min of 128KB.
+	 * 0.1% of pool size, with a max of 1G and min of 128KB.
 	 */
 	shpp->sh_phys_max_off =
-	    metaslab_class_get_dspace(spa_normal_class(spa)) / 100;
-	shpp->sh_phys_max_off = MIN(shpp->sh_phys_max_off, 32<<20);
+	    metaslab_class_get_dspace(spa_normal_class(spa)) / 1000;
+	shpp->sh_phys_max_off = MIN(shpp->sh_phys_max_off, 1<<30);
 	shpp->sh_phys_max_off = MAX(shpp->sh_phys_max_off, 128<<10);
 
 	dmu_buf_rele(dbp, FTAG);
@@ -233,7 +234,7 @@ spa_history_log_sync(void *arg1, void *arg2, dmu_tx_t *tx)
 	}
 #endif
 
-	VERIFY(nvlist_alloc(&nvrecord, NV_UNIQUE_NAME, KM_SLEEP) == 0);
+	VERIFY(nvlist_alloc(&nvrecord, NV_UNIQUE_NAME, KM_PUSHPAGE) == 0);
 	VERIFY(nvlist_add_uint64(nvrecord, ZPOOL_HIST_TIME,
 	    gethrestime_sec()) == 0);
 	VERIFY(nvlist_add_uint64(nvrecord, ZPOOL_HIST_WHO, hap->ha_uid) == 0);
@@ -265,10 +266,10 @@ spa_history_log_sync(void *arg1, void *arg2, dmu_tx_t *tx)
 	}
 
 	VERIFY(nvlist_size(nvrecord, &reclen, NV_ENCODE_XDR) == 0);
-	record_packed = kmem_alloc(reclen, KM_SLEEP);
+	record_packed = kmem_alloc(reclen, KM_PUSHPAGE);
 
 	VERIFY(nvlist_pack(nvrecord, &record_packed, &reclen,
-	    NV_ENCODE_XDR, KM_SLEEP) == 0);
+	    NV_ENCODE_XDR, KM_PUSHPAGE) == 0);
 
 	mutex_enter(&spa->spa_history_lock);
 	if (hap->ha_log_type == LOG_CMD_POOL_CREATE)
@@ -315,7 +316,7 @@ spa_history_log(spa_t *spa, const char *history_str, history_log_type_t what)
 		return (err);
 	}
 
-	ha = kmem_alloc(sizeof (history_arg_t), KM_SLEEP);
+	ha = kmem_alloc(sizeof (history_arg_t), KM_PUSHPAGE);
 	ha->ha_history_str = strdup(history_str);
 	ha->ha_zone = strdup(spa_history_zone());
 	ha->ha_log_type = what;
@@ -441,7 +442,7 @@ log_internal(history_internal_events_t event, spa_t *spa,
 	if (tx->tx_txg == TXG_INITIAL)
 		return;
 
-	ha = kmem_alloc(sizeof (history_arg_t), KM_SLEEP);
+	ha = kmem_alloc(sizeof (history_arg_t), KM_PUSHPAGE);
 	va_copy(adx_copy, adx);
 	ha->ha_history_str = kmem_vasprintf(fmt, adx_copy);
 	va_end(adx_copy);

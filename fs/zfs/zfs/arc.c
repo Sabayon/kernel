@@ -3547,7 +3547,7 @@ arc_write(zio_t *pio, spa_t *spa, uint64_t txg,
 	ASSERT(hdr->b_acb == NULL);
 	if (l2arc)
 		hdr->b_flags |= ARC_L2CACHE;
-	callback = kmem_zalloc(sizeof (arc_write_callback_t), KM_SLEEP);
+	callback = kmem_zalloc(sizeof (arc_write_callback_t), KM_PUSHPAGE);
 	callback->awcb_ready = ready;
 	callback->awcb_done = done;
 	callback->awcb_private = private;
@@ -3723,23 +3723,18 @@ arc_init(void)
 	spl_register_shrinker(&arc_shrinker);
 #endif
 
-	/* set min cache to 1/32 of all memory, or 16MB, whichever is more */
-	arc_c_min = MAX(arc_c / 4, 16<<20);
+	/* set min cache to 1/32 of all memory, or 64MB, whichever is more */
+	arc_c_min = MAX(arc_c / 4, 64<<20);
 	/* set max to 1/2 of all memory */
 	arc_c_max = MAX(arc_c * 4, arc_c_max);
 
 	/*
 	 * Allow the tunables to override our calculations if they are
-	 * reasonable (ie. over 16MB)
+	 * reasonable (ie. over 64MB)
 	 */
-#ifdef _KERNEL
-	if (zfs_arc_max > 16<<20 && zfs_arc_max < MIN(physmem * PAGESIZE, 
-		vmem_size(heap_arena, VMEM_ALLOC | VMEM_FREE)))
+	if (zfs_arc_max > 64<<20 && zfs_arc_max < physmem * PAGESIZE)
 		arc_c_max = zfs_arc_max;
-#else
-	if (zfs_arc_max > 16<<20 && zfs_arc_max < physmem * PAGESIZE)
-#endif
-	if (zfs_arc_min > 16<<20 && zfs_arc_min <= arc_c_max)
+	if (zfs_arc_min > 64<<20 && zfs_arc_min <= arc_c_max)
 		arc_c_min = zfs_arc_min;
 
 	arc_c = arc_c_max;

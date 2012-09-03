@@ -65,7 +65,6 @@
 #include <sys/kstat.h>
 #include <sys/zfs_context.h>
 #ifdef _KERNEL
-#include <linux/preempt.h>
 #include <sys/atomic.h>
 #include <sys/condvar.h>
 #include <sys/cpuvar.h>
@@ -419,7 +418,7 @@ zfs_zevent_alloc(void)
 {
 	zevent_t *ev;
 
-	ev = kmem_zalloc(sizeof(zevent_t), KM_SLEEP);
+	ev = kmem_zalloc(sizeof(zevent_t), KM_PUSHPAGE);
 	if (ev == NULL)
 		return NULL;
 
@@ -673,7 +672,7 @@ zfs_zevent_destroy(zfs_zevent_t *ze)
 static void *
 i_fm_alloc(nv_alloc_t *nva, size_t size)
 {
-	return (kmem_zalloc(size, KM_SLEEP));
+	return (kmem_zalloc(size, KM_PUSHPAGE));
 }
 
 /* ARGSUSED */
@@ -741,7 +740,7 @@ fm_nvlist_create(nv_alloc_t *nva)
 	nv_alloc_t *nvhdl;
 
 	if (nva == NULL) {
-		nvhdl = kmem_zalloc(sizeof (nv_alloc_t), KM_SLEEP);
+		nvhdl = kmem_zalloc(sizeof (nv_alloc_t), KM_PUSHPAGE);
 
 		if (nv_alloc_init(nvhdl, &fm_mem_alloc_ops, NULL, 0) != 0) {
 			kmem_free(nvhdl, sizeof (nv_alloc_t));
@@ -1414,17 +1413,13 @@ fm_ena_generate_cpu(uint64_t timestamp, processorid_t cpuid, uchar_t format)
 uint64_t
 fm_ena_generate(uint64_t timestamp, uchar_t format)
 {
-	processorid_t cpuid;
+	uint64_t ena;
 
-#ifdef _KERNEL
-	preempt_disable();
-	cpuid = getcpuid();
-	preempt_enable();
-#else
-	cpuid = getcpuid();
-#endif
+	kpreempt_disable();
+	ena = fm_ena_generate_cpu(timestamp, getcpuid(), format);
+	kpreempt_enable();
 
-	return (fm_ena_generate_cpu(timestamp, cpuid, format));
+	return (ena);
 }
 
 uint64_t

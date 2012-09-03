@@ -1,6 +1,9 @@
 config ZFS
-	tristate "ZFS"
+	tristate "ZFS filesystem support"
 	depends on SPL
+	depends on EFI_PARTITION
+	select ZLIB_INFLATE
+	select ZLIB_DEFLATE
 	help
 	  This is the ZFS filesystem from the ZFS On Linux project.
 

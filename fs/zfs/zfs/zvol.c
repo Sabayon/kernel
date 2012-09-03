@@ -49,6 +49,7 @@
 unsigned int zvol_inhibit_dev = 0;
 unsigned int zvol_major = ZVOL_MAJOR;
 unsigned int zvol_threads = 32;
+unsigned long zvol_max_discard_blocks = 16384;
 
 static taskq_t *zvol_taskq;
 static kmutex_t zvol_state_lock;
@@ -390,24 +391,6 @@ out:
 }
 
 /*
- * Replay a TX_TRUNCATE ZIL transaction if asked.  TX_TRUNCATE is how we
- * implement DKIOCFREE/free-long-range.
- */
-static int
-zvol_replay_truncate(zvol_state_t *zv, lr_truncate_t *lr, boolean_t byteswap)
-{
-	uint64_t offset, length;
-
-	if (byteswap)
-		byteswap_uint64_array(lr, sizeof (*lr));
-
-	offset = lr->lr_offset;
-	length = lr->lr_length;
-
-	return (dmu_free_long_range(zv->zv_objset, ZVOL_OBJ, offset, length));
-}
-
-/*
  * Replay a TX_WRITE ZIL transaction that didn't get committed
  * after a system failure
  */
@@ -458,7 +441,7 @@ zil_replay_func_t *zvol_replay_vector[TX_MAX_TYPE] = {
 	(zil_replay_func_t *)zvol_replay_err,	/* TX_LINK */
 	(zil_replay_func_t *)zvol_replay_err,	/* TX_RENAME */
 	(zil_replay_func_t *)zvol_replay_write,	/* TX_WRITE */
-	(zil_replay_func_t *)zvol_replay_truncate,	/* TX_TRUNCATE */
+	(zil_replay_func_t *)zvol_replay_err,	/* TX_TRUNCATE */
 	(zil_replay_func_t *)zvol_replay_err,	/* TX_SETATTR */
 	(zil_replay_func_t *)zvol_replay_err,	/* TX_ACL */
 };
@@ -557,6 +540,14 @@ zvol_write(void *arg)
 	dmu_tx_t *tx;
 	rl_t *rl;
 
+	/*
+	 * Annotate this call path with a flag that indicates that it is
+	 * unsafe to use KM_SLEEP during memory allocations due to the
+	 * potential for a deadlock.  KM_PUSHPAGE should be used instead.
+	 */
+	ASSERT(!(current->flags & PF_NOFS));
+	current->flags |= PF_NOFS;
+
 	if (req->cmd_flags & VDEV_REQ_FLUSH)
 		zil_commit(zv->zv_zilog, ZVOL_OBJ);
 
@@ -565,7 +556,7 @@ zvol_write(void *arg)
 	 */
 	if (size == 0) {
 		blk_end_request(req, 0, size);
-		return;
+		goto out;
 	}
 
 	rl = zfs_range_lock(&zv->zv_znode, offset, size, RL_WRITER);
@@ -579,7 +570,7 @@ zvol_write(void *arg)
 		dmu_tx_abort(tx);
 		zfs_range_unlock(rl);
 		blk_end_request(req, -error, size);
-		return;
+		goto out;
 	}
 
 	error = dmu_write_req(zv->zv_objset, ZVOL_OBJ, req, tx);
@@ -595,33 +586,11 @@ zvol_write(void *arg)
 		zil_commit(zv->zv_zilog, ZVOL_OBJ);
 
 	blk_end_request(req, -error, size);
+out:
+	current->flags &= ~PF_NOFS;
 }
 
 #ifdef HAVE_BLK_QUEUE_DISCARD
-/*
- * Log a DKIOCFREE/free-long-range to the ZIL with TX_TRUNCATE.
- */
-static void
-zvol_log_truncate(zvol_state_t *zv, dmu_tx_t *tx, uint64_t off, uint64_t len,
-    boolean_t sync)
-{
-	itx_t *itx;
-	lr_truncate_t *lr;
-	zilog_t *zilog = zv->zv_zilog;
-
-	if (zil_replaying(zilog, tx))
-		return;
-
-	itx = zil_itx_create(TX_TRUNCATE, sizeof (*lr));
-	lr = (lr_truncate_t *)&itx->itx_lr;
-	lr->lr_foid = ZVOL_OBJ;
-	lr->lr_offset = off;
-	lr->lr_length = len;
-
-	itx->itx_sync = sync;
-	zil_itx_assign(zilog, itx, tx);
-}
-
 static void
 zvol_discard(void *arg)
 {
@@ -632,58 +601,38 @@ zvol_discard(void *arg)
 	uint64_t size = blk_rq_bytes(req);
 	int error;
 	rl_t *rl;
-	dmu_tx_t *tx;
 
 	/*
-	 * Apply Postel's Law to length-checking.  If they overshoot,
-	 * just blank out until the end, if there's a need to blank
-	 * out anything.
+	 * Annotate this call path with a flag that indicates that it is
+	 * unsafe to use KM_SLEEP during memory allocations due to the
+	 * potential for a deadlock.  KM_PUSHPAGE should be used instead.
 	 */
-	if (offset >= zv->zv_volsize) {
-		blk_end_request(req, 0, size); /* No need to do anything... */
-		return;
+	ASSERT(!(current->flags & PF_NOFS));
+	current->flags |= PF_NOFS;
+
+	if (offset + size > zv->zv_volsize) {
+		blk_end_request(req, -EIO, size);
+		goto out;
 	}
-	if (offset + size > zv->zv_volsize)
-		size = DMU_OBJECT_END;
 
 	if (size == 0) {
 		blk_end_request(req, 0, size);
-		return;
+		goto out;
 	}
 
 	rl = zfs_range_lock(&zv->zv_znode, offset, size, RL_WRITER);
-	tx = dmu_tx_create(zv->zv_objset);
-	error = dmu_tx_assign(tx, TXG_WAIT);
-	if (error != 0) {
-		dmu_tx_abort(tx);
-	} else {
-		zvol_log_truncate(zv, tx, offset, size, B_TRUE);
-		dmu_tx_commit(tx);
-		error = dmu_free_long_range(zv->zv_objset, ZVOL_OBJ, offset,
-			size);
-	}
+
+	error = dmu_free_long_range(zv->zv_objset, ZVOL_OBJ, offset, size);
+
+	/*
+	 * TODO: maybe we should add the operation to the log.
+	 */
 
 	zfs_range_unlock(rl);
 
-	if (error == 0) {
-		/*
-		 * If the 'sync' property is set to 'always' then treat this as
-		 * a synchronous operation (i.e. commit to zil).
-		 */
-		if (zv->zv_objset->os_sync == ZFS_SYNC_ALWAYS)
-			zil_commit(zv->zv_zilog, ZVOL_OBJ);
-
-		/*
-		 * If the caller really wants synchronous writes, and
-		 * can't wait for them, don't return until the write
-		 * is done.
-		 */
-		if (req->cmd_flags & VDEV_REQ_FUA) {
-			txg_wait_synced(
-			    dmu_objset_pool(zv->zv_objset), 0);
-		}
-	}
 	blk_end_request(req, -error, size);
+out:
+	current->flags &= ~PF_NOFS;
 }
 #endif /* HAVE_BLK_QUEUE_DISCARD */
 
@@ -836,7 +785,7 @@ zvol_get_data(void *arg, lr_write_t *lr, char *buf, zio_t *zio)
 	ASSERT(zio != NULL);
 	ASSERT(size != 0);
 
-	zgd = (zgd_t *)kmem_zalloc(sizeof (zgd_t), KM_SLEEP);
+	zgd = (zgd_t *)kmem_zalloc(sizeof (zgd_t), KM_PUSHPAGE);
 	zgd->zgd_zilog = zv->zv_zilog;
 	zgd->zgd_rl = zfs_range_lock(&zv->zv_znode, offset, size, RL_READER);
 
@@ -1200,10 +1149,6 @@ zvol_alloc(dev_t dev, const char *name)
 	if (zv->zv_queue == NULL)
 		goto out_kmem;
 
-#ifdef HAVE_BLK_DEV_DISCARD_ZEROES_DATA
-	zv->zv_queue->limits.discard_zeroes_data = 1;
-#endif
-
 #ifdef HAVE_BLK_QUEUE_FLUSH
 	blk_queue_flush(zv->zv_queue, VDEV_REQ_FLUSH | VDEV_REQ_FUA);
 #else
@@ -1318,7 +1263,9 @@ __zvol_create_minor(const char *name)
 	blk_queue_physical_block_size(zv->zv_queue, zv->zv_volblocksize);
 	blk_queue_io_opt(zv->zv_queue, zv->zv_volblocksize);
 #ifdef HAVE_BLK_QUEUE_DISCARD
-	blk_queue_max_discard_sectors(zv->zv_queue, UINT_MAX);
+	blk_queue_max_discard_sectors(zv->zv_queue,
+	    (zvol_max_discard_blocks * zv->zv_volblocksize) >> 9);
+	blk_queue_discard_granularity(zv->zv_queue, zv->zv_volblocksize);
 	queue_flag_set_unlocked(QUEUE_FLAG_DISCARD, zv->zv_queue);
 #endif
 #ifdef HAVE_BLK_QUEUE_NONROT
@@ -1522,3 +1469,6 @@ MODULE_PARM_DESC(zvol_major, "Major number for zvol device");
 
 module_param(zvol_threads, uint, 0444);
 MODULE_PARM_DESC(zvol_threads, "Number of threads for zvol device");
+
+module_param(zvol_max_discard_blocks, ulong, 0444);
+MODULE_PARM_DESC(zvol_max_discard_blocks, "Max number of blocks to discard at once");

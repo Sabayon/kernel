@@ -5,9 +5,9 @@ subdir-m += zcommon
 subdir-m += zfs
 subdir-m += zpios
 
-ZFS_MODULE_CFLAGS += -include /usr/src/spl-0.6.0-rc9/3.5.0/spl_config.h
-ZFS_MODULE_CFLAGS += -include /var/tmp/portage/sys-fs/zfs-9999/work/zfs-9999/zfs_config.h
-ZFS_MODULE_CFLAGS += -I/var/tmp/portage/sys-fs/zfs-9999/work/zfs-9999/include -I/usr/src/spl-0.6.0-rc9/3.5.0/include -I/usr/src/spl-0.6.0-rc9/3.5.0
+ZFS_MODULE_CFLAGS += -include /var/tmp/portage/sys-fs/zfs-20120903/work/zfs-20120903/spl-src/spl_config.h
+ZFS_MODULE_CFLAGS += -include /var/tmp/portage/sys-fs/zfs-20120903/work/zfs-20120903/zfs-src/zfs_config.h
+ZFS_MODULE_CFLAGS += -I/var/tmp/portage/sys-fs/zfs-20120903/work/zfs-20120903/zfs-src/include -I/var/tmp/portage/sys-fs/zfs-20120903/work/zfs-20120903/spl-src/include -I/var/tmp/portage/sys-fs/zfs-20120903/work/zfs-20120903/spl-src
 export ZFS_MODULE_CFLAGS
 
 modules:
@@ -15,46 +15,46 @@ modules:
 	@# They may be in the root of SPL_OBJ when building against
 	@# installed devel headers, or they may be in the module
 	@# subdirectory when building against the spl source tree.
-	@if [ -f /usr/src/spl-0.6.0-rc9/3.5.0/Module.symvers ]; then \
-		/bin/cp /usr/src/spl-0.6.0-rc9/3.5.0/Module.symvers .; \
-	elif [ -f /usr/src/spl-0.6.0-rc9/3.5.0/module/Module.symvers ]; then \
-		/bin/cp /usr/src/spl-0.6.0-rc9/3.5.0/module/Module.symvers .; \
+	@if [ -f /var/tmp/portage/sys-fs/zfs-20120903/work/zfs-20120903/spl-src/Module.symvers ]; then \
+		/bin/cp /var/tmp/portage/sys-fs/zfs-20120903/work/zfs-20120903/spl-src/Module.symvers .; \
+	elif [ -f /var/tmp/portage/sys-fs/zfs-20120903/work/zfs-20120903/spl-src/module/Module.symvers ]; then \
+		/bin/cp /var/tmp/portage/sys-fs/zfs-20120903/work/zfs-20120903/spl-src/module/Module.symvers .; \
 	else \
 		echo -e "\n" \
 		"*** Missing spl symbols ensure you have built the spl:\n" \
-		"*** - /usr/src/spl-0.6.0-rc9/3.5.0/Module.symvers, or\n" \
-		"*** - /usr/src/spl-0.6.0-rc9/3.5.0/module/Module.symvers\n"; \
+		"*** - /var/tmp/portage/sys-fs/zfs-20120903/work/zfs-20120903/spl-src/Module.symvers, or\n" \
+		"*** - /var/tmp/portage/sys-fs/zfs-20120903/work/zfs-20120903/spl-src/module/Module.symvers\n"; \
 		exit 1; \
 	fi
-	$(MAKE) -C /lib/modules/3.5.0/build SUBDIRS=`pwd`  O=/lib/modules/3.5.0/build CONFIG_ZFS=m $@
+	$(MAKE) -C /run/media/fabio/0880a32b-0f6f-457f-9e41-6a9139ce15b9/repos/ldd/linux-2.6 SUBDIRS=`pwd`  CONFIG_ZFS=m $@
 
 clean:
 	@# Only cleanup the kernel build directories when CONFIG_KERNEL
 	@# is defined.  This indicates that kernel modules should be built.
-#	$(MAKE) -C /lib/modules/3.5.0/build SUBDIRS=`pwd`  O=/lib/modules/3.5.0/build $@
+	$(MAKE) -C /run/media/fabio/0880a32b-0f6f-457f-9e41-6a9139ce15b9/repos/ldd/linux-2.6 SUBDIRS=`pwd`  $@
 
 	if [ -f Module.symvers ]; then $(RM) Module.symvers; fi
-	if [ -f NONE ]; then $(RM) NONE; fi
+	if [ -f Module.symvers ]; then $(RM) Module.symvers; fi
 	if [ -f Module.markers ]; then $(RM) Module.markers; fi
 
 modules_install:
 	@# Install the kernel modules
-	$(MAKE) -C /lib/modules/3.5.0/build SUBDIRS=`pwd` \
+	$(MAKE) -C /run/media/fabio/0880a32b-0f6f-457f-9e41-6a9139ce15b9/repos/ldd/linux-2.6 SUBDIRS=`pwd` \
 		INSTALL_MOD_PATH=$(DESTDIR) \
 		INSTALL_MOD_DIR=addon/zfs $@
 	@# Remove extraneous build products when packaging
 	if [ -n "$(DESTDIR)" ]; then \
-		find $(DESTDIR)/lib/modules/3.5.0 \
+		find $(DESTDIR)/lib/modules/3.5.2+ \
 			-name 'modules.*' | xargs $(RM); \
 	fi
-	sysmap=$(DESTDIR)/boot/System.map-3.5.0; \
+	sysmap=$(DESTDIR)/boot/System.map-3.5.2+; \
 	if [ -f $$sysmap ]; then \
-		depmod -ae -F $$sysmap 3.5.0; \
+		depmod -ae -F $$sysmap 3.5.2+; \
 	fi
 
 modules_uninstall:
 	@# Uninstall the kernel modules
-	$(RM) -R $(DESTDIR)/lib/modules/3.5.0/addon/zfs
+	$(RM) -R $(DESTDIR)/lib/modules/3.5.2+/addon/zfs
 
 distdir:
 

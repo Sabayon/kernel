@@ -221,13 +221,15 @@ txg_hold_open(dsl_pool_t *dp, txg_handle_t *th)
 	tx_cpu_t *tc;
 	uint64_t txg;
 
-#ifdef _KERNEL
-	preempt_disable();
+	/*
+	 * It appears the processor id is simply used as a "random"
+	 * number to index into the array, and there isn't any other
+	 * significance to the chosen tx_cpu. Because.. Why not use
+	 * the current cpu to index into the array?
+	 */
+	kpreempt_disable();
 	tc = &tx->tx_cpu[CPU_SEQID];
-	preempt_enable();
-#else
-	tc = &tx->tx_cpu[CPU_SEQID];
-#endif /* _KERNEL */
+	kpreempt_enable();
 
 	mutex_enter(&tc->tc_lock);
 
@@ -347,7 +349,7 @@ txg_dispatch_callbacks(dsl_pool_t *dp, uint64_t txg)
 			    TASKQ_THREADS_CPU_PCT | TASKQ_PREPOPULATE);
 		}
 
-		cb_list = kmem_alloc(sizeof (list_t), KM_SLEEP);
+		cb_list = kmem_alloc(sizeof (list_t), KM_PUSHPAGE);
 		list_create(cb_list, sizeof (dmu_tx_callback_t),
 		    offsetof(dmu_tx_callback_t, dcb_node));
 
@@ -379,6 +381,15 @@ txg_sync_thread(dsl_pool_t *dp)
 	tx_state_t *tx = &dp->dp_tx;
 	callb_cpr_t cpr;
 	uint64_t start, delta;
+
+#ifdef _KERNEL
+	/*
+	 * Annotate this process with a flag that indicates that it is
+	 * unsafe to use KM_SLEEP during memory allocations due to the
+	 * potential for a deadlock.  KM_PUSHPAGE should be used instead.
+	 */
+	current->flags |= PF_NOFS;
+#endif /* _KERNEL */
 
 	txg_thread_enter(tx, &cpr);
 

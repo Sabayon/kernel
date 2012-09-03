@@ -205,13 +205,13 @@ zfs_sa_get_xattr(znode_t *zp)
 			return (error);
 	}
 
-	obj = kmem_alloc(size, KM_SLEEP);
+	obj = sa_spill_alloc(KM_SLEEP);
 
 	error = sa_lookup(zp->z_sa_hdl, SA_ZPL_DXATTR(zsb), obj, size);
 	if (error == 0)
 		error = nvlist_unpack(obj, size, &zp->z_xattr_cached, KM_SLEEP);
 
-	kmem_free(obj, size);
+	sa_spill_free(obj);
 
 	return (error);
 }
@@ -233,12 +233,12 @@ zfs_sa_set_xattr(znode_t *zp)
 	if (error)
 		goto out;
 
-	obj = kmem_alloc(size, KM_SLEEP);
+	obj = sa_spill_alloc(KM_SLEEP);
 
 	error = nvlist_pack(zp->z_xattr_cached, &obj, &size,
 	    NV_ENCODE_XDR, KM_SLEEP);
 	if (error)
-		goto out;
+		goto out_free;
 
 	tx = dmu_tx_create(zsb->z_os);
 	dmu_tx_hold_sa_create(tx, size);
@@ -248,12 +248,15 @@ zfs_sa_set_xattr(znode_t *zp)
 	if (error) {
 		dmu_tx_abort(tx);
 	} else {
-		VERIFY(0 == sa_update(zp->z_sa_hdl, SA_ZPL_DXATTR(zsb), obj,
-		    size, tx));
-		dmu_tx_commit(tx);
+		error = sa_update(zp->z_sa_hdl, SA_ZPL_DXATTR(zsb),
+		    obj, size, tx);
+		if (error)
+			dmu_tx_abort(tx);
+		else
+			dmu_tx_commit(tx);
 	}
-
-	kmem_free(obj, size);
+out_free:
+	sa_spill_free(obj);
 out:
 	return (error);
 }

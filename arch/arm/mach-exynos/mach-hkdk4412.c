@@ -892,6 +892,8 @@ static struct i2c_board_info hkdk4412_i2c_devs7[] __initdata = {
 	/* nothing here yet */
 };
 
+// Disable
+#if 0
 static struct gpio_led hkdk4412_gpio_leds[] = {
 	{
 		.name		= "led1",	/* D5 on ODROID-X */
@@ -919,6 +921,8 @@ static struct platform_device hkdk4412_leds_gpio = {
 		.platform_data	= &hkdk4412_gpio_led_info,
 	},
 };
+#endif
+//
 
 /* LCD Backlight data */
 static struct samsung_bl_gpio_info hkdk4412_bl_gpio_info = {
@@ -1092,7 +1096,10 @@ static struct platform_device *hkdk4412_devices[] __initdata = {
 #endif
 	&exynos4_device_ohci,
 	&exynos4_device_dwmci,
-	&hkdk4412_leds_gpio,
+	
+	// Disable : ADD
+	// &hkdk4412_leds_gpio,
+	
 #if defined(CONFIG_LCD_LP101WH1)
 	&hkdk4412_lcd_lp101wh1,
 #endif
@@ -1133,6 +1140,59 @@ static struct i2c_board_info hdmiphy_info = {
 };
 #endif
 
+//------------------ ADD Hardkernel -------------------
+#include <linux/hrtimer.h>
+#include <linux/slab.h>
+
+#define KERNEL_RUNNING_LED_PORT     EXYNOS4_GPC1(0)
+#define KERNEL_ENTER_LED_PORT       EXYNOS4_GPC1(2)
+#define LED_BLINK_PERIOD            1   // 1 sec
+
+static  struct hrtimer              led_timer;
+   
+static enum hrtimer_restart hkdk4412_led_timer(struct hrtimer *timer)
+{
+    static  unsigned char status = false;
+
+    status = !status;
+
+	gpio_direction_output	(KERNEL_RUNNING_LED_PORT, !status);
+
+	hrtimer_start(&led_timer, ktime_set(LED_BLINK_PERIOD, 0), HRTIMER_MODE_REL);
+
+	return HRTIMER_NORESTART;
+}
+
+static void hkdk4412_led_init(void)
+{
+    // GPIO request & init
+	gpio_request_one(   KERNEL_RUNNING_LED_PORT, 
+	                    GPIOF_OUT_INIT_LOW, 
+	                    "kernel running led"    );
+	gpio_request_one(   KERNEL_ENTER_LED_PORT, 
+	                    GPIOF_OUT_INIT_LOW, 
+	                    "kernel enter led"      );
+	// led blink timer init
+	hrtimer_init(&led_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+	led_timer.function = hkdk4412_led_timer;
+	hrtimer_start(&led_timer, ktime_set(LED_BLINK_PERIOD, 0), HRTIMER_MODE_REL);
+}
+
+static void hkdk4412_led_deinit(void)
+{
+    // led blink timer deinit
+	hrtimer_cancel(&led_timer);
+
+    // GPIO free
+	gpio_direction_output	(KERNEL_RUNNING_LED_PORT, 1);
+    gpio_free(KERNEL_RUNNING_LED_PORT);
+
+	gpio_direction_output	(KERNEL_ENTER_LED_PORT, 1);
+    gpio_free(KERNEL_ENTER_LED_PORT);
+}
+
+//------------------ END Hardkernel -------------------
+
 static void __init hkdk4412_gpio_init(void)
 {
 	/* Peripheral power enable (P3V3) */
@@ -1161,6 +1221,10 @@ static void hkdk4412_power_off(void)
 {
 	pr_emerg("Bye...\n");
 
+    // ADD Hardkernel
+    hkdk4412_led_deinit();
+    // END Hardkernel
+
 	writel(0x5200, S5P_PS_HOLD_CONTROL);
 	while (1) {
 		pr_emerg("%s : should not reach here!\n", __func__);
@@ -1171,6 +1235,10 @@ static void hkdk4412_power_off(void)
 static void __init hkdk4412_machine_init(void)
 {
 	hkdk4412_gpio_init();
+
+    // ADD Hardkernel
+    hkdk4412_led_init();
+    // END Hardkernel
 
 	/* Register power off function */
 	pm_power_off = hkdk4412_power_off;

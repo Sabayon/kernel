@@ -1140,7 +1140,7 @@ static struct i2c_board_info hdmiphy_info = {
 	I2C_BOARD_INFO("hdmiphy-exynos4412", 0x38),
 };
 #endif
-if defined(CONFIG_ODROID_X_ANDROID_LEDS)
+#if defined(CONFIG_ODROID_X_ANDROID_LEDS)
 //------------------ ADD Hardkernel -------------------
 #include <linux/hrtimer.h>
 #include <linux/slab.h>

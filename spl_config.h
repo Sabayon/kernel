@@ -133,6 +133,9 @@
 /* kern_path_parent() is available */
 /* #undef HAVE_KERN_PATH_PARENT_SYMBOL */
 
+/* kern_path_locked() is available */
+#define HAVE_KERN_PATH_LOCKED 1
+
 /* kmalloc_node() is available */
 #define HAVE_KMALLOC_NODE 1
 

@@ -139,3 +139,6 @@ obj-$(CONFIG_EXTCON)		+= extcon/
 obj-$(CONFIG_MEMORY)		+= memory/
 obj-$(CONFIG_IIO)		+= iio/
 obj-$(CONFIG_VME_BUS)		+= vme/
+
+# Hardkernel HKDK 4412 TMU
+obj-$(CONFIG_HKDK4412_TMU)	+= hardkernel/

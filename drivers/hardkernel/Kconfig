@@ -1,0 +1,8 @@
+config HKDK4412_TMU
+	bool "Hardkernel's ODROID(X/Q) TMU Hack"
+	default y
+	help
+	This is hack to support TMU on ODROID-X/Q running Ubuntu.
+	Its strongly recommended to Enable this.
+	Otherwise you'll experience system freezes due to high cpu
+	temperature

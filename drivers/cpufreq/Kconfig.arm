@@ -71,6 +71,21 @@ config ARM_EXYNOS4X12_CPUFREQ
 	  This adds the CPUFreq driver for Samsung EXYNOS4X12
 	  SoC (EXYNOS4212 or EXYNOS4412).
 
+config EXYNOS4X12_1600MHZ_SUPPORT
+        bool "Max 1600MHz CPUFREQ LEVEL"
+        help
+          Max 1.6Ghz support
+
+config EXYNOS4X12_1704MHZ_SUPPORT
+        bool "Max 1704MHz CPUFREQ LEVEL"
+        help
+          Max 1.7Ghz support
+
+config EXYNOS4X12_1800MHZ_SUPPORT
+        bool "Max 1800MHz CPUFREQ LEVEL"
+        help
+          Max 1.8Ghz support
+
 config ARM_EXYNOS5250_CPUFREQ
 	def_bool SOC_EXYNOS5250
 	help

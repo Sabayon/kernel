@@ -61,9 +61,6 @@
 /* class_device_create() is available */
 /* #undef HAVE_CLASS_DEVICE_CREATE */
 
-/* __clear_close_on_exec() is available */
-#define HAVE_CLEAR_CLOSE_ON_EXEC 1
-
 /* struct cred exists */
 #define HAVE_CRED_STRUCT 1
 
@@ -78,12 +75,6 @@
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 1
-
-/* linux/fdtable.h exists */
-#define HAVE_FDTABLE_HEADER 1
-
-/* files_fdtable() is available */
-#define HAVE_FILES_FDTABLE 1
 
 /* first_online_pgdat() is available */
 /* #undef HAVE_FIRST_ONLINE_PGDAT */
@@ -127,14 +118,14 @@
 /* kallsyms_lookup_name() is available */
 #define HAVE_KALLSYMS_LOOKUP_NAME 1
 
+/* kern_path_locked() is available */
+#define HAVE_KERN_PATH_LOCKED 1
+
 /* kern_path_parent() is available */
 /* #undef HAVE_KERN_PATH_PARENT_HEADER */
 
 /* kern_path_parent() is available */
 /* #undef HAVE_KERN_PATH_PARENT_SYMBOL */
-
-/* kern_path_locked() is available */
-#define HAVE_KERN_PATH_LOCKED 1
 
 /* kmalloc_node() is available */
 #define HAVE_KMALLOC_NODE 1
@@ -270,7 +261,7 @@
 #define RWSEM_SPINLOCK_IS_RAW 1
 
 /* Define the project alias string. */
-#define SPL_META_ALIAS "spl-0.6.0-rc11"
+#define SPL_META_ALIAS "spl-0.6.0-rc12"
 
 /* Define the project author. */
 /* #undef SPL_META_AUTHOR */
@@ -291,7 +282,7 @@
 #define SPL_META_NAME "spl"
 
 /* Define the project release. */
-#define SPL_META_RELEASE "rc11"
+#define SPL_META_RELEASE "rc12"
 
 /* Define the project version. */
 #define SPL_META_VERSION "0.6.0"

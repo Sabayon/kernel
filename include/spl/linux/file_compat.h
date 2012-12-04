@@ -87,11 +87,7 @@ extern kern_path_parent_t kern_path_parent_fn;
 typedef struct dentry * (*kern_path_locked_t)(const char *, struct path *);
 extern kern_path_locked_t kern_path_locked_fn;
 # define spl_kern_path_locked(name, path)	kern_path_locked_fn(name, path)
-#endif
-
-#ifndef HAVE_CLEAR_CLOSE_ON_EXEC
-#define __clear_close_on_exec(fd, fdt)	FD_CLR(fd, fdt->close_on_exec)
-#endif
+#endif /* HAVE_KERN_PATH_LOCKED */
 
 #endif /* SPL_FILE_COMPAT_H */
 

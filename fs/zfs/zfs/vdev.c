@@ -904,6 +904,8 @@ vdev_metaslab_fini(vdev_t *vd)
 		kmem_free(vd->vdev_ms, count * sizeof (metaslab_t *));
 		vd->vdev_ms = NULL;
 	}
+
+	ASSERT3U(vd->vdev_pending_fastwrite, ==, 0);
 }
 
 typedef struct vdev_probe_stats {
@@ -1269,13 +1271,16 @@ vdev_open(vdev_t *vd)
 		vd->vdev_ashift = MAX(ashift, vd->vdev_ashift);
 	} else {
 		/*
-		 * Make sure the alignment requirement hasn't increased.
+		 * Detect if the alignment requirement has increased.
+		 * We don't want to make the pool unavailable, just
+		 * post an event instead.
 		 */
-		if (ashift > vd->vdev_top->vdev_ashift) {
-			vdev_set_state(vd, B_TRUE, VDEV_STATE_CANT_OPEN,
-			    VDEV_AUX_BAD_LABEL);
-			return (EINVAL);
+		if (ashift > vd->vdev_top->vdev_ashift &&
+		    vd->vdev_ops->vdev_op_leaf) {
+			zfs_ereport_post(FM_EREPORT_ZFS_DEVICE_BAD_ASHIFT,
+			    spa, vd, NULL, 0, 0);
 		}
+
 		vd->vdev_max_asize = max_asize;
 	}
 

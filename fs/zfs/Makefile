@@ -5,9 +5,9 @@ subdir-m += zcommon
 subdir-m += zfs
 subdir-m += zpios
 
-ZFS_MODULE_CFLAGS += -include /home/fabio/repos/spl/spl_config.h
-ZFS_MODULE_CFLAGS += -include /home/fabio/repos/zfs-upstream/zfs_config.h
-ZFS_MODULE_CFLAGS += -I/home/fabio/repos/zfs-upstream/include -I/home/fabio/repos/spl/include -I/home/fabio/repos/spl
+ZFS_MODULE_CFLAGS += -include /usr/src/spl-0.6.0-rc11/3.6.8/spl_config.h
+ZFS_MODULE_CFLAGS += -include /var/tmp/portage/sys-fs/zfs-kmod-9999/work/zfs-/zfs_config.h
+ZFS_MODULE_CFLAGS += -I/var/tmp/portage/sys-fs/zfs-kmod-9999/work/zfs-/include -I/usr/src/spl-0.6.0-rc11/3.6.8/include -I/usr/src/spl-0.6.0-rc11/3.6.8
 export ZFS_MODULE_CFLAGS
 
 modules:
@@ -15,23 +15,23 @@ modules:
 	@# They may be in the root of SPL_OBJ when building against
 	@# installed devel headers, or they may be in the module
 	@# subdirectory when building against the spl source tree.
-	@if [ -f /home/fabio/repos/spl/Module.symvers ]; then \
-		/bin/cp /home/fabio/repos/spl/Module.symvers .; \
-	elif [ -f /home/fabio/repos/spl/module/Module.symvers ]; then \
-		/bin/cp /home/fabio/repos/spl/module/Module.symvers .; \
+	@if [ -f /usr/src/spl-0.6.0-rc11/3.6.8/Module.symvers ]; then \
+		/bin/cp /usr/src/spl-0.6.0-rc11/3.6.8/Module.symvers .; \
+	elif [ -f /usr/src/spl-0.6.0-rc11/3.6.8/module/Module.symvers ]; then \
+		/bin/cp /usr/src/spl-0.6.0-rc11/3.6.8/module/Module.symvers .; \
 	else \
 		echo -e "\n" \
 		"*** Missing spl symbols ensure you have built the spl:\n" \
-		"*** - /home/fabio/repos/spl/Module.symvers, or\n" \
-		"*** - /home/fabio/repos/spl/module/Module.symvers\n"; \
+		"*** - /usr/src/spl-0.6.0-rc11/3.6.8/Module.symvers, or\n" \
+		"*** - /usr/src/spl-0.6.0-rc11/3.6.8/module/Module.symvers\n"; \
 		exit 1; \
 	fi
-	$(MAKE) -C /home/fabio/repos/kernel SUBDIRS=`pwd`  CONFIG_ZFS=m $@
+	$(MAKE) -C /lib/modules/3.6.8/build SUBDIRS=`pwd`  O=/lib/modules/3.6.8/build CONFIG_ZFS=m $@
 
 clean:
 	@# Only cleanup the kernel build directories when CONFIG_KERNEL
 	@# is defined.  This indicates that kernel modules should be built.
-	$(MAKE) -C /home/fabio/repos/kernel SUBDIRS=`pwd`  $@
+	$(MAKE) -C /lib/modules/3.6.8/build SUBDIRS=`pwd`  O=/lib/modules/3.6.8/build $@
 
 	if [ -f Module.symvers ]; then $(RM) Module.symvers; fi
 	if [ -f Module.symvers ]; then $(RM) Module.symvers; fi
@@ -39,22 +39,22 @@ clean:
 
 modules_install:
 	@# Install the kernel modules
-	$(MAKE) -C /home/fabio/repos/kernel SUBDIRS=`pwd` \
+	$(MAKE) -C /lib/modules/3.6.8/build SUBDIRS=`pwd` \
 		INSTALL_MOD_PATH=$(DESTDIR) \
 		INSTALL_MOD_DIR=addon/zfs $@
 	@# Remove extraneous build products when packaging
 	if [ -n "$(DESTDIR)" ]; then \
-		find $(DESTDIR)/lib/modules/3.6.0+ \
+		find $(DESTDIR)/lib/modules/3.6.8 \
 			-name 'modules.*' | xargs $(RM); \
 	fi
-	sysmap=$(DESTDIR)/boot/System.map-3.6.0+; \
+	sysmap=$(DESTDIR)/boot/System.map-3.6.8; \
 	if [ -f $$sysmap ]; then \
-		depmod -ae -F $$sysmap 3.6.0+; \
+		depmod -ae -F $$sysmap 3.6.8; \
 	fi
 
 modules_uninstall:
 	@# Uninstall the kernel modules
-	$(RM) -R $(DESTDIR)/lib/modules/3.6.0+/addon/zfs
+	$(RM) -R $(DESTDIR)/lib/modules/3.6.8/addon/zfs
 
 distdir:
 

@@ -13,6 +13,9 @@
 /* blkdev_get() wants 3 args */
 #define HAVE_3ARG_BLKDEV_GET 1
 
+/* sget() wants 5 args */
+#define HAVE_5ARG_SGET 1
+
 /* security_inode_init_security wants 6 args */
 /* #undef HAVE_6ARGS_SECURITY_INODE_INIT_SECURITY */
 
@@ -24,6 +27,9 @@
 
 /* bdev_logical_block_size() is available */
 #define HAVE_BDEV_LOGICAL_BLOCK_SIZE 1
+
+/* bdev_physical_block_size() is available */
+#define HAVE_BDEV_PHYSICAL_BLOCK_SIZE 1
 
 /* struct super_block has s_bdi */
 #define HAVE_BDI 1
@@ -115,8 +121,8 @@
 /* super_block uses const struct xattr_hander */
 #define HAVE_CONST_XATTR_HANDLER 1
 
-/* iops->create()/mkdir()/mknod() take umode_t */
-/* #undef HAVE_CREATE_UMODE_T */
+/* iops->create() operation takes nameidata */
+/* #undef HAVE_CREATE_NAMEIDATA */
 
 /* xattr_handler->get() wants dentry */
 #define HAVE_DENTRY_XATTR_GET 1
@@ -208,8 +214,14 @@
 /* Define to 1 if you have the `z' library (-lz). */
 /* #undef HAVE_LIBZ */
 
+/* iops->lookup() operation takes nameidata */
+/* #undef HAVE_LOOKUP_NAMEIDATA */
+
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
+
+/* iops->create()/mkdir()/mknod() take umode_t */
+#define HAVE_MKDIR_UMODE_T 1
 
 /* mount_nodev() is available */
 #define HAVE_MOUNT_NODEV 1
@@ -277,7 +289,7 @@
 /* #undef ZFS_DEBUG */
 
 /* Define the project alias string. */
-#define ZFS_META_ALIAS "zfs-0.6.0-rc11"
+#define ZFS_META_ALIAS "zfs-0.6.0-rc12"
 
 /* Define the project author. */
 #define ZFS_META_AUTHOR "Sun Microsystems/Oracle, Lawrence Livermore National Laboratory"
@@ -301,7 +313,7 @@
 #define ZFS_META_NAME "zfs"
 
 /* Define the project release. */
-#define ZFS_META_RELEASE "rc11"
+#define ZFS_META_RELEASE "rc12"
 
 /* Define the project version. */
 #define ZFS_META_VERSION "0.6.0"

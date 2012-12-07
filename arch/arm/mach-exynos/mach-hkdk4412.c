@@ -10,6 +10,7 @@
 */
 
 #include <linux/gpio.h>
+#include <linux/gpio_keys.h>
 #include <linux/i2c.h>
 #include <linux/input.h>
 #include <linux/io.h>
@@ -939,6 +940,31 @@ static struct platform_device hkdk4412_lcd_lp101wh1 = {
 };
 #endif
 
+/* GPIO KEYS */
+static struct gpio_keys_button hkdk4412_gpio_keys_tables[] = {
+	{
+		.code			= KEY_POWER,
+		.gpio			= EXYNOS4_GPX1(3),	/* XEINT11 */
+		.desc			= "KEY_POWER",
+		.type			= EV_KEY,
+		.active_low		= 1,
+		.wakeup			= 1,
+		.debounce_interval	= 1,
+	},
+};
+
+static struct gpio_keys_platform_data hkdk4412_gpio_keys_data = {
+	.buttons	= hkdk4412_gpio_keys_tables,
+	.nbuttons	= ARRAY_SIZE(hkdk4412_gpio_keys_tables),
+};
+
+static struct platform_device hkdk4412_gpio_keys = {
+	.name	= "gpio-keys",
+	.dev	= {
+		.platform_data	= &hkdk4412_gpio_keys_data,
+	},
+};
+
 /* USB EHCI */
 static struct s5p_ehci_platdata hkdk4412_ehci_pdata;
 
@@ -986,6 +1012,7 @@ static struct platform_device *hkdk4412_devices[] __initdata = {
 #if defined(CONFIG_LCD_LP101WH1)
 	&hkdk4412_lcd_lp101wh1,
 #endif
+	&hkdk4412_gpio_keys,
 };
 
 static void __init hkdk4412_map_io(void)
@@ -1006,6 +1033,10 @@ static void __init hkdk4412_gpio_init(void)
 {
 	/* Peripheral power enable (P3V3) */
 	gpio_request_one(EXYNOS4_GPA1(1), GPIOF_OUT_INIT_HIGH, "p3v3_en");
+
+	/* Power on/off button */
+	s3c_gpio_cfgpin(EXYNOS4_GPX1(3), S3C_GPIO_SFN(0xF));
+	s3c_gpio_setpull(EXYNOS4_GPX1(3), S3C_GPIO_PULL_NONE);
 }
 
 static void hkdk4412_power_off(void)

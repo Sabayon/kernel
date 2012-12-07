@@ -1326,10 +1326,17 @@ static void s3c_fb_set_rgb_timing(struct s3c_fb *sfb)
 	       VIDTCON1_HSPW(vmode->hsync_len - 1);
 	writel(data, regs + sfb->variant.vidtcon + 4);
 
+#if defined(CONFIG_LCD_LP101WH1)
+	data = VIDTCON2_LINEVAL(vmode->yres - 1) |
+	       VIDTCON2_HOZVAL(vmode->xres - 1 + 6) |
+	       VIDTCON2_LINEVAL_E(vmode->yres - 1) |
+	       VIDTCON2_HOZVAL_E(vmode->xres - 1);
+#else
 	data = VIDTCON2_LINEVAL(vmode->yres - 1) |
 	       VIDTCON2_HOZVAL(vmode->xres - 1) |
 	       VIDTCON2_LINEVAL_E(vmode->yres - 1) |
 	       VIDTCON2_HOZVAL_E(vmode->xres - 1);
+#endif
 	writel(data, regs + sfb->variant.vidtcon + 8);
 }
 

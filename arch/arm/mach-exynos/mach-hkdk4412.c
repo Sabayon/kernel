@@ -21,6 +21,9 @@
 #include <linux/regulator/machine.h>
 #include <linux/serial_core.h>
 #include <linux/platform_data/s3c-hsotg.h>
+#include <linux/platform_data/i2c-s3c2410.h>
+#include <linux/platform_data/usb-ehci-s5p.h>
+#include <linux/platform_data/usb-exynos.h>
 #include <linux/delay.h>
 #include <linux/lcd.h>
 #include <linux/clk.h>
@@ -34,17 +37,16 @@
 #include <plat/cpu.h>
 #include <plat/devs.h>
 #include <plat/gpio-cfg.h>
-#include <plat/iic.h>
 #include <plat/keypad.h>
 #include <plat/mfc.h>
 #include <plat/regs-serial.h>
 #include <plat/sdhci.h>
-#include <plat/ehci.h>
 #include <plat/fb.h>
-#include <plat/regs-fb-v4.h>
-#include <video/platform_lcd.h>
+#include <plat/hdmi.h>
 
-#include <mach/ohci.h>
+#include <video/platform_lcd.h>
+#include <video/samsung_fimd.h>
+
 #include <mach/map.h>
 #include <mach/regs-pmu.h>
 #include <mach/dwmci.h>
@@ -151,6 +153,10 @@ static struct regulator_consumer_supply __initdata max77686_ldo18_consumer[] = {
 };
 
 static struct regulator_consumer_supply __initdata max77686_ldo19_consumer[] = {
+};
+
+static struct regulator_consumer_supply __initdata max77686_ldo21_consumer[] = {
+	REGULATOR_SUPPLY("vqmmc", "exynos4-sdhci.2"),
 };
 
 static struct regulator_consumer_supply __initdata max77686_ldo23_consumer[] = {
@@ -638,6 +644,8 @@ static struct regulator_init_data __initdata max77686_ldo21_data = {
 			.enabled = 1,
 		},
 	},
+	.num_consumer_supplies = ARRAY_SIZE(max77686_ldo21_consumer),
+	.consumer_supplies = max77686_ldo21_consumer,
 };
 
 static struct regulator_init_data __initdata max77686_ldo22_data = {
@@ -992,12 +1000,12 @@ static void __init hkdk4412_ohci_init(void)
 /* USB OTG */
 static struct s3c_hsotg_plat hkdk4412_hsotg_pdata;
 
+/* SDCARD */
 static struct s3c_sdhci_platdata hkdk4412_hsmmc2_pdata __initdata = {
+	.max_width	= 4,
+	.host_caps	= MMC_CAP_4_BIT_DATA |
+			MMC_CAP_MMC_HIGHSPEED | MMC_CAP_SD_HIGHSPEED,
 	.cd_type	= S3C_SDHCI_CD_INTERNAL,
-#ifdef CONFIG_EXYNOS4_SDHCI_CH2_8BIT
-	.max_width	= 8,
-	.host_caps	= MMC_CAP_8_BIT_DATA,
-#endif
 };
 
 /* DWMMC */

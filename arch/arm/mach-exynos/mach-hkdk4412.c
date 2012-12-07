@@ -23,6 +23,7 @@
 #include <linux/platform_data/s3c-hsotg.h>
 #include <linux/delay.h>
 #include <linux/lcd.h>
+#include <linux/clk.h>
 
 #include <asm/mach/arch.h>
 #include <asm/hardware/gic.h>
@@ -46,8 +47,11 @@
 #include <mach/ohci.h>
 #include <mach/map.h>
 #include <mach/regs-pmu.h>
+#include <mach/dwmci.h>
 
 #include "common.h"
+
+extern void exynos4_setup_dwmci_cfg_gpio(struct platform_device *dev, int width);
 
 /* Following are default values for UCON, ULCON and UFCON UART registers */
 #define HKDK4412_UCON_DEFAULT	(S3C2410_UCON_TXILEVEL |	\
@@ -92,18 +96,6 @@ static struct s3c2410_uartcfg hkdk4412_uartcfgs[] __initdata = {
 		.ulcon		= HKDK4412_ULCON_DEFAULT,
 		.ufcon		= HKDK4412_UFCON_DEFAULT,
 	},
-};
-
-static struct s3c_sdhci_platdata hkdk4412_hsmmc2_pdata __initdata = {
-	.cd_type	= S3C_SDHCI_CD_INTERNAL,
-#ifdef CONFIG_EXYNOS4_SDHCI_CH2_8BIT
-	.max_width	= 8,
-	.host_caps	= MMC_CAP_8_BIT_DATA,
-#endif
-};
-
-static struct s3c_sdhci_platdata hkdk4412_hsmmc3_pdata __initdata = {
-	.cd_type	= S3C_SDHCI_CD_INTERNAL,
 };
 
 static struct regulator_consumer_supply __initdata max77686_buck1_consumer[] = {
@@ -988,6 +980,34 @@ static void __init hkdk4412_ohci_init(void)
 /* USB OTG */
 static struct s3c_hsotg_plat hkdk4412_hsotg_pdata;
 
+static struct s3c_sdhci_platdata hkdk4412_hsmmc2_pdata __initdata = {
+	.cd_type	= S3C_SDHCI_CD_INTERNAL,
+#ifdef CONFIG_EXYNOS4_SDHCI_CH2_8BIT
+	.max_width	= 8,
+	.host_caps	= MMC_CAP_8_BIT_DATA,
+#endif
+};
+
+/* DWMMC */
+static int hkdk4412_dwmci_get_bus_wd(u32 slot_id)
+{
+       return 8;
+}
+
+static int hkdk4412_dwmci_init(u32 slot_id, irq_handler_t handler, void *data)
+{
+       return 0;
+}
+
+static struct dw_mci_board hkdk4412_dwmci_pdata = {
+       .num_slots              = 1,
+       .quirks                 = DW_MCI_QUIRK_BROKEN_CARD_DETECTION,
+//       .bus_hz                 = 80 * 1000 * 1000,
+       .detect_delay_ms        = 200,
+       .init                   = hkdk4412_dwmci_init,
+       .get_bus_wd             = hkdk4412_dwmci_get_bus_wd,
+};
+
 static struct platform_device *hkdk4412_devices[] __initdata = {
 	&s3c_device_hsmmc2,
 	&s3c_device_i2c0,
@@ -1008,6 +1028,7 @@ static struct platform_device *hkdk4412_devices[] __initdata = {
 	&s5p_device_mfc_l,
 	&s5p_device_mfc_r,
 	&exynos4_device_ohci,
+	&exynos4_device_dwmci,
 	&hkdk4412_leds_gpio,
 #if defined(CONFIG_LCD_LP101WH1)
 	&hkdk4412_lcd_lp101wh1,
@@ -1074,6 +1095,9 @@ static void __init hkdk4412_machine_init(void)
 				ARRAY_SIZE(hkdk4412_i2c_devs7));
 
 	s3c_sdhci2_set_platdata(&hkdk4412_hsmmc2_pdata);
+
+	exynos4_setup_dwmci_cfg_gpio(NULL, MMC_BUS_WIDTH_8);
+	exynos4_dwmci_set_platdata(&hkdk4412_dwmci_pdata);
 
 	hkdk4412_ehci_init();
 	hkdk4412_ohci_init();

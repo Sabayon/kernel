@@ -21,6 +21,7 @@
 #include <linux/serial_core.h>
 #include <linux/platform_data/s3c-hsotg.h>
 #include <linux/delay.h>
+#include <linux/lcd.h>
 
 #include <asm/mach/arch.h>
 #include <asm/hardware/gic.h>
@@ -37,6 +38,9 @@
 #include <plat/regs-serial.h>
 #include <plat/sdhci.h>
 #include <plat/ehci.h>
+#include <plat/fb.h>
+#include <plat/regs-fb-v4.h>
+#include <video/platform_lcd.h>
 
 #include <mach/ohci.h>
 #include <mach/map.h>
@@ -162,7 +166,7 @@ static struct regulator_consumer_supply __initdata max77686_ldo24_consumer[] = {
 };
 
 static struct regulator_consumer_supply __initdata max77686_ldo25_consumer[] = {
-	REGULATOR_SUPPLY("vddq_lcd", NULL),
+	REGULATOR_SUPPLY("vddq_lcd", "platform-lcd"),
 };
 
 static struct regulator_consumer_supply __initdata max77686_ldo26_consumer[] = {
@@ -696,8 +700,8 @@ static struct regulator_init_data __initdata max77686_ldo25_data = {
 		.name		= "VDDQ_LCD_1.8V",
 		.min_uV		= 1800000,
 		.max_uV		= 1800000,
+		.boot_on	= 1,
 		.apply_uV	= 1,
-		.always_on	= 1,
 		.valid_ops_mask = REGULATOR_CHANGE_STATUS,
 		.state_mem = {
 			.disabled = 1,
@@ -875,6 +879,65 @@ static struct platform_device hkdk4412_leds_gpio = {
 	},
 };
 
+/* LCD Backlight data */
+static struct samsung_bl_gpio_info hkdk4412_bl_gpio_info = {
+	.no	= EXYNOS4_GPD0(1),
+	.func	= S3C_GPIO_SFN(2),
+};
+
+static struct platform_pwm_backlight_data hkdk4412_bl_data = {
+	.pwm_id		= 1,
+	.pwm_period_ns	= 1000,
+};
+
+#if defined(CONFIG_LCD_LP101WH1)
+static struct s3c_fb_pd_win hkdk4412_fb_win0 = {
+	.max_bpp	= 32,
+	.default_bpp	= 24,
+	.xres		= 1360,
+	.yres		= 768,
+};
+
+static struct fb_videomode hkdk4412_lcd_timing = {
+	.left_margin	= 80,
+	.right_margin	= 48,
+	.upper_margin	= 14,
+	.lower_margin	= 3,
+	.hsync_len	= 32,
+	.vsync_len	= 5,
+	.xres		= 1360,
+	.yres		= 768,
+};
+
+static struct s3c_fb_platdata hkdk4412_fb_pdata __initdata = {
+	.win[0]		= &hkdk4412_fb_win0,
+	.vtiming	= &hkdk4412_lcd_timing,
+	.vidcon0	= VIDCON0_VIDOUT_RGB | VIDCON0_PNRMODE_RGB,
+	.vidcon1	= VIDCON1_INV_HSYNC | VIDCON1_INV_VSYNC,
+	.setup_gpio	= exynos4_fimd0_gpio_setup_24bpp,
+};
+
+static void lcd_lp101wh1_set_power(struct plat_lcd_data *pd,
+				   unsigned int power)
+{
+	gpio_request(EXYNOS4_GPA1(3), "bl_enable");
+	gpio_direction_output(EXYNOS4_GPA1(3), power);
+	gpio_free(EXYNOS4_GPA1(3));
+}
+
+static struct plat_lcd_data hkdk4412_lcd_lp101wh1_data = {
+	.set_power	= lcd_lp101wh1_set_power,
+};
+
+static struct platform_device hkdk4412_lcd_lp101wh1 = {
+	.name	= "platform-lcd",
+	.dev	= {
+		.parent		= &s5p_device_fimd0.dev,
+		.platform_data	= &hkdk4412_lcd_lp101wh1_data,
+	},
+};
+#endif
+
 /* USB EHCI */
 static struct s5p_ehci_platdata hkdk4412_ehci_pdata;
 
@@ -913,11 +976,15 @@ static struct platform_device *hkdk4412_devices[] __initdata = {
 	&s5p_device_fimc2,
 	&s5p_device_fimc3,
 	&s5p_device_fimc_md,
+	&s5p_device_fimd0,
 	&s5p_device_mfc,
 	&s5p_device_mfc_l,
 	&s5p_device_mfc_r,
 	&exynos4_device_ohci,
 	&hkdk4412_leds_gpio,
+#if defined(CONFIG_LCD_LP101WH1)
+	&hkdk4412_lcd_lp101wh1,
+#endif
 };
 
 static void __init hkdk4412_map_io(void)
@@ -965,6 +1032,10 @@ static void __init hkdk4412_machine_init(void)
 	hkdk4412_ehci_init();
 	hkdk4412_ohci_init();
 	s3c_hsotg_set_platdata(&hkdk4412_hsotg_pdata);
+
+	samsung_bl_set(&hkdk4412_bl_gpio_info, &hkdk4412_bl_data);
+
+	s5p_fimd0_set_platdata(&hkdk4412_fb_pdata);
 
 	platform_add_devices(hkdk4412_devices, ARRAY_SIZE(hkdk4412_devices));
 }

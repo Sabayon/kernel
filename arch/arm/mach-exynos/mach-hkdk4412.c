@@ -19,6 +19,7 @@
 #include <linux/platform_device.h>
 #include <linux/pwm_backlight.h>
 #include <linux/regulator/machine.h>
+#include <linux/regulator/fixed.h>
 #include <linux/serial_core.h>
 #include <linux/platform_data/s3c-hsotg.h>
 #include <linux/platform_data/i2c-s3c2410.h>
@@ -818,6 +819,41 @@ static struct max77686_platform_data hkdk4412_max77686_info = {
 	.buck4_voltage[7] = 900000,	/* 0.9V */
 };
 
+enum fixed_regulator_id {
+	FIXED_REG_ID_HDMI_5V,
+};
+
+#if defined(CONFIG_VIDEO_SAMSUNG_S5P_HDMI)
+static struct regulator_consumer_supply __initdata hdmi_fixed_consumer[] = {
+	REGULATOR_SUPPLY("hdmi-en", "exynos4-hdmi"),
+};
+
+static struct regulator_init_data __initdata hdmi_fixed_voltage_init_data = {
+	.constraints	= {
+		.name		= "hdmi_5v",
+		.valid_ops_mask = REGULATOR_CHANGE_STATUS,
+	},
+	.num_consumer_supplies  = ARRAY_SIZE(hdmi_fixed_consumer),
+	.consumer_supplies      = hdmi_fixed_consumer,
+};
+
+static struct fixed_voltage_config __initdata hdmi_fixed_voltage_config = {
+	.supply_name	= "hdmi_en",
+	.microvolts	= 5000000,
+	.gpio		= 0,		/* FIXME : No GPIO candidated */
+	.enable_high	= true,
+	.init_data	= &hdmi_fixed_voltage_init_data,
+};
+
+static struct platform_device hdmi_fixed_voltage = {
+	.name	= "reg-fixed-voltage",
+	.id	= FIXED_REG_ID_HDMI_5V,
+	.dev	= {
+		.platform_data  = &hdmi_fixed_voltage_config,
+	},
+};
+#endif
+
 #if defined(CONFIG_USB_HSIC_USB3503)
 #include <linux/platform_data/usb3503.h>
 
@@ -1050,6 +1086,12 @@ static struct platform_device *hkdk4412_devices[] __initdata = {
 	&s5p_device_mfc,
 	&s5p_device_mfc_l,
 	&s5p_device_mfc_r,
+#if defined(CONFIG_S5P_DEV_TV)
+	&s5p_device_hdmi,
+	&s5p_device_i2c_hdmiphy,
+	&s5p_device_mixer,
+	&hdmi_fixed_voltage,
+#endif
 	&exynos4_device_ohci,
 	&exynos4_device_dwmci,
 	&hkdk4412_leds_gpio,
@@ -1077,6 +1119,21 @@ static void __init hkdk4412_reserve(void)
 {
 	s5p_mfc_reserve_mem(0x43000000, 8 << 20, 0x51000000, 8 << 20);
 }
+
+#if defined(CONFIG_S5P_DEV_TV)
+static void s5p_tv_setup(void)
+{
+	/* Direct HPD to HDMI chip */
+	gpio_request_one(EXYNOS4_GPX3(7), GPIOF_IN, "hpd-plug");
+	s3c_gpio_cfgpin(EXYNOS4_GPX3(7), S3C_GPIO_SFN(0x3));
+	s3c_gpio_setpull(EXYNOS4_GPX3(7), S3C_GPIO_PULL_NONE);
+}
+
+/* I2C module and id for HDMIPHY */
+static struct i2c_board_info hdmiphy_info = {
+	I2C_BOARD_INFO("hdmiphy-exynos4412", 0x38),
+};
+#endif
 
 static void __init hkdk4412_gpio_init(void)
 {
@@ -1131,9 +1188,15 @@ static void __init hkdk4412_machine_init(void)
 	hkdk4412_ohci_init();
 	s3c_hsotg_set_platdata(&hkdk4412_hsotg_pdata);
 
-	samsung_bl_set(&hkdk4412_bl_gpio_info, &hkdk4412_bl_data);
+#if defined(CONFIG_S5P_DEV_TV)
+	s5p_tv_setup();
+	s5p_i2c_hdmiphy_set_platdata(NULL);
+	s5p_hdmi_set_platdata(&hdmiphy_info, NULL, 0);
+#endif
 
 	s5p_fimd0_set_platdata(&hkdk4412_fb_pdata);
+
+	samsung_bl_set(&hkdk4412_bl_gpio_info, &hkdk4412_bl_data);
 
 	platform_add_devices(hkdk4412_devices, ARRAY_SIZE(hkdk4412_devices));
 }

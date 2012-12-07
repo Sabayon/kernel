@@ -44,6 +44,7 @@
 
 #include <mach/ohci.h>
 #include <mach/map.h>
+#include <mach/regs-pmu.h>
 
 #include "common.h"
 
@@ -1007,9 +1008,23 @@ static void __init hkdk4412_gpio_init(void)
 	gpio_request_one(EXYNOS4_GPA1(1), GPIOF_OUT_INIT_HIGH, "p3v3_en");
 }
 
+static void hkdk4412_power_off(void)
+{
+	pr_emerg("Bye...\n");
+
+	writel(0x5200, S5P_PS_HOLD_CONTROL);
+	while (1) {
+		pr_emerg("%s : should not reach here!\n", __func__);
+		msleep(1000);
+	}
+}
+
 static void __init hkdk4412_machine_init(void)
 {
 	hkdk4412_gpio_init();
+
+	/* Register power off function */
+	pm_power_off = hkdk4412_power_off;
 
 	s3c_i2c0_set_platdata(NULL);
 	i2c_register_board_info(0, hkdk4412_i2c_devs0,

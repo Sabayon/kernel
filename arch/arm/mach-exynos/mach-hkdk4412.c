@@ -954,6 +954,7 @@ static void __init hkdk4412_machine_init(void)
 MACHINE_START(ODROIDX, "ODROID-X")
 	/* Maintainer: Dongjin Kim <dongjin.kim@agreeyamobiity.net> */
 	.atag_offset	= 0x100,
+	.smp		= smp_ops(exynos_smp_ops),
 	.init_irq	= exynos4_init_irq,
 	.map_io		= hkdk4412_map_io,
 	.handle_irq	= gic_handle_irq,

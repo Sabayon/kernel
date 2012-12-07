@@ -50,6 +50,8 @@ struct vb2_fb_data {
 	struct file fake_file;
 	struct dentry fake_dentry;
 	struct inode fake_inode;
+
+	struct mutex fb_lock;
 };
 
 static int vb2_fb_stop(struct fb_info *info);
@@ -357,7 +359,7 @@ static int vb2_fb_open(struct fb_info *info, int user)
 	if (user == 0)
 		return -ENODEV;
 
-	vb2_drv_lock(data->q);
+	mutex_lock(&data->fb_lock);
 
 	/*
 	 * Activate emulation on the first open.
@@ -368,7 +370,7 @@ static int vb2_fb_open(struct fb_info *info, int user)
 	if (ret == 0)
 		data->refcount++;
 
-	vb2_drv_unlock(data->q);
+	mutex_unlock(&data->fb_lock);
 
 	return ret;
 }
@@ -385,12 +387,12 @@ static int vb2_fb_release(struct fb_info *info, int user)
 
 	dprintk(3, "fb emu: release()\n");
 
-	vb2_drv_lock(data->q);
+	mutex_lock(&data->fb_lock);
 
 	if (--data->refcount == 0)
 		ret = vb2_fb_deactivate(info);
 
-	vb2_drv_unlock(data->q);
+	mutex_unlock(&data->fb_lock);
 
 	return ret;
 }
@@ -539,6 +541,8 @@ void *vb2_fb_register(struct vb2_queue *q, struct video_device *vfd)
 	data->fake_file.f_path.dentry = &data->fake_dentry;
 	data->fake_dentry.d_inode = &data->fake_inode;
 	data->fake_inode.i_rdev = vfd->cdev->dev;
+
+	mutex_init(&data->fb_lock);
 
 	return info;
 }

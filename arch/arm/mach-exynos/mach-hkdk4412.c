@@ -20,6 +20,7 @@
 #include <linux/regulator/machine.h>
 #include <linux/serial_core.h>
 #include <linux/platform_data/s3c-hsotg.h>
+#include <linux/delay.h>
 
 #include <asm/mach/arch.h>
 #include <asm/hardware/gic.h>
@@ -811,11 +812,28 @@ static struct max77686_platform_data hkdk4412_max77686_info = {
 	.buck4_voltage[7] = 900000,	/* 0.9V */
 };
 
+#if defined(CONFIG_USB_HSIC_USB3503)
+#include <linux/platform_data/usb3503.h>
+
+static struct usb3503_platform_data usb3503_pdata = {
+	.initial_mode	= USB3503_MODE_HUB,
+	.gpio_intn	= EXYNOS4_GPX3(0),
+	.gpio_connect	= EXYNOS4_GPX3(4),
+	.gpio_reset	= EXYNOS4_GPX3(5),
+};
+#endif
+
 static struct i2c_board_info hkdk4412_i2c_devs0[] __initdata = {
 	{
 		I2C_BOARD_INFO("max77686", (0x12 >> 1)),
 		.platform_data	= &hkdk4412_max77686_info,
-	}
+	},
+#if defined(CONFIG_USB_HSIC_USB3503)
+	{
+		I2C_BOARD_INFO("usb3503", (0x08)),
+		.platform_data  = &usb3503_pdata,
+	},
+#endif
 };
 
 static struct i2c_board_info hkdk4412_i2c_devs1[] __initdata = {

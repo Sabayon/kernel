@@ -306,3 +306,5 @@
 /* Define the project version. */
 #define ZFS_META_VERSION "0.6.0"
 
+/* Ouch ouch */
+#define HAVE_5ARG_SGET 1

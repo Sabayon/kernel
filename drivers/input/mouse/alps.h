@@ -16,6 +16,8 @@
 #define ALPS_PROTO_V2	1
 #define ALPS_PROTO_V3	2
 #define ALPS_PROTO_V4	3
+#define ALPS_PROTO_V5	4
+#define ALPS_PROTO_V6	5
 
 struct alps_model_info {
         unsigned char signature[3];

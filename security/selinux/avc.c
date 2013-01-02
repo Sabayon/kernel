@@ -133,6 +133,11 @@ static void avc_dump_query(struct audit_buffer *ab, u32 ssid, u32 tsid, u16 tcla
 	char *scontext;
 	u32 scontext_len;
 
+#ifdef CONFIG_GRKERNSEC_SELINUX_AVC_LOG_IPADDR
+	if (current->signal->curr_ip)
+		audit_log_format(ab, "ipaddr=%pI4 ", &current->signal->curr_ip);
+#endif
+
 	rc = security_sid_to_context(ssid, &scontext, &scontext_len);
 	if (rc)
 		audit_log_format(ab, "ssid=%d", ssid);

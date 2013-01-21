@@ -1205,6 +1205,7 @@ MACHINE_START(ODROIDX, "ODROID-X")
 	.atag_offset	= 0x100,
 	.smp		= smp_ops(exynos_smp_ops),
 	.init_irq	= exynos4_init_irq,
+	.init_early	= exynos_firmware_init,
 	.map_io		= hkdk4412_map_io,
 	.handle_irq	= gic_handle_irq,
 	.init_machine	= hkdk4412_machine_init,

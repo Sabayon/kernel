@@ -1064,6 +1064,26 @@ static struct dw_mci_board hkdk4412_dwmci_pdata = {
        .get_bus_wd             = hkdk4412_dwmci_get_bus_wd,
 };
 
+static struct resource tmu_resource[] = {
+	[0] = {
+		.start = EXYNOS4_PA_TMU,
+		.end = EXYNOS4_PA_TMU + 0xFFFF - 1,
+		.flags = IORESOURCE_MEM,
+	},
+	[1] = { 
+		.start = EXYNOS4_IRQ_TMU_TRIG0,
+		.end = EXYNOS4_IRQ_TMU_TRIG0,
+		.flags = IORESOURCE_IRQ,
+	},
+};
+
+static struct platform_device hkdk4412_tmu = {
+	.id = -1,
+	.name = "exynos5250-tmu",
+	.num_resources = ARRAY_SIZE(tmu_resource),
+	.resource = tmu_resource,
+};
+
 static struct platform_device *hkdk4412_devices[] __initdata = {
 	&s3c_device_hsmmc2,
 	&s3c_device_i2c0,
@@ -1102,6 +1122,9 @@ static struct platform_device *hkdk4412_devices[] __initdata = {
 	&samsung_asoc_idma,
 #if defined(CONFIG_SND_SOC_HKDK_MAX98090)
 	&hardkernel_audio_device,
+#endif
+#if defined(CONFIG_EXYNOS_THERMAL)
+	&hkdk4412_tmu,
 #endif
 };
 

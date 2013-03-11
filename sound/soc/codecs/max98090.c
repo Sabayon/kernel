@@ -1277,7 +1277,7 @@ static int max98090_i2c_probe(struct i2c_client *i2c,
 	return ret;
 }
 
-static int __devexit max98090_i2c_remove(struct i2c_client *client)
+static int max98090_i2c_remove(struct i2c_client *client)
 {
 	struct snd_soc_codec *codec = i2c_get_clientdata(client);
 
@@ -1302,7 +1302,7 @@ static struct i2c_driver max98090_i2c_driver = {
 		.owner = THIS_MODULE,
 	},
 	.probe  = max98090_i2c_probe,
-	.remove = __devexit_p(max98090_i2c_remove),
+	.remove = max98090_i2c_remove,
 	.id_table = max98090_i2c_id,
 };
 

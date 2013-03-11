@@ -214,7 +214,7 @@ static struct snd_soc_card snd_soc_hkdk_max98090 = {
 	.num_links = ARRAY_SIZE(odroid_dai),
 };
 
-static __devinit int hkdk_max98090_driver_probe(struct platform_device *pdev)
+static int hkdk_max98090_driver_probe(struct platform_device *pdev)
 {
 	struct snd_soc_card *card = &snd_soc_hkdk_max98090;
 	int ret;
@@ -231,7 +231,7 @@ static __devinit int hkdk_max98090_driver_probe(struct platform_device *pdev)
 	return 0;
 }
 
-static int __devexit hkdk_max98090_driver_remove(struct platform_device *pdev)
+static int hkdk_max98090_driver_remove(struct platform_device *pdev)
 {
 	struct snd_soc_card *card = platform_get_drvdata(pdev);
 
@@ -247,7 +247,7 @@ static struct platform_driver hkdk_max98090_driver = {
 		.pm	= &snd_soc_pm_ops,
 	},
 	.probe		= hkdk_max98090_driver_probe,
-	.remove		= __devexit_p(hkdk_max98090_driver_remove),
+	.remove		= hkdk_max98090_driver_remove,
 };
 
 module_platform_driver(hkdk_max98090_driver);

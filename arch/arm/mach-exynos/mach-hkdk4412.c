@@ -1057,11 +1057,14 @@ static int hkdk4412_dwmci_init(u32 slot_id, irq_handler_t handler, void *data)
 
 static struct dw_mci_board hkdk4412_dwmci_pdata = {
        .num_slots              = 1,
-       .quirks                 = DW_MCI_QUIRK_BROKEN_CARD_DETECTION,
-//       .bus_hz                 = 80 * 1000 * 1000,
+       .quirks                 = DW_MCI_QUIRK_BROKEN_CARD_DETECTION | DW_MCI_QUIRK_HIGHSPEED,
+       .caps		       = MMC_CAP_UHS_DDR50 | MMC_CAP_1_8V_DDR | MMC_CAP_8_BIT_DATA | MMC_CAP_CMD23,
+       .fifo_depth	       = 0x80,
+       .bus_hz                 = 100 * 1000 * 1000,
        .detect_delay_ms        = 200,
        .init                   = hkdk4412_dwmci_init,
        .get_bus_wd             = hkdk4412_dwmci_get_bus_wd,
+       .cfg_gpio	       = exynos4_setup_dwmci_cfg_gpio,
 };
 
 static struct resource tmu_resource[] = {
@@ -1113,7 +1116,7 @@ static struct platform_device *hkdk4412_devices[] __initdata = {
 	&hdmi_fixed_voltage,
 #endif
 	&exynos4_device_ohci,
-	&exynos4_device_dwmci,
+	&exynos_device_dwmci,
 	&hkdk4412_leds_gpio,
 #if defined(CONFIG_LCD_LP101WH1)
 	&hkdk4412_lcd_lp101wh1,
@@ -1204,7 +1207,7 @@ static void __init hkdk4412_machine_init(void)
 	s3c_sdhci2_set_platdata(&hkdk4412_hsmmc2_pdata);
 
 	exynos4_setup_dwmci_cfg_gpio(NULL, MMC_BUS_WIDTH_8);
-	exynos4_dwmci_set_platdata(&hkdk4412_dwmci_pdata);
+	exynos_dwmci_set_platdata(&hkdk4412_dwmci_pdata);
 
 	hkdk4412_ehci_init();
 	hkdk4412_ohci_init();

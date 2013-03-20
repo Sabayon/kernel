@@ -37,11 +37,9 @@ static int exynos_dwmci_init(u32 slot_id, irq_handler_t handler, void *data)
 
 	/* Set Phase Shift Register */
 	if (soc_is_exynos4210()) {
-		pr_emerg("DWMCI: SOC IS EXYNOS4210\n");
 		host->pdata->sdr_timing = 0x00010001;
 		host->pdata->ddr_timing = 0x00020002;
 	} else if (soc_is_exynos4212() || soc_is_exynos4412()) {
-		pr_emerg("DWMCI: SOC IS EXYNOS4212 or 4412\n");
 		host->pdata->sdr_timing = 0x00010001;
 		host->pdata->ddr_timing = 0x00010002;
 	}
@@ -58,10 +56,8 @@ static void exynos_dwmci_set_io_timing(void *data, unsigned char timing)
 	struct dw_mci *host = (struct dw_mci *)data;
 	host->pdata->ddr_timing = 0x00010002;
 	if (timing == MMC_TIMING_UHS_DDR50) {
-		pr_emerg("DWMCI: Setted DDR MODE\n");
 		__raw_writel(host->pdata->ddr_timing, host->regs + DWMCI_CLKSEL);
 	} else {
-		pr_emerg("DWMCI: Setted SDR MODE\n");
 		__raw_writel(host->pdata->sdr_timing, host->regs + DWMCI_CLKSEL);
 	}
 }

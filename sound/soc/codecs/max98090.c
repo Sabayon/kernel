@@ -889,12 +889,11 @@ static int max98090_dai1_hw_params(struct snd_pcm_substream *substream,
 	u8 regval;
 
 	cdata = &max98090->dai;
-	printk("### max98090_dai1_hw_params###\n");
+
 	snd_soc_write(codec, M98090_006_IF_QS, M98090_QS_DAI_I2S_SLV);
 	snd_soc_write(codec, M98090_005_SAMPLERATE_QS, M98090_QS_SR_44K1);
 	snd_soc_write(codec, M98090_007_DAC_PATH_QS, 0x80);
 
-#if 0	// FIXME:
 	rate = params_rate(params);
 
 	switch (params_format(params)) {
@@ -941,7 +940,6 @@ static int max98090_dai1_hw_params(struct snd_pcm_substream *substream,
 		snd_soc_update_bits(codec, M98090_026_FILTER_CONFIG,
 				M98090_FILTER_DHF, M98090_FILTER_DHF);
 	max98090_set_playback_speaker_headset(codec);
-#endif
 
 	return 0;
 }
@@ -958,7 +956,6 @@ static int max98090_dai_set_sysclk(struct snd_soc_dai *dai,
 
 	max98090->sysclk = freq; /* remember current sysclk */
 
-#if 0	// FIXME:
 	/* Setup clocks for slave mode, and using the PLL
 	 * PSCLK = 0x01 (when master clk is 10MHz to 20MHz)
 	 *         0x02 (when master clk is 20MHz to 40MHz)..
@@ -974,7 +971,7 @@ static int max98090_dai_set_sysclk(struct snd_soc_dai *dai,
 		dev_err(codec->dev, "Invalid master clock frequency\n");
 		return -EINVAL;
 	}
-#endif
+
 	snd_soc_write(codec, M98090_004_SYS_CLK_QS, M98090_QS_MCLK_11P2896M);
 	dev_dbg(dai->dev, "Clock source is %d at %uHz\n", clk_id, freq);
 
@@ -994,7 +991,7 @@ static int max98090_dai1_set_fmt(struct snd_soc_dai *codec_dai,
 
 	if (fmt != cdata->fmt) {
 		cdata->fmt = fmt;
-#if 0	// FIXME:
+
 		switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
 		case SND_SOC_DAIFMT_CBS_CFS:
 			/* Slave mode PLL */
@@ -1045,7 +1042,6 @@ static int max98090_dai1_set_fmt(struct snd_soc_dai *codec_dai,
 		snd_soc_update_bits(codec, M98090_022_DAI_IF_FORMAT,
 				M98090_DAI_DLY | M98090_DAI_BCI |
 				M98090_DAI_RJ | M98090_DAI_WCI, regval);
-#endif
 
 		snd_soc_write(codec, M98090_006_IF_QS, M98090_QS_DAI_I2S_SLV);
 	}
@@ -1063,7 +1059,6 @@ static int max98090_set_bias_level(struct snd_soc_codec *codec,
 
 	case SND_SOC_BIAS_PREPARE:
 		break;
-#if 0	// FIXME:
 	case SND_SOC_BIAS_STANDBY:
 		snd_soc_update_bits(codec, M98090_03E_IPUT_ENABLE,
 				M98090_MBEN, M98090_MBEN);
@@ -1072,7 +1067,6 @@ static int max98090_set_bias_level(struct snd_soc_codec *codec,
 		snd_soc_update_bits(codec, M98090_03E_IPUT_ENABLE,
 				M98090_MBEN, 0);
 		codec->cache_sync = 1;
-#endif
 		break;
 	}
 	codec->dapm.bias_level = level;

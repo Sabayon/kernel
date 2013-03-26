@@ -208,7 +208,7 @@ static struct snd_soc_dai_link odroid_dai[] = {
 };
 
 static struct snd_soc_card snd_soc_hkdk_max98090 = {
-	.name = "hkdk-max98090",
+	.name = "Built-in Audio",
 	.owner = THIS_MODULE,
 	.dai_link = odroid_dai,
 	.num_links = ARRAY_SIZE(odroid_dai),

@@ -74,7 +74,7 @@
 #define HAVE_FILE_FALLOCATE 1
 
 /* first_online_pgdat() is available */
-#define HAVE_FIRST_ONLINE_PGDAT 1
+/* #undef HAVE_NEXT_ONLINE_PGDAT */
 
 /* fls64() is available */
 #define HAVE_FLS64 1
@@ -92,7 +92,7 @@
 #define HAVE_GLOBAL_PAGE_STATE 1
 
 /* groups_search() is available */
-#define HAVE_GROUPS_SEARCH 1
+/* #undef HAVE_GROUPS_SEARCH */
 
 /* init_utsname() is available */
 #define HAVE_INIT_UTSNAME 1
@@ -146,7 +146,7 @@
 #define HAVE_NEXT_ONLINE_PGDAT 1
 
 /* next_zone() is available */
-#define HAVE_NEXT_ZONE 1
+/* #undef HAVE_NEXT_ZONE */
 
 /* struct path used in struct nameidata */
 #define HAVE_PATH_IN_NAMEIDATA 1
@@ -164,7 +164,7 @@
 #define HAVE_SCHED_RT_HEADER 1
 
 /* set_fs_pwd() is available */
-#define HAVE_SET_FS_PWD 1
+/* #undef HAVE_SET_FS_PWD */
 
 /* set_fs_pwd() needs const path * */
 #define HAVE_SET_FS_PWD_WITH_CONST 1

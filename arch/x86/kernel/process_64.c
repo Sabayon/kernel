@@ -152,11 +152,10 @@ int copy_thread(unsigned long clone_flags, unsigned long sp,
 	struct pt_regs *childregs;
 	struct task_struct *me = current;
 
-	p->thread.sp0 = (unsigned long)task_stack_page(p) + THREAD_SIZE - 16;
+	p->thread.sp0 = (unsigned long)task_stack_page(p) + THREAD_SIZE;
 	childregs = task_pt_regs(p);
 	p->thread.sp = (unsigned long) childregs;
 	p->thread.usersp = me->thread.usersp;
-	p->tinfo.lowest_stack = (unsigned long)task_stack_page(p);
 	set_tsk_thread_flag(p, TIF_FORK);
 	p->fpu_counter = 0;
 	p->thread.io_bitmap_ptr = NULL;
@@ -275,7 +274,7 @@ __switch_to(struct task_struct *prev_p, struct task_struct *next_p)
 	struct thread_struct *prev = &prev_p->thread;
 	struct thread_struct *next = &next_p->thread;
 	int cpu = smp_processor_id();
-	struct tss_struct *tss = init_tss + cpu;
+	struct tss_struct *tss = &per_cpu(init_tss, cpu);
 	unsigned fsindex, gsindex;
 	fpu_switch_t fpu;
 
@@ -357,9 +356,10 @@ __switch_to(struct task_struct *prev_p, struct task_struct *next_p)
 	prev->usersp = this_cpu_read(old_rsp);
 	this_cpu_write(old_rsp, next->usersp);
 	this_cpu_write(current_task, next_p);
-	this_cpu_write(current_tinfo, &next_p->tinfo);
 
-	this_cpu_write(kernel_stack, next->sp0);
+	this_cpu_write(kernel_stack,
+		  (unsigned long)task_stack_page(next_p) +
+		  THREAD_SIZE - KERNEL_STACK_OFFSET);
 
 	/*
 	 * Now maybe reload the debug registers and handle I/O bitmaps
@@ -428,11 +428,12 @@ unsigned long get_wchan(struct task_struct *p)
 	if (!p || p == current || p->state == TASK_RUNNING)
 		return 0;
 	stack = (unsigned long)task_stack_page(p);
-	if (p->thread.sp < stack || p->thread.sp > stack+THREAD_SIZE-16-sizeof(u64))
+	if (p->thread.sp < stack || p->thread.sp >= stack+THREAD_SIZE)
 		return 0;
 	fp = *(u64 *)(p->thread.sp);
 	do {
-		if (fp < stack || fp > stack+THREAD_SIZE-16-sizeof(u64))
+		if (fp < (unsigned long)stack ||
+		    fp >= (unsigned long)stack+THREAD_SIZE)
 			return 0;
 		ip = *(u64 *)(fp+8);
 		if (!in_sched_functions(ip))

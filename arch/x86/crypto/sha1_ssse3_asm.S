@@ -28,8 +28,6 @@
  * (at your option) any later version.
  */
 
-#include <asm/alternative-asm.h>
-
 #define CTX	%rdi	// arg1
 #define BUF	%rsi	// arg2
 #define CNT	%rdx	// arg3
@@ -106,7 +104,6 @@
 	pop	%r12
 	pop	%rbp
 	pop	%rbx
-	pax_force_retaddr 0, 1
 	ret
 
 	.size	\name, .-\name

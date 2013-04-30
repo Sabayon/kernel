@@ -616,7 +616,7 @@ symlink_exit:
 
 void cifs_put_link(struct dentry *direntry, struct nameidata *nd, void *cookie)
 {
-	const char *p = nd_get_link(nd);
+	char *p = nd_get_link(nd);
 	if (!IS_ERR(p))
 		kfree(p);
 }

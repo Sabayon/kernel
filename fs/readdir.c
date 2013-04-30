@@ -17,7 +17,6 @@
 #include <linux/security.h>
 #include <linux/syscalls.h>
 #include <linux/unistd.h>
-#include <linux/namei.h>
 
 #include <asm/uaccess.h>
 
@@ -68,7 +67,6 @@ struct old_linux_dirent {
 
 struct readdir_callback {
 	struct old_linux_dirent __user * dirent;
-	struct file * file;
 	int result;
 };
 
@@ -86,10 +84,6 @@ static int fillonedir(void * __buf, const char * name, int namlen, loff_t offset
 		buf->result = -EOVERFLOW;
 		return -EOVERFLOW;
 	}
-
-	if (!gr_acl_handle_filldir(buf->file, name, namlen, ino))
-		return 0;
-
 	buf->result++;
 	dirent = buf->dirent;
 	if (!access_ok(VERIFY_WRITE, dirent,
@@ -120,7 +114,6 @@ SYSCALL_DEFINE3(old_readdir, unsigned int, fd,
 
 	buf.result = 0;
 	buf.dirent = dirent;
-	buf.file = f.file;
 
 	error = vfs_readdir(f.file, fillonedir, &buf);
 	if (buf.result)
@@ -146,7 +139,6 @@ struct linux_dirent {
 struct getdents_callback {
 	struct linux_dirent __user * current_dir;
 	struct linux_dirent __user * previous;
-	struct file * file;
 	int count;
 	int error;
 };
@@ -168,10 +160,6 @@ static int filldir(void * __buf, const char * name, int namlen, loff_t offset,
 		buf->error = -EOVERFLOW;
 		return -EOVERFLOW;
 	}
-
-	if (!gr_acl_handle_filldir(buf->file, name, namlen, ino))
-		return 0;
-
 	dirent = buf->previous;
 	if (dirent) {
 		if (__put_user(offset, &dirent->d_off))
@@ -217,7 +205,6 @@ SYSCALL_DEFINE3(getdents, unsigned int, fd,
 	buf.previous = NULL;
 	buf.count = count;
 	buf.error = 0;
-	buf.file = f.file;
 
 	error = vfs_readdir(f.file, filldir, &buf);
 	if (error >= 0)
@@ -236,7 +223,6 @@ SYSCALL_DEFINE3(getdents, unsigned int, fd,
 struct getdents_callback64 {
 	struct linux_dirent64 __user * current_dir;
 	struct linux_dirent64 __user * previous;
-	struct file *file;
 	int count;
 	int error;
 };
@@ -252,10 +238,6 @@ static int filldir64(void * __buf, const char * name, int namlen, loff_t offset,
 	buf->error = -EINVAL;	/* only used if we fail.. */
 	if (reclen > buf->count)
 		return -EINVAL;
-
-	if (!gr_acl_handle_filldir(buf->file, name, namlen, ino))
-		return 0;
-
 	dirent = buf->previous;
 	if (dirent) {
 		if (__put_user(offset, &dirent->d_off))
@@ -301,7 +283,6 @@ SYSCALL_DEFINE3(getdents64, unsigned int, fd,
 
 	buf.current_dir = dirent;
 	buf.previous = NULL;
-	buf.file = f.file;
 	buf.count = count;
 	buf.error = 0;
 
@@ -310,7 +291,7 @@ SYSCALL_DEFINE3(getdents64, unsigned int, fd,
 		error = buf.error;
 	lastdirent = buf.previous;
 	if (lastdirent) {
-		typeof(((struct linux_dirent64 *)0)->d_off) d_off = f.file->f_pos;
+		typeof(lastdirent->d_off) d_off = f.file->f_pos;
 		if (__put_user(d_off, &lastdirent->d_off))
 			error = -EFAULT;
 		else

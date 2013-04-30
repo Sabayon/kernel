@@ -133,8 +133,6 @@ static unsigned __kprobes long oops_begin(struct pt_regs *regs)
 	return flags;
 }
 
-extern void gr_handle_kernel_exploit(void);
-
 static void __kprobes oops_end(unsigned long flags, struct pt_regs *regs,
 			       int signr)
 {
@@ -184,9 +182,6 @@ static void __kprobes oops_end(unsigned long flags, struct pt_regs *regs,
 		panic("Fatal exception in interrupt");
 	if (panic_on_oops)
 		panic("Fatal exception");
-
-	gr_handle_kernel_exploit();
-
 	do_exit(signr);
 }
 

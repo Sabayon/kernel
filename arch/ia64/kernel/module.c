@@ -307,7 +307,8 @@ plt_target (struct plt_entry *plt)
 void
 module_free (struct module *mod, void *module_region)
 {
-	if (mod && mod->arch.init_unw_table && module_region == mod->module_init_rx) {
+	if (mod && mod->arch.init_unw_table &&
+	    module_region == mod->module_init) {
 		unw_remove_unwind_table(mod->arch.init_unw_table);
 		mod->arch.init_unw_table = NULL;
 	}
@@ -493,39 +494,15 @@ module_frob_arch_sections (Elf_Ehdr *ehdr, Elf_Shdr *sechdrs, char *secstrings,
 }
 
 static inline int
-in_init_rx (const struct module *mod, uint64_t addr)
-{
-	return addr - (uint64_t) mod->module_init_rx < mod->init_size_rx;
-}
-
-static inline int
-in_init_rw (const struct module *mod, uint64_t addr)
-{
-	return addr - (uint64_t) mod->module_init_rw < mod->init_size_rw;
-}
-
-static inline int
 in_init (const struct module *mod, uint64_t addr)
 {
-	return in_init_rx(mod, addr) || in_init_rw(mod, addr);
-}
-
-static inline int
-in_core_rx (const struct module *mod, uint64_t addr)
-{
-	return addr - (uint64_t) mod->module_core_rx < mod->core_size_rx;
-}
-
-static inline int
-in_core_rw (const struct module *mod, uint64_t addr)
-{
-	return addr - (uint64_t) mod->module_core_rw < mod->core_size_rw;
+	return addr - (uint64_t) mod->module_init < mod->init_size;
 }
 
 static inline int
 in_core (const struct module *mod, uint64_t addr)
 {
-	return in_core_rx(mod, addr) || in_core_rw(mod, addr);
+	return addr - (uint64_t) mod->module_core < mod->core_size;
 }
 
 static inline int
@@ -708,14 +685,7 @@ do_reloc (struct module *mod, uint8_t r_type, Elf64_Sym *sym, uint64_t addend,
 		break;
 
 	      case RV_BDREL:
-		if (in_init_rx(mod, val))
-			val -= (uint64_t) mod->module_init_rx;
-		else if (in_init_rw(mod, val))
-			val -= (uint64_t) mod->module_init_rw;
-		else if (in_core_rx(mod, val))
-			val -= (uint64_t) mod->module_core_rx;
-		else if (in_core_rw(mod, val))
-			val -= (uint64_t) mod->module_core_rw;
+		val -= (uint64_t) (in_init(mod, val) ? mod->module_init : mod->module_core);
 		break;
 
 	      case RV_LTV:
@@ -850,15 +820,15 @@ apply_relocate_add (Elf64_Shdr *sechdrs, const char *strtab, unsigned int symind
 		 *     addresses have been selected...
 		 */
 		uint64_t gp;
-		if (mod->core_size_rx + mod->core_size_rw > MAX_LTOFF)
+		if (mod->core_size > MAX_LTOFF)
 			/*
 			 * This takes advantage of fact that SHF_ARCH_SMALL gets allocated
 			 * at the end of the module.
 			 */
-			gp = mod->core_size_rx + mod->core_size_rw - MAX_LTOFF / 2;
+			gp = mod->core_size - MAX_LTOFF / 2;
 		else
-			gp = (mod->core_size_rx + mod->core_size_rw) / 2;
-		gp = (uint64_t) mod->module_core_rx + ((gp + 7) & -8);
+			gp = mod->core_size / 2;
+		gp = (uint64_t) mod->module_core + ((gp + 7) & -8);
 		mod->arch.gp = gp;
 		DEBUGP("%s: placing gp at 0x%lx\n", __func__, gp);
 	}

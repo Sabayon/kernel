@@ -72,7 +72,7 @@ static int probe_default(void)
 	return 1;
 }
 
-static struct apic apic_default __read_only = {
+static struct apic apic_default = {
 
 	.name				= "default",
 	.probe				= probe_default,

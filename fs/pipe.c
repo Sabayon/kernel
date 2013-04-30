@@ -438,9 +438,9 @@ redo:
 		}
 		if (bufs)	/* More to do? */
 			continue;
-		if (!atomic_read(&pipe->writers))
+		if (!pipe->writers)
 			break;
-		if (!atomic_read(&pipe->waiting_writers)) {
+		if (!pipe->waiting_writers) {
 			/* syscall merging: Usually we must not sleep
 			 * if O_NONBLOCK is set, or if we got some data.
 			 * But if a writer sleeps in kernel space, then
@@ -504,7 +504,7 @@ pipe_write(struct kiocb *iocb, const struct iovec *_iov,
 	mutex_lock(&inode->i_mutex);
 	pipe = inode->i_pipe;
 
-	if (!atomic_read(&pipe->readers)) {
+	if (!pipe->readers) {
 		send_sig(SIGPIPE, current, 0);
 		ret = -EPIPE;
 		goto out;
@@ -553,7 +553,7 @@ redo1:
 	for (;;) {
 		int bufs;
 
-		if (!atomic_read(&pipe->readers)) {
+		if (!pipe->readers) {
 			send_sig(SIGPIPE, current, 0);
 			if (!ret)
 				ret = -EPIPE;
@@ -644,9 +644,9 @@ redo2:
 			kill_fasync(&pipe->fasync_readers, SIGIO, POLL_IN);
 			do_wakeup = 0;
 		}
-		atomic_inc(&pipe->waiting_writers);
+		pipe->waiting_writers++;
 		pipe_wait(pipe);
-		atomic_dec(&pipe->waiting_writers);
+		pipe->waiting_writers--;
 	}
 out:
 	mutex_unlock(&inode->i_mutex);
@@ -716,7 +716,7 @@ pipe_poll(struct file *filp, poll_table *wait)
 	mask = 0;
 	if (filp->f_mode & FMODE_READ) {
 		mask = (nrbufs > 0) ? POLLIN | POLLRDNORM : 0;
-		if (!atomic_read(&pipe->writers) && filp->f_version != pipe->w_counter)
+		if (!pipe->writers && filp->f_version != pipe->w_counter)
 			mask |= POLLHUP;
 	}
 
@@ -726,7 +726,7 @@ pipe_poll(struct file *filp, poll_table *wait)
 		 * Most Unices do not set POLLERR for FIFOs but on Linux they
 		 * behave exactly like pipes for poll().
 		 */
-		if (!atomic_read(&pipe->readers))
+		if (!pipe->readers)
 			mask |= POLLERR;
 	}
 
@@ -740,10 +740,10 @@ pipe_release(struct inode *inode, int decr, int decw)
 
 	mutex_lock(&inode->i_mutex);
 	pipe = inode->i_pipe;
-	atomic_sub(decr, &pipe->readers);
-	atomic_sub(decw, &pipe->writers);
+	pipe->readers -= decr;
+	pipe->writers -= decw;
 
-	if (!atomic_read(&pipe->readers) && !atomic_read(&pipe->writers)) {
+	if (!pipe->readers && !pipe->writers) {
 		free_pipe_info(inode);
 	} else {
 		wake_up_interruptible_sync_poll(&pipe->wait, POLLIN | POLLOUT | POLLRDNORM | POLLWRNORM | POLLERR | POLLHUP);
@@ -833,7 +833,7 @@ pipe_read_open(struct inode *inode, struct file *filp)
 
 	if (inode->i_pipe) {
 		ret = 0;
-		atomic_inc(&inode->i_pipe->readers);
+		inode->i_pipe->readers++;
 	}
 
 	mutex_unlock(&inode->i_mutex);
@@ -850,7 +850,7 @@ pipe_write_open(struct inode *inode, struct file *filp)
 
 	if (inode->i_pipe) {
 		ret = 0;
-		atomic_inc(&inode->i_pipe->writers);
+		inode->i_pipe->writers++;
 	}
 
 	mutex_unlock(&inode->i_mutex);
@@ -868,9 +868,9 @@ pipe_rdwr_open(struct inode *inode, struct file *filp)
 	if (inode->i_pipe) {
 		ret = 0;
 		if (filp->f_mode & FMODE_READ)
-			atomic_inc(&inode->i_pipe->readers);
+			inode->i_pipe->readers++;
 		if (filp->f_mode & FMODE_WRITE)
-			atomic_inc(&inode->i_pipe->writers);
+			inode->i_pipe->writers++;
 	}
 
 	mutex_unlock(&inode->i_mutex);
@@ -962,7 +962,7 @@ void free_pipe_info(struct inode *inode)
 	inode->i_pipe = NULL;
 }
 
-struct vfsmount *pipe_mnt __read_mostly;
+static struct vfsmount *pipe_mnt __read_mostly;
 
 /*
  * pipefs_dname() is called from d_path().
@@ -992,8 +992,7 @@ static struct inode * get_pipe_inode(void)
 		goto fail_iput;
 	inode->i_pipe = pipe;
 
-	atomic_set(&pipe->readers, 1);
-	atomic_set(&pipe->writers, 1);
+	pipe->readers = pipe->writers = 1;
 	inode->i_fop = &rdwr_pipefifo_fops;
 
 	/*

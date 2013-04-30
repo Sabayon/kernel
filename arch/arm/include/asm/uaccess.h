@@ -18,7 +18,6 @@
 #include <asm/domain.h>
 #include <asm/unified.h>
 #include <asm/compiler.h>
-#include <asm/pgtable.h>
 
 #define VERIFY_READ 0
 #define VERIFY_WRITE 1
@@ -61,34 +60,10 @@ extern int __put_user_bad(void);
 #define USER_DS		TASK_SIZE
 #define get_fs()	(current_thread_info()->addr_limit)
 
-static inline void pax_open_userland(void)
-{
-
-#ifdef CONFIG_PAX_MEMORY_UDEREF
-	if (get_fs() == USER_DS) {
-		BUG_ON(test_domain(DOMAIN_USER, DOMAIN_UDEREF));
-		modify_domain(DOMAIN_USER, DOMAIN_UDEREF);
-	}
-#endif
-
-}
-
-static inline void pax_close_userland(void)
-{
-
-#ifdef CONFIG_PAX_MEMORY_UDEREF
-	if (get_fs() == USER_DS) {
-		BUG_ON(test_domain(DOMAIN_USER, DOMAIN_NOACCESS));
-		modify_domain(DOMAIN_USER, DOMAIN_NOACCESS);
-	}
-#endif
-
-}
-
 static inline void set_fs(mm_segment_t fs)
 {
 	current_thread_info()->addr_limit = fs;
-	modify_domain(DOMAIN_KERNEL, fs ? DOMAIN_KERNELCLIENT : DOMAIN_MANAGER);
+	modify_domain(DOMAIN_KERNEL, fs ? DOMAIN_CLIENT : DOMAIN_MANAGER);
 }
 
 #define segment_eq(a,b)	((a) == (b))
@@ -168,12 +143,8 @@ extern int __get_user_4(void *);
 
 #define get_user(x,p)							\
 	({								\
-		int __e;						\
 		might_fault();						\
-		pax_open_userland();					\
-		__e = __get_user_check(x,p);				\
-		pax_close_userland();					\
-		__e;							\
+		__get_user_check(x,p);					\
 	 })
 
 extern int __put_user_1(void *, unsigned int);
@@ -217,12 +188,8 @@ extern int __put_user_8(void *, unsigned long long);
 
 #define put_user(x,p)							\
 	({								\
-		int __e;						\
 		might_fault();						\
-		pax_open_userland();					\
-		__e = __put_user_check(x,p);				\
-		pax_close_userland();					\
-		__e;							\
+		__put_user_check(x,p);					\
 	 })
 
 #else /* CONFIG_MMU */
@@ -263,17 +230,13 @@ static inline void set_fs(mm_segment_t fs)
 #define __get_user(x,ptr)						\
 ({									\
 	long __gu_err = 0;						\
-	pax_open_userland();						\
 	__get_user_err((x),(ptr),__gu_err);				\
-	pax_close_userland();						\
 	__gu_err;							\
 })
 
 #define __get_user_error(x,ptr,err)					\
 ({									\
-	pax_open_userland();						\
 	__get_user_err((x),(ptr),err);					\
-	pax_close_userland();						\
 	(void) 0;							\
 })
 
@@ -349,17 +312,13 @@ do {									\
 #define __put_user(x,ptr)						\
 ({									\
 	long __pu_err = 0;						\
-	pax_open_userland();						\
 	__put_user_err((x),(ptr),__pu_err);				\
-	pax_close_userland();						\
 	__pu_err;							\
 })
 
 #define __put_user_error(x,ptr,err)					\
 ({									\
-	pax_open_userland();						\
 	__put_user_err((x),(ptr),err);					\
-	pax_close_userland();						\
 	(void) 0;							\
 })
 
@@ -459,44 +418,11 @@ do {									\
 
 
 #ifdef CONFIG_MMU
-extern unsigned long __must_check ___copy_from_user(void *to, const void __user *from, unsigned long n);
-extern unsigned long __must_check ___copy_to_user(void __user *to, const void *from, unsigned long n);
-
-static inline unsigned long __must_check __copy_from_user(void *to, const void __user *from, unsigned long n)
-{
-	unsigned long ret;
-
-	check_object_size(to, n, false);
-	pax_open_userland();
-	ret = ___copy_from_user(to, from, n);
-	pax_close_userland();
-	return ret;
-}
-
-static inline unsigned long __must_check __copy_to_user(void __user *to, const void *from, unsigned long n)
-{
-	unsigned long ret;
-
-	check_object_size(from, n, true);
-	pax_open_userland();
-	ret = ___copy_to_user(to, from, n);
-	pax_close_userland();
-	return ret;
-}
-
+extern unsigned long __must_check __copy_from_user(void *to, const void __user *from, unsigned long n);
+extern unsigned long __must_check __copy_to_user(void __user *to, const void *from, unsigned long n);
 extern unsigned long __must_check __copy_to_user_std(void __user *to, const void *from, unsigned long n);
-extern unsigned long __must_check ___clear_user(void __user *addr, unsigned long n);
+extern unsigned long __must_check __clear_user(void __user *addr, unsigned long n);
 extern unsigned long __must_check __clear_user_std(void __user *addr, unsigned long n);
-
-static inline unsigned long __must_check __clear_user(void __user *addr, unsigned long n)
-{
-	unsigned long ret;
-	pax_open_userland();
-	ret = ___clear_user(addr, n);
-	pax_close_userland();
-	return ret;
-}
-
 #else
 #define __copy_from_user(to,from,n)	(memcpy(to, (void __force *)from, n), 0)
 #define __copy_to_user(to,from,n)	(memcpy((void __force *)to, from, n), 0)
@@ -505,9 +431,6 @@ static inline unsigned long __must_check __clear_user(void __user *addr, unsigne
 
 static inline unsigned long __must_check copy_from_user(void *to, const void __user *from, unsigned long n)
 {
-	if ((long)n < 0)
-		return n;
-
 	if (access_ok(VERIFY_READ, from, n))
 		n = __copy_from_user(to, from, n);
 	else /* security hole - plug it */
@@ -517,9 +440,6 @@ static inline unsigned long __must_check copy_from_user(void *to, const void __u
 
 static inline unsigned long __must_check copy_to_user(void __user *to, const void *from, unsigned long n)
 {
-	if ((long)n < 0)
-		return n;
-
 	if (access_ok(VERIFY_WRITE, to, n))
 		n = __copy_to_user(to, from, n);
 	return n;

@@ -126,9 +126,7 @@ static inline void sanitize_i387_state(struct task_struct *tsk)
 ({									\
 	int err;							\
 	asm volatile(ASM_STAC "\n"					\
-		     "1:"						\
-		     __copyuser_seg					\
-		     #insn "\n\t"					\
+		     "1:" #insn "\n\t"					\
 		     "2: " ASM_CLAC "\n"				\
 		     ".section .fixup,\"ax\"\n"				\
 		     "3:  movl $-1,%[err]\n"				\
@@ -301,7 +299,7 @@ static inline int restore_fpu_checking(struct task_struct *tsk)
 		"emms\n\t"		/* clear stack tags */
 		"fildl %P[addr]",	/* set F?P to defined value */
 		X86_FEATURE_FXSAVE_LEAK,
-		[addr] "m" (init_tss[raw_smp_processor_id()].x86_tss.sp0));
+		[addr] "m" (tsk->thread.fpu.has_fpu));
 
 	return fpu_restore_checking(&tsk->thread.fpu);
 }

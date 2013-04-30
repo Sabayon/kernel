@@ -73,6 +73,7 @@ static u16 port;
 static unsigned int enum_bit;
 static u8 enum_mask;
 
+static struct cpci_hp_controller_ops generic_hpc_ops;
 static struct cpci_hp_controller generic_hpc;
 
 static int __init validate_parameters(void)
@@ -138,10 +139,6 @@ static int query_enum(void)
 	return ((value & enum_mask) == enum_mask);
 }
 
-static struct cpci_hp_controller_ops generic_hpc_ops = {
-	.query_enum = query_enum,
-};
-
 static int __init cpcihp_generic_init(void)
 {
 	int status;
@@ -168,6 +165,7 @@ static int __init cpcihp_generic_init(void)
 	pci_dev_put(dev);
 
 	memset(&generic_hpc, 0, sizeof (struct cpci_hp_controller));
+	generic_hpc_ops.query_enum = query_enum;
 	generic_hpc.ops = &generic_hpc_ops;
 
 	status = cpci_hp_register_controller(&generic_hpc);

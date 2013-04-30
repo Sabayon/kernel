@@ -8,11 +8,7 @@
 #include <asm/thread_info.h>
 #include <asm/memory.h>
 #include <asm/page.h>
-
-#ifdef CONFIG_PAX_KERNEXEC
-#include <asm/pgtable.h>
-#endif
-
+	
 #define PROC_INFO							\
 	. = ALIGN(4);							\
 	VMLINUX_SYMBOL(__proc_info_begin) = .;				\
@@ -94,11 +90,6 @@ SECTIONS
 		_text = .;
 		HEAD_TEXT
 	}
-
-#ifdef CONFIG_PAX_KERNEXEC
-	. = ALIGN(1<<SECTION_SHIFT);
-#endif
-
 	.text : {			/* Real text segment		*/
 		_stext = .;		/* Text and read-only data	*/
 			__exception_text_start = .;
@@ -152,10 +143,6 @@ SECTIONS
 	NOTES
 
 	_etext = .;			/* End of text and rodata section */
-
-#ifdef CONFIG_PAX_KERNEXEC
-	. = ALIGN(1<<SECTION_SHIFT);
-#endif
 
 #ifndef CONFIG_XIP_KERNEL
 	. = ALIGN(PAGE_SIZE);
@@ -216,11 +203,6 @@ SECTIONS
 	. = PAGE_OFFSET + TEXT_OFFSET;
 #else
 	__init_end = .;
-
-#ifdef CONFIG_PAX_KERNEXEC
-	. = ALIGN(1<<SECTION_SHIFT);
-#endif
-
 	. = ALIGN(THREAD_SIZE);
 	__data_loc = .;
 #endif

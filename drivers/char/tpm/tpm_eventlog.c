@@ -95,7 +95,7 @@ static void *tpm_bios_measurements_start(struct seq_file *m, loff_t *pos)
 	event = addr;
 
 	if ((event->event_type == 0 && event->event_size == 0) ||
-	    (event->event_size >= limit - addr - sizeof(struct tcpa_event)))
+	    ((addr + sizeof(struct tcpa_event) + event->event_size) >= limit))
 		return NULL;
 
 	return addr;
@@ -120,7 +120,7 @@ static void *tpm_bios_measurements_next(struct seq_file *m, void *v,
 		return NULL;
 
 	if ((event->event_type == 0 && event->event_size == 0) ||
-	    (event->event_size >= limit - v - sizeof(struct tcpa_event)))
+	    ((v + sizeof(struct tcpa_event) + event->event_size) >= limit))
 		return NULL;
 
 	(*pos)++;
@@ -213,8 +213,7 @@ static int tpm_binary_bios_measurements_show(struct seq_file *m, void *v)
 	int i;
 
 	for (i = 0; i < sizeof(struct tcpa_event) + event->event_size; i++)
-		if (!seq_putc(m, data[i]))
-			return -EFAULT;
+		seq_putc(m, data[i]);
 
 	return 0;
 }

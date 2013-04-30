@@ -6,9 +6,7 @@
  */
 
 #include <linux/linkage.h>
-#include <linux/init.h>
 #include <asm/page_types.h>
-#include <asm/segment.h>
 
 /*
  * efi_call_phys(void *, ...) is a function with variable parameters.
@@ -22,7 +20,7 @@
  * service functions will comply with gcc calling convention, too.
  */
 
-__INIT
+.text
 ENTRY(efi_call_phys)
 	/*
 	 * 0. The function can only be called in Linux kernel. So CS has been
@@ -38,24 +36,10 @@ ENTRY(efi_call_phys)
 	 * The mapping of lower virtual memory has been created in prelog and
 	 * epilog.
 	 */
-#ifdef CONFIG_PAX_KERNEXEC
-	movl	$(__KERNEXEC_EFI_DS), %edx
-	mov	%edx, %ds
-	mov	%edx, %es
-	mov	%edx, %ss
-	addl	$2f,(1f)
-	ljmp	*(1f)
-
-__INITDATA
-1:	.long __LOAD_PHYSICAL_ADDR, __KERNEXEC_EFI_CS
-.previous
-
-2:
-	subl	$2b,(1b)
-#else
-	jmp	1f-__PAGE_OFFSET
+	movl	$1f, %edx
+	subl	$__PAGE_OFFSET, %edx
+	jmp	*%edx
 1:
-#endif
 
 	/*
 	 * 2. Now on the top of stack is the return
@@ -63,8 +47,14 @@ __INITDATA
 	 * parameter 2, ..., param n. To make things easy, we save the return
 	 * address of efi_call_phys in a global variable.
 	 */
-	popl	(saved_return_addr)
-	popl	(efi_rt_function_ptr)
+	popl	%edx
+	movl	%edx, saved_return_addr
+	/* get the function pointer into ECX*/
+	popl	%ecx
+	movl	%ecx, efi_rt_function_ptr
+	movl	$2f, %edx
+	subl	$__PAGE_OFFSET, %edx
+	pushl	%edx
 
 	/*
 	 * 3. Clear PG bit in %CR0.
@@ -83,8 +73,9 @@ __INITDATA
 	/*
 	 * 5. Call the physical function.
 	 */
-	call	*(efi_rt_function_ptr-__PAGE_OFFSET)
+	jmp	*%ecx
 
+2:
 	/*
 	 * 6. After EFI runtime service returns, control will return to
 	 * following instruction. We'd better readjust stack pointer first.
@@ -97,36 +88,35 @@ __INITDATA
 	movl	%cr0, %edx
 	orl	$0x80000000, %edx
 	movl	%edx, %cr0
-
+	jmp	1f
+1:
 	/*
 	 * 8. Now restore the virtual mode from flat mode by
 	 * adding EIP with PAGE_OFFSET.
 	 */
-#ifdef CONFIG_PAX_KERNEXEC
-	movl	$(__KERNEL_DS), %edx
-	mov	%edx, %ds
-	mov	%edx, %es
-	mov	%edx, %ss
-	ljmp	$(__KERNEL_CS),$1f
-#else
-	jmp	1f+__PAGE_OFFSET
-#endif
+	movl	$1f, %edx
+	jmp	*%edx
 1:
 
 	/*
 	 * 9. Balance the stack. And because EAX contain the return value,
 	 * we'd better not clobber it.
 	 */
-	pushl	(efi_rt_function_ptr)
+	leal	efi_rt_function_ptr, %edx
+	movl	(%edx), %ecx
+	pushl	%ecx
 
 	/*
-	 * 10. Return to the saved return address.
+	 * 10. Push the saved return address onto the stack and return.
 	 */
-	jmpl	*(saved_return_addr)
+	leal	saved_return_addr, %edx
+	movl	(%edx), %ecx
+	pushl	%ecx
+	ret
 ENDPROC(efi_call_phys)
 .previous
 
-__INITDATA
+.data
 saved_return_addr:
 	.long 0
 efi_rt_function_ptr:

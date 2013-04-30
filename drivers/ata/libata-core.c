@@ -4780,7 +4780,7 @@ void ata_qc_free(struct ata_queued_cmd *qc)
 	struct ata_port *ap;
 	unsigned int tag;
 
-	BUG_ON(qc == NULL); /* ata_qc_from_tag _might_ return NULL */
+	WARN_ON_ONCE(qc == NULL); /* ata_qc_from_tag _might_ return NULL */
 	ap = qc->ap;
 
 	qc->flags = 0;
@@ -4796,7 +4796,7 @@ void __ata_qc_complete(struct ata_queued_cmd *qc)
 	struct ata_port *ap;
 	struct ata_link *link;
 
-	BUG_ON(qc == NULL); /* ata_qc_from_tag _might_ return NULL */
+	WARN_ON_ONCE(qc == NULL); /* ata_qc_from_tag _might_ return NULL */
 	WARN_ON_ONCE(!(qc->flags & ATA_QCFLAG_ACTIVE));
 	ap = qc->ap;
 	link = qc->dev->link;
@@ -5892,7 +5892,6 @@ static void ata_finalize_port_ops(struct ata_port_operations *ops)
 		return;
 
 	spin_lock(&lock);
-	pax_open_kernel();
 
 	for (cur = ops->inherits; cur; cur = cur->inherits) {
 		void **inherit = (void **)cur;
@@ -5906,9 +5905,8 @@ static void ata_finalize_port_ops(struct ata_port_operations *ops)
 		if (IS_ERR(*pp))
 			*pp = NULL;
 
-	*(struct ata_port_operations **)&ops->inherits = NULL;
+	ops->inherits = NULL;
 
-	pax_close_kernel();
 	spin_unlock(&lock);
 }
 

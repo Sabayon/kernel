@@ -1,6 +1,6 @@
 #ifndef _ASM_SCORE_EXEC_H
 #define _ASM_SCORE_EXEC_H
 
-#define arch_align_stack(x) (x)
+extern unsigned long arch_align_stack(unsigned long sp);
 
 #endif /* _ASM_SCORE_EXEC_H */

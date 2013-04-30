@@ -26,7 +26,6 @@
 #include <linux/capability.h>
 #include <linux/slab.h>
 #include <linux/err.h>
-#include <linux/grsecurity.h>
 
 struct linux_binprm;
 struct cred;

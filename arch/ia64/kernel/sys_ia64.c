@@ -28,7 +28,6 @@ arch_get_unmapped_area (struct file *filp, unsigned long addr, unsigned long len
 	unsigned long start_addr, align_mask = PAGE_SIZE - 1;
 	struct mm_struct *mm = current->mm;
 	struct vm_area_struct *vma;
-	unsigned long offset = gr_rand_threadstack_offset(mm, filp, flags);
 
 	if (len > RGN_MAP_LIMIT)
 		return -ENOMEM;
@@ -44,13 +43,6 @@ arch_get_unmapped_area (struct file *filp, unsigned long addr, unsigned long len
 	if (REGION_NUMBER(addr) == RGN_HPAGE)
 		addr = 0;
 #endif
-
-#ifdef CONFIG_PAX_RANDMMAP
-	if (mm->pax_flags & MF_PAX_RANDMMAP)
-		addr = mm->free_area_cache;
-	else
-#endif
-
 	if (!addr)
 		addr = mm->free_area_cache;
 
@@ -69,14 +61,14 @@ arch_get_unmapped_area (struct file *filp, unsigned long addr, unsigned long len
 	for (vma = find_vma(mm, addr); ; vma = vma->vm_next) {
 		/* At this point:  (!vma || addr < vma->vm_end). */
 		if (TASK_SIZE - len < addr || RGN_MAP_LIMIT - len < REGION_OFFSET(addr)) {
-			if (start_addr != mm->mmap_base) {
+			if (start_addr != TASK_UNMAPPED_BASE) {
 				/* Start a new search --- just in case we missed some holes.  */
-				addr = mm->mmap_base;
+				addr = TASK_UNMAPPED_BASE;
 				goto full_search;
 			}
 			return -ENOMEM;
 		}
-		if (check_heap_stack_gap(vma, addr, len, offset)) {
+		if (!vma || addr + len <= vma->vm_start) {
 			/* Remember the address where we stopped this search:  */
 			mm->free_area_cache = addr + len;
 			return addr;

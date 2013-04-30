@@ -835,7 +835,6 @@ struct xpc_arch_operations {
 	void (*received_payload) (struct xpc_channel *, void *);
 	void (*notify_senders_of_disconnect) (struct xpc_channel *);
 };
-typedef struct xpc_arch_operations __no_const xpc_arch_operations_no_const;
 
 /* struct xpc_partition act_state values (for XPC HB) */
 
@@ -877,7 +876,7 @@ extern struct xpc_registration xpc_registrations[];
 /* found in xpc_main.c */
 extern struct device *xpc_part;
 extern struct device *xpc_chan;
-extern xpc_arch_operations_no_const xpc_arch_ops;
+extern struct xpc_arch_operations xpc_arch_ops;
 extern int xpc_disengage_timelimit;
 extern int xpc_disengage_timedout;
 extern int xpc_activate_IRQ_rcvd;

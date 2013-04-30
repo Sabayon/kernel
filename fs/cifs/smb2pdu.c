@@ -1761,7 +1761,8 @@ SMB2_query_directory(const unsigned int xid, struct cifs_tcon *tcon,
 	default:
 		cERROR(1, "info level %u isn't supported",
 		       srch_inf->info_level);
-		return -EINVAL;
+		rc = -EINVAL;
+		goto qdir_exit;
 	}
 
 	req->FileIndex = cpu_to_le32(index);

@@ -395,7 +395,7 @@ xfs_vn_put_link(
 	struct nameidata *nd,
 	void		*p)
 {
-	const char	*s = nd_get_link(nd);
+	char		*s = nd_get_link(nd);
 
 	if (!IS_ERR(s))
 		kfree(s);

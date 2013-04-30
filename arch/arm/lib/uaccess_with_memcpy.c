@@ -104,7 +104,7 @@ out:
 }
 
 unsigned long
-___copy_to_user(void __user *to, const void *from, unsigned long n)
+__copy_to_user(void __user *to, const void *from, unsigned long n)
 {
 	/*
 	 * This test is stubbed out of the main function above to keep

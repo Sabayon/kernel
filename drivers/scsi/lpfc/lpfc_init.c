@@ -10618,10 +10618,8 @@ lpfc_init(void)
 			"misc_register returned with status %d", error);
 
 	if (lpfc_enable_npiv) {
-		pax_open_kernel();
-		*(void **)&lpfc_transport_functions.vport_create = lpfc_vport_create;
-		*(void **)&lpfc_transport_functions.vport_delete = lpfc_vport_delete;
-		pax_close_kernel();
+		lpfc_transport_functions.vport_create = lpfc_vport_create;
+		lpfc_transport_functions.vport_delete = lpfc_vport_delete;
 	}
 	lpfc_transport_template =
 				fc_attach_transport(&lpfc_transport_functions);

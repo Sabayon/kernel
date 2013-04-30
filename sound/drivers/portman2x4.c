@@ -48,7 +48,6 @@
 #include <sound/initval.h>
 #include <sound/rawmidi.h>
 #include <sound/control.h>
-#include <asm/local.h>
 
 #define CARD_NAME "Portman 2x4"
 #define DRIVER_NAME "portman"
@@ -86,7 +85,7 @@ struct portman {
 	struct pardevice *pardev;
 	int pardev_claimed;
 
-	local_t open_count;
+	int open_count;
 	int mode[PORTMAN_NUM_INPUT_PORTS];
 	struct snd_rawmidi_substream *midi_input[PORTMAN_NUM_INPUT_PORTS];
 };

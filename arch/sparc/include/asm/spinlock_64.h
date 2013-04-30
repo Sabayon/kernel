@@ -92,19 +92,14 @@ static inline void arch_spin_lock_flags(arch_spinlock_t *lock, unsigned long fla
 
 /* Multi-reader locks, these are much saner than the 32-bit Sparc ones... */
 
-static inline void arch_read_lock(arch_rwlock_t *lock)
+static void inline arch_read_lock(arch_rwlock_t *lock)
 {
 	unsigned long tmp1, tmp2;
 
 	__asm__ __volatile__ (
 "1:	ldsw		[%2], %0\n"
 "	brlz,pn		%0, 2f\n"
-"4:	 addcc		%0, 1, %1\n"
-
-#ifdef CONFIG_PAX_REFCOUNT
-"	tvs		%%icc, 6\n"
-#endif
-
+"4:	 add		%0, 1, %1\n"
 "	cas		[%2], %0, %1\n"
 "	cmp		%0, %1\n"
 "	bne,pn		%%icc, 1b\n"
@@ -117,10 +112,10 @@ static inline void arch_read_lock(arch_rwlock_t *lock)
 "	.previous"
 	: "=&r" (tmp1), "=&r" (tmp2)
 	: "r" (lock)
-	: "memory", "cc");
+	: "memory");
 }
 
-static inline int arch_read_trylock(arch_rwlock_t *lock)
+static int inline arch_read_trylock(arch_rwlock_t *lock)
 {
 	int tmp1, tmp2;
 
@@ -128,12 +123,7 @@ static inline int arch_read_trylock(arch_rwlock_t *lock)
 "1:	ldsw		[%2], %0\n"
 "	brlz,a,pn	%0, 2f\n"
 "	 mov		0, %0\n"
-"	addcc		%0, 1, %1\n"
-
-#ifdef CONFIG_PAX_REFCOUNT
-"	tvs		%%icc, 6\n"
-#endif
-
+"	add		%0, 1, %1\n"
 "	cas		[%2], %0, %1\n"
 "	cmp		%0, %1\n"
 "	bne,pn		%%icc, 1b\n"
@@ -146,18 +136,13 @@ static inline int arch_read_trylock(arch_rwlock_t *lock)
 	return tmp1;
 }
 
-static inline void arch_read_unlock(arch_rwlock_t *lock)
+static void inline arch_read_unlock(arch_rwlock_t *lock)
 {
 	unsigned long tmp1, tmp2;
 
 	__asm__ __volatile__(
 "1:	lduw	[%2], %0\n"
-"	subcc	%0, 1, %1\n"
-
-#ifdef CONFIG_PAX_REFCOUNT
-"	tvs	%%icc, 6\n"
-#endif
-
+"	sub	%0, 1, %1\n"
 "	cas	[%2], %0, %1\n"
 "	cmp	%0, %1\n"
 "	bne,pn	%%xcc, 1b\n"
@@ -167,7 +152,7 @@ static inline void arch_read_unlock(arch_rwlock_t *lock)
 	: "memory");
 }
 
-static inline void arch_write_lock(arch_rwlock_t *lock)
+static void inline arch_write_lock(arch_rwlock_t *lock)
 {
 	unsigned long mask, tmp1, tmp2;
 
@@ -192,7 +177,7 @@ static inline void arch_write_lock(arch_rwlock_t *lock)
 	: "memory");
 }
 
-static inline void arch_write_unlock(arch_rwlock_t *lock)
+static void inline arch_write_unlock(arch_rwlock_t *lock)
 {
 	__asm__ __volatile__(
 "	stw		%%g0, [%0]"
@@ -201,7 +186,7 @@ static inline void arch_write_unlock(arch_rwlock_t *lock)
 	: "memory");
 }
 
-static inline int arch_write_trylock(arch_rwlock_t *lock)
+static int inline arch_write_trylock(arch_rwlock_t *lock)
 {
 	unsigned long mask, tmp1, tmp2, result;
 

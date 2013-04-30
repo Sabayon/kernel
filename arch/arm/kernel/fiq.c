@@ -82,9 +82,7 @@ void set_fiq_handler(void *start, unsigned int length)
 #if defined(CONFIG_CPU_USE_DOMAINS)
 	memcpy((void *)0xffff001c, start, length);
 #else
-	pax_open_kernel();
 	memcpy(vectors_page + 0x1c, start, length);
-	pax_close_kernel();
 #endif
 	flush_icache_range(0xffff001c, 0xffff001c + length);
 	if (!vectors_high())

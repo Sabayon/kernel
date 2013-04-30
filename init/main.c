@@ -96,8 +96,6 @@ static inline void mark_rodata_ro(void) { }
 extern void tc_init(void);
 #endif
 
-extern void grsecurity_init(void);
-
 /*
  * Debug helper: via this flag we know that we are in 'early bootup code'
  * where only the boot processor is running with IRQ disabled.  This means
@@ -150,61 +148,6 @@ static int __init set_reset_devices(char *str)
 }
 
 __setup("reset_devices", set_reset_devices);
-
-#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
-int grsec_proc_gid = CONFIG_GRKERNSEC_PROC_GID;
-static int __init setup_grsec_proc_gid(char *str)
-{
-	grsec_proc_gid = (int)simple_strtol(str, NULL, 0);
-	return 1;
-}
-__setup("grsec_proc_gid=", setup_grsec_proc_gid);
-#endif
-
-#if defined(CONFIG_X86_64) && defined(CONFIG_PAX_MEMORY_UDEREF)
-extern char pax_enter_kernel_user[];
-extern char pax_exit_kernel_user[];
-extern pgdval_t clone_pgd_mask;
-#endif
-
-#if defined(CONFIG_X86) && defined(CONFIG_PAX_MEMORY_UDEREF)
-static int __init setup_pax_nouderef(char *str)
-{
-#ifdef CONFIG_X86_32
-	unsigned int cpu;
-	struct desc_struct *gdt;
-
-	for (cpu = 0; cpu < nr_cpu_ids; cpu++) {
-		gdt = get_cpu_gdt_table(cpu);
-		gdt[GDT_ENTRY_KERNEL_DS].type = 3;
-		gdt[GDT_ENTRY_KERNEL_DS].limit = 0xf;
-		gdt[GDT_ENTRY_DEFAULT_USER_CS].limit = 0xf;
-		gdt[GDT_ENTRY_DEFAULT_USER_DS].limit = 0xf;
-	}
-	loadsegment(ds, __KERNEL_DS);
-	loadsegment(es, __KERNEL_DS);
-	loadsegment(ss, __KERNEL_DS);
-#else
-	memcpy(pax_enter_kernel_user, (unsigned char []){0xc3}, 1);
-	memcpy(pax_exit_kernel_user, (unsigned char []){0xc3}, 1);
-	clone_pgd_mask = ~(pgdval_t)0UL;
-#endif
-
-	return 0;
-}
-early_param("pax_nouderef", setup_pax_nouderef);
-#endif
-
-#ifdef CONFIG_PAX_SOFTMODE
-int pax_softmode;
-
-static int __init setup_pax_softmode(char *str)
-{
-	get_option(&str, &pax_softmode);
-	return 1;
-}
-__setup("pax_softmode=", setup_pax_softmode);
-#endif
 
 static const char * argv_init[MAX_INIT_ARGS+2] = { "init", NULL, };
 const char * envp_init[MAX_INIT_ENVS+2] = { "HOME=/", "TERM=linux", NULL, };
@@ -738,7 +681,6 @@ int __init_or_module do_one_initcall(initcall_t fn)
 {
 	int count = preempt_count();
 	int ret;
-	const char *msg1 = "", *msg2 = "";
 
 	if (initcall_debug)
 		ret = do_one_initcall_debug(fn);
@@ -751,15 +693,15 @@ int __init_or_module do_one_initcall(initcall_t fn)
 		sprintf(msgbuf, "error code %d ", ret);
 
 	if (preempt_count() != count) {
-		msg1 = " preemption imbalance";
+		strlcat(msgbuf, "preemption imbalance ", sizeof(msgbuf));
 		preempt_count() = count;
 	}
 	if (irqs_disabled()) {
-		msg2 = " disabled interrupts";
+		strlcat(msgbuf, "disabled interrupts ", sizeof(msgbuf));
 		local_irq_enable();
 	}
-	if (msgbuf[0] || *msg1 || *msg2) {
-		printk("initcall %pF returned with %s%s%s\n", fn, msgbuf, msg1, msg2);
+	if (msgbuf[0]) {
+		printk("initcall %pF returned with %s\n", fn, msgbuf);
 	}
 
 	return ret;
@@ -801,10 +743,6 @@ static char *initcall_level_names[] __initdata = {
 	"late",
 };
 
-#ifdef CONFIG_PAX_LATENT_ENTROPY
-u64 latent_entropy;
-#endif
-
 static void __init do_initcall_level(int level)
 {
 	extern const struct kernel_param __start___param[], __stop___param[];
@@ -817,14 +755,8 @@ static void __init do_initcall_level(int level)
 		   level, level,
 		   &repair_env_string);
 
-	for (fn = initcall_levels[level]; fn < initcall_levels[level+1]; fn++) {
+	for (fn = initcall_levels[level]; fn < initcall_levels[level+1]; fn++)
 		do_one_initcall(*fn);
-
-#ifdef CONFIG_PAX_LATENT_ENTROPY
-		add_device_randomness(&latent_entropy, sizeof(latent_entropy));
-#endif
-
-	}
 }
 
 static void __init do_initcalls(void)
@@ -858,14 +790,8 @@ static void __init do_pre_smp_initcalls(void)
 {
 	initcall_t *fn;
 
-	for (fn = __initcall_start; fn < __initcall0_start; fn++) {
+	for (fn = __initcall_start; fn < __initcall0_start; fn++)
 		do_one_initcall(*fn);
-
-#ifdef CONFIG_PAX_LATENT_ENTROPY
-		add_device_randomness(&latent_entropy, sizeof(latent_entropy));
-#endif
-
-	}
 }
 
 static int run_init_process(const char *init_filename)
@@ -951,7 +877,7 @@ static noinline void __init kernel_init_freeable(void)
 	do_basic_setup();
 
 	/* Open the /dev/console on the rootfs, this should never fail */
-	if (sys_open((const char __force_user *) "/dev/console", O_RDWR, 0) < 0)
+	if (sys_open((const char __user *) "/dev/console", O_RDWR, 0) < 0)
 		printk(KERN_WARNING "Warning: unable to open an initial console.\n");
 
 	(void) sys_dup(0);
@@ -964,12 +890,10 @@ static noinline void __init kernel_init_freeable(void)
 	if (!ramdisk_execute_command)
 		ramdisk_execute_command = "/init";
 
-	if (sys_access((const char __force_user *) ramdisk_execute_command, 0) != 0) {
+	if (sys_access((const char __user *) ramdisk_execute_command, 0) != 0) {
 		ramdisk_execute_command = NULL;
 		prepare_namespace();
 	}
-
-	grsecurity_init();
 
 	/*
 	 * Ok, we have completed the initial bootup, and

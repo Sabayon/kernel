@@ -234,14 +234,14 @@ static gpt_entry *alloc_read_gpt_entries(struct parsed_partitions *state,
 	if (!gpt)
 		return NULL;
 
-	if (!le32_to_cpu(gpt->num_partition_entries))
+	count = le32_to_cpu(gpt->num_partition_entries) *
+                le32_to_cpu(gpt->sizeof_partition_entry);
+	if (!count)
 		return NULL;
-	pte = kcalloc(le32_to_cpu(gpt->num_partition_entries), le32_to_cpu(gpt->sizeof_partition_entry), GFP_KERNEL);
+	pte = kzalloc(count, GFP_KERNEL);
 	if (!pte)
 		return NULL;
 
-	count = le32_to_cpu(gpt->num_partition_entries) *
-                le32_to_cpu(gpt->sizeof_partition_entry);
 	if (read_lba(state, le64_to_cpu(gpt->partition_entry_lba),
                      (u8 *) pte,
 		     count) < count) {

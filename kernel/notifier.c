@@ -5,7 +5,6 @@
 #include <linux/rcupdate.h>
 #include <linux/vmalloc.h>
 #include <linux/reboot.h>
-#include <linux/mm.h>
 
 /*
  *	Notifier list for kernel code which wants to be called
@@ -25,12 +24,10 @@ static int notifier_chain_register(struct notifier_block **nl,
 	while ((*nl) != NULL) {
 		if (n->priority > (*nl)->priority)
 			break;
-		nl = (struct notifier_block **)&((*nl)->next);
+		nl = &((*nl)->next);
 	}
-	pax_open_kernel();
-	*(const void **)&n->next = *nl;
+	n->next = *nl;
 	rcu_assign_pointer(*nl, n);
-	pax_close_kernel();
 	return 0;
 }
 
@@ -42,12 +39,10 @@ static int notifier_chain_cond_register(struct notifier_block **nl,
 			return 0;
 		if (n->priority > (*nl)->priority)
 			break;
-		nl = (struct notifier_block **)&((*nl)->next);
+		nl = &((*nl)->next);
 	}
-	pax_open_kernel();
-	*(const void **)&n->next = *nl;
+	n->next = *nl;
 	rcu_assign_pointer(*nl, n);
-	pax_close_kernel();
 	return 0;
 }
 
@@ -56,12 +51,10 @@ static int notifier_chain_unregister(struct notifier_block **nl,
 {
 	while ((*nl) != NULL) {
 		if ((*nl) == n) {
-			pax_open_kernel();
 			rcu_assign_pointer(*nl, n->next);
-			pax_close_kernel();
 			return 0;
 		}
-		nl = (struct notifier_block **)&((*nl)->next);
+		nl = &((*nl)->next);
 	}
 	return -ENOENT;
 }

@@ -11,7 +11,6 @@
 #include <asm/kexec.h>
 #include <asm/processor-flags.h>
 #include <asm/pgtable_types.h>
-#include <asm/alternative-asm.h>
 
 /*
  * Must be relocatable PIC code callable as a C function
@@ -161,14 +160,13 @@ identity_mapped:
 	xorq    %rbp, %rbp
 	xorq	%r8,  %r8
 	xorq	%r9,  %r9
-	xorq	%r10, %r10
+	xorq	%r10, %r9
 	xorq	%r11, %r11
 	xorq	%r12, %r12
 	xorq	%r13, %r13
 	xorq	%r14, %r14
 	xorq	%r15, %r15
 
-	pax_force_retaddr 0, 1
 	ret
 
 1:

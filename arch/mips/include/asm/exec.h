@@ -12,6 +12,6 @@
 #ifndef _ASM_EXEC_H
 #define _ASM_EXEC_H
 
-#define arch_align_stack(x) ((x) & ~0xfUL)
+extern unsigned long arch_align_stack(unsigned long sp);
 
 #endif /* _ASM_EXEC_H */

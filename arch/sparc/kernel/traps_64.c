@@ -76,7 +76,7 @@ static void dump_tl1_traplog(struct tl1_traplog *p)
 		       i + 1,
 		       p->trapstack[i].tstate, p->trapstack[i].tpc,
 		       p->trapstack[i].tnpc, p->trapstack[i].tt);
-		printk("TRAPLOG: TPC<%pA>\n", (void *) p->trapstack[i].tpc);
+		printk("TRAPLOG: TPC<%pS>\n", (void *) p->trapstack[i].tpc);
 	}
 }
 
@@ -96,12 +96,6 @@ void bad_trap(struct pt_regs *regs, long lvl)
 
 	lvl -= 0x100;
 	if (regs->tstate & TSTATE_PRIV) {
-
-#ifdef CONFIG_PAX_REFCOUNT
-		if (lvl == 6)
-			pax_report_refcount_overflow(regs);
-#endif
-
 		sprintf(buffer, "Kernel bad sw trap %lx", lvl);
 		die_if_kernel(buffer, regs);
 	}
@@ -120,15 +114,10 @@ void bad_trap(struct pt_regs *regs, long lvl)
 void bad_trap_tl1(struct pt_regs *regs, long lvl)
 {
 	char buffer[32];
-
+	
 	if (notify_die(DIE_TRAP_TL1, "bad trap tl1", regs,
 		       0, lvl, SIGTRAP) == NOTIFY_STOP)
 		return;
-
-#ifdef CONFIG_PAX_REFCOUNT
-	if (lvl == 6)
-		pax_report_refcount_overflow(regs);
-#endif
 
 	dump_tl1_traplog((struct tl1_traplog *)(regs + 1));
 
@@ -1153,7 +1142,7 @@ static void cheetah_log_errors(struct pt_regs *regs, struct cheetah_err_info *in
 	       regs->tpc, regs->tnpc, regs->u_regs[UREG_I7], regs->tstate);
 	printk("%s" "ERROR(%d): ",
 	       (recoverable ? KERN_WARNING : KERN_CRIT), smp_processor_id());
-	printk("TPC<%pA>\n", (void *) regs->tpc);
+	printk("TPC<%pS>\n", (void *) regs->tpc);
 	printk("%s" "ERROR(%d): M_SYND(%lx),  E_SYND(%lx)%s%s\n",
 	       (recoverable ? KERN_WARNING : KERN_CRIT), smp_processor_id(),
 	       (afsr & CHAFSR_M_SYNDROME) >> CHAFSR_M_SYNDROME_SHIFT,
@@ -1760,7 +1749,7 @@ void cheetah_plus_parity_error(int type, struct pt_regs *regs)
 		       smp_processor_id(),
 		       (type & 0x1) ? 'I' : 'D',
 		       regs->tpc);
-		printk(KERN_EMERG "TPC<%pA>\n", (void *) regs->tpc);
+		printk(KERN_EMERG "TPC<%pS>\n", (void *) regs->tpc);
 		panic("Irrecoverable Cheetah+ parity error.");
 	}
 
@@ -1768,7 +1757,7 @@ void cheetah_plus_parity_error(int type, struct pt_regs *regs)
 	       smp_processor_id(),
 	       (type & 0x1) ? 'I' : 'D',
 	       regs->tpc);
-	printk(KERN_WARNING "TPC<%pA>\n", (void *) regs->tpc);
+	printk(KERN_WARNING "TPC<%pS>\n", (void *) regs->tpc);
 }
 
 struct sun4v_error_entry {
@@ -2115,9 +2104,9 @@ void sun4v_itlb_error_report(struct pt_regs *regs, int tl)
 
 	printk(KERN_EMERG "SUN4V-ITLB: Error at TPC[%lx], tl %d\n",
 	       regs->tpc, tl);
-	printk(KERN_EMERG "SUN4V-ITLB: TPC<%pA>\n", (void *) regs->tpc);
+	printk(KERN_EMERG "SUN4V-ITLB: TPC<%pS>\n", (void *) regs->tpc);
 	printk(KERN_EMERG "SUN4V-ITLB: O7[%lx]\n", regs->u_regs[UREG_I7]);
-	printk(KERN_EMERG "SUN4V-ITLB: O7<%pA>\n",
+	printk(KERN_EMERG "SUN4V-ITLB: O7<%pS>\n",
 	       (void *) regs->u_regs[UREG_I7]);
 	printk(KERN_EMERG "SUN4V-ITLB: vaddr[%lx] ctx[%lx] "
 	       "pte[%lx] error[%lx]\n",
@@ -2139,9 +2128,9 @@ void sun4v_dtlb_error_report(struct pt_regs *regs, int tl)
 
 	printk(KERN_EMERG "SUN4V-DTLB: Error at TPC[%lx], tl %d\n",
 	       regs->tpc, tl);
-	printk(KERN_EMERG "SUN4V-DTLB: TPC<%pA>\n", (void *) regs->tpc);
+	printk(KERN_EMERG "SUN4V-DTLB: TPC<%pS>\n", (void *) regs->tpc);
 	printk(KERN_EMERG "SUN4V-DTLB: O7[%lx]\n", regs->u_regs[UREG_I7]);
-	printk(KERN_EMERG "SUN4V-DTLB: O7<%pA>\n",
+	printk(KERN_EMERG "SUN4V-DTLB: O7<%pS>\n",
 	       (void *) regs->u_regs[UREG_I7]);
 	printk(KERN_EMERG "SUN4V-DTLB: vaddr[%lx] ctx[%lx] "
 	       "pte[%lx] error[%lx]\n",
@@ -2347,13 +2336,13 @@ void show_stack(struct task_struct *tsk, unsigned long *_ksp)
 			fp = (unsigned long)sf->fp + STACK_BIAS;
 		}
 
-		printk(" [%016lx] %pA\n", pc, (void *) pc);
+		printk(" [%016lx] %pS\n", pc, (void *) pc);
 #ifdef CONFIG_FUNCTION_GRAPH_TRACER
 		if ((pc + 8UL) == (unsigned long) &return_to_handler) {
 			int index = tsk->curr_ret_stack;
 			if (tsk->ret_stack && index >= graph) {
 				pc = tsk->ret_stack[index - graph].ret;
-				printk(" [%016lx] %pA\n", pc, (void *) pc);
+				printk(" [%016lx] %pS\n", pc, (void *) pc);
 				graph++;
 			}
 		}
@@ -2377,8 +2366,6 @@ static inline struct reg_window *kernel_stack_up(struct reg_window *rw)
 
 	return (struct reg_window *) (fp + STACK_BIAS);
 }
-
-extern void gr_handle_kernel_exploit(void);
 
 void die_if_kernel(char *str, struct pt_regs *regs)
 {
@@ -2408,7 +2395,7 @@ void die_if_kernel(char *str, struct pt_regs *regs)
 		while (rw &&
 		       count++ < 30 &&
 		       kstack_valid(tp, (unsigned long) rw)) {
-			printk("Caller[%016lx]: %pA\n", rw->ins[7],
+			printk("Caller[%016lx]: %pS\n", rw->ins[7],
 			       (void *) rw->ins[7]);
 
 			rw = kernel_stack_up(rw);
@@ -2421,10 +2408,8 @@ void die_if_kernel(char *str, struct pt_regs *regs)
 		}
 		user_instruction_dump ((unsigned int __user *) regs->tpc);
 	}
-	if (regs->tstate & TSTATE_PRIV) {
-		gr_handle_kernel_exploit();
+	if (regs->tstate & TSTATE_PRIV)
 		do_exit(SIGKILL);
-	}
 	do_exit(SIGSEGV);
 }
 EXPORT_SYMBOL(die_if_kernel);

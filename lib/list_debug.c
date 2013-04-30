@@ -11,9 +11,7 @@
 #include <linux/bug.h>
 #include <linux/kernel.h>
 #include <linux/rculist.h>
-#include <linux/mm.h>
 
-#ifdef CONFIG_DEBUG_LIST
 /*
  * Insert a new entry between two known consecutive entries.
  *
@@ -21,32 +19,21 @@
  * the prev/next entries already!
  */
 
-static bool __list_add_debug(struct list_head *new,
-			     struct list_head *prev,
-			     struct list_head *next)
+void __list_add(struct list_head *new,
+			      struct list_head *prev,
+			      struct list_head *next)
 {
-	if (WARN(next->prev != prev,
+	WARN(next->prev != prev,
 		"list_add corruption. next->prev should be "
 		"prev (%p), but was %p. (next=%p).\n",
-		prev, next->prev, next) ||
-	    WARN(prev->next != next,
+		prev, next->prev, next);
+	WARN(prev->next != next,
 		"list_add corruption. prev->next should be "
 		"next (%p), but was %p. (prev=%p).\n",
-		next, prev->next, prev) ||
-	    WARN(new == prev || new == next,
+		next, prev->next, prev);
+	WARN(new == prev || new == next,
 	     "list_add double add: new=%p, prev=%p, next=%p.\n",
-	     new, prev, next))
-		return false;
-	return true;
-}
-
-void __list_add(struct list_head *new,
-		struct list_head *prev,
-		struct list_head *next)
-{
-	if (!__list_add_debug(new, prev, next))
-		return;
-
+	     new, prev, next);
 	next->prev = new;
 	new->next = next;
 	new->prev = prev;
@@ -54,7 +41,7 @@ void __list_add(struct list_head *new,
 }
 EXPORT_SYMBOL(__list_add);
 
-static bool __list_del_entry_debug(struct list_head *entry)
+void __list_del_entry(struct list_head *entry)
 {
 	struct list_head *prev, *next;
 
@@ -73,16 +60,9 @@ static bool __list_del_entry_debug(struct list_head *entry)
 	    WARN(next->prev != entry,
 		"list_del corruption. next->prev should be %p, "
 		"but was %p\n", entry, next->prev))
-		return false;
-	return true;
-}
-
-void __list_del_entry(struct list_head *entry)
-{
-	if (!__list_del_entry_debug(entry))
 		return;
 
-	__list_del(entry->prev, entry->next);
+	__list_del(prev, next);
 }
 EXPORT_SYMBOL(__list_del_entry);
 
@@ -106,54 +86,15 @@ EXPORT_SYMBOL(list_del);
 void __list_add_rcu(struct list_head *new,
 		    struct list_head *prev, struct list_head *next)
 {
-	if (WARN(next->prev != prev,
+	WARN(next->prev != prev,
 		"list_add_rcu corruption. next->prev should be prev (%p), but was %p. (next=%p).\n",
-		prev, next->prev, next) ||
-	    WARN(prev->next != next,
+		prev, next->prev, next);
+	WARN(prev->next != next,
 		"list_add_rcu corruption. prev->next should be next (%p), but was %p. (prev=%p).\n",
-		next, prev->next, prev))
-		return;
-
+		next, prev->next, prev);
 	new->next = next;
 	new->prev = prev;
 	rcu_assign_pointer(list_next_rcu(prev), new);
 	next->prev = new;
 }
 EXPORT_SYMBOL(__list_add_rcu);
-#endif
-
-void pax_list_add_tail(struct list_head *new, struct list_head *head)
-{
-	struct list_head *prev, *next;
-
-	prev = head->prev;
-	next = head;
-
-#ifdef CONFIG_DEBUG_LIST
-	if (!__list_add_debug(new, prev, next))
-		return;
-#endif
-
-	pax_open_kernel();
-	next->prev = new;
-	new->next = next;
-	new->prev = prev;
-	prev->next = new;
-	pax_close_kernel();
-}
-EXPORT_SYMBOL(pax_list_add_tail);
-
-void pax_list_del(struct list_head *entry)
-{
-#ifdef CONFIG_DEBUG_LIST
-	if (!__list_del_entry_debug(entry))
-		return;
-#endif
-
-	pax_open_kernel();
-	__list_del(entry->prev, entry->next);
-	entry->next = LIST_POISON1;
-	entry->prev = LIST_POISON2;
-	pax_close_kernel();
-}
-EXPORT_SYMBOL(pax_list_del);

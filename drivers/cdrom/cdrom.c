@@ -416,6 +416,7 @@ int register_cdrom(struct cdrom_device_info *cdi)
 	ENSURE(reset, CDC_RESET);
 	ENSURE(generic_packet, CDC_GENERIC_PACKET);
 	cdi->mc_flags = 0;
+	cdo->n_minors = 0;
         cdi->options = CDO_USE_FFLAGS;
 	
 	if (autoclose==1 && CDROM_CAN(CDC_CLOSE_TRAY))
@@ -435,11 +436,8 @@ int register_cdrom(struct cdrom_device_info *cdi)
 	else
 		cdi->cdda_method = CDDA_OLD;
 
-	if (!cdo->generic_packet) {
-		pax_open_kernel();
-		*(void **)&cdo->generic_packet = cdrom_dummy_generic_packet;
-		pax_close_kernel();
-	}
+	if (!cdo->generic_packet)
+		cdo->generic_packet = cdrom_dummy_generic_packet;
 
 	cdinfo(CD_REG_UNREG, "drive \"/dev/%s\" registered\n", cdi->name);
 	mutex_lock(&cdrom_mutex);
@@ -460,6 +458,7 @@ void unregister_cdrom(struct cdrom_device_info *cdi)
 	if (cdi->exit)
 		cdi->exit(cdi);
 
+	cdi->ops->n_minors--;
 	cdinfo(CD_REG_UNREG, "drive \"/dev/%s\" unregistered\n", cdi->name);
 }
 

@@ -26,7 +26,7 @@
  */
 static inline long do_strnlen_user(const char __user *src, unsigned long count, unsigned long max)
 {
-	static const struct word_at_a_time constants = WORD_AT_A_TIME_CONSTANTS;
+	const struct word_at_a_time constants = WORD_AT_A_TIME_CONSTANTS;
 	long align, res = 0;
 	unsigned long c;
 

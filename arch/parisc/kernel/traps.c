@@ -732,7 +732,9 @@ void notrace handle_interruption(int code, struct pt_regs *regs)
 
 			down_read(&current->mm->mmap_sem);
 			vma = find_vma(current->mm,regs->iaoq[0]);
-			if (vma && (regs->iaoq[0] >= vma->vm_start)) {
+			if (vma && (regs->iaoq[0] >= vma->vm_start)
+				&& (vma->vm_flags & VM_EXEC)) {
+
 				fault_address = regs->iaoq[0];
 				fault_space = regs->iasq[0];
 

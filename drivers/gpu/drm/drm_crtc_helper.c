@@ -319,7 +319,7 @@ static bool drm_encoder_crtc_ok(struct drm_encoder *encoder,
 	struct drm_crtc *tmp;
 	int crtc_mask = 1;
 
-	BUG_ON(!crtc);
+	WARN(!crtc, "checking null crtc?\n");
 
 	dev = crtc->dev;
 

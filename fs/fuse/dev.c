@@ -1236,7 +1236,7 @@ static ssize_t fuse_dev_splice_read(struct file *in, loff_t *ppos,
 	ret = 0;
 	pipe_lock(pipe);
 
-	if (!atomic_read(&pipe->readers)) {
+	if (!pipe->readers) {
 		send_sig(SIGPIPE, current, 0);
 		if (!ret)
 			ret = -EPIPE;

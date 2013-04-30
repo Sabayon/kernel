@@ -21,17 +21,19 @@
 #include <asm/cpu.h>
 #include <asm/stackprotector.h>
 
-#ifdef CONFIG_SMP
-DEFINE_PER_CPU_READ_MOSTLY(unsigned int, cpu_number);
+DEFINE_PER_CPU_READ_MOSTLY(int, cpu_number);
 EXPORT_PER_CPU_SYMBOL(cpu_number);
-#endif
 
+#ifdef CONFIG_X86_64
 #define BOOT_PERCPU_OFFSET ((unsigned long)__per_cpu_load)
+#else
+#define BOOT_PERCPU_OFFSET 0
+#endif
 
 DEFINE_PER_CPU(unsigned long, this_cpu_off) = BOOT_PERCPU_OFFSET;
 EXPORT_PER_CPU_SYMBOL(this_cpu_off);
 
-unsigned long __per_cpu_offset[NR_CPUS] __read_only = {
+unsigned long __per_cpu_offset[NR_CPUS] __read_mostly = {
 	[0 ... NR_CPUS-1] = BOOT_PERCPU_OFFSET,
 };
 EXPORT_SYMBOL(__per_cpu_offset);
@@ -153,10 +155,10 @@ static inline void setup_percpu_segment(int cpu)
 {
 #ifdef CONFIG_X86_32
 	struct desc_struct gdt;
-	unsigned long base = per_cpu_offset(cpu);
 
-	pack_descriptor(&gdt, base, (VMALLOC_END - base - 1) >> PAGE_SHIFT,
-			0x83 | DESCTYPE_S, 0xC);
+	pack_descriptor(&gdt, per_cpu_offset(cpu), 0xFFFFF,
+			0x2 | DESCTYPE_S, 0x8);
+	gdt.s = 1;
 	write_gdt_entry(get_cpu_gdt_table(cpu),
 			GDT_ENTRY_PERCPU, &gdt, DESCTYPE_S);
 #endif
@@ -217,11 +219,6 @@ void __init setup_per_cpu_areas(void)
 	/* alrighty, percpu areas up and running */
 	delta = (unsigned long)pcpu_base_addr - (unsigned long)__per_cpu_start;
 	for_each_possible_cpu(cpu) {
-#ifdef CONFIG_CC_STACKPROTECTOR
-#ifdef CONFIG_X86_32
-		unsigned long canary = per_cpu(stack_canary.canary, cpu);
-#endif
-#endif
 		per_cpu_offset(cpu) = delta + pcpu_unit_offsets[cpu];
 		per_cpu(this_cpu_off, cpu) = per_cpu_offset(cpu);
 		per_cpu(cpu_number, cpu) = cpu;
@@ -261,12 +258,6 @@ void __init setup_per_cpu_areas(void)
 		 * So set them all (boot cpu and all APs).
 		 */
 		set_cpu_numa_node(cpu, early_cpu_to_node(cpu));
-#endif
-#ifdef CONFIG_CC_STACKPROTECTOR
-#ifdef CONFIG_X86_32
-		if (!cpu)
-			per_cpu(stack_canary.canary, cpu) = canary;
-#endif
 #endif
 		/*
 		 * Up to this point, the boot CPU has been using .init.data

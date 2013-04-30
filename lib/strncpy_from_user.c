@@ -21,7 +21,7 @@
  */
 static inline long do_strncpy_from_user(char *dst, const char __user *src, long count, unsigned long max)
 {
-	static const struct word_at_a_time constants = WORD_AT_A_TIME_CONSTANTS;
+	const struct word_at_a_time constants = WORD_AT_A_TIME_CONSTANTS;
 	long res = 0;
 
 	/*

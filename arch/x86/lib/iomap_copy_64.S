@@ -17,7 +17,6 @@
 
 #include <linux/linkage.h>
 #include <asm/dwarf2.h>
-#include <asm/alternative-asm.h>
 
 /*
  * override generic version in lib/iomap_copy.c
@@ -26,7 +25,6 @@ ENTRY(__iowrite32_copy)
 	CFI_STARTPROC
 	movl %edx,%ecx
 	rep movsd
-	pax_force_retaddr
 	ret
 	CFI_ENDPROC
 ENDPROC(__iowrite32_copy)

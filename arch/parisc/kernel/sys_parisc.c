@@ -33,11 +33,9 @@
 #include <linux/utsname.h>
 #include <linux/personality.h>
 
-static unsigned long get_unshared_area(struct file *filp, unsigned long addr, unsigned long len,
-				       unsigned long flags)
+static unsigned long get_unshared_area(unsigned long addr, unsigned long len)
 {
 	struct vm_area_struct *vma;
-	unsigned long offset = gr_rand_threadstack_offset(current->mm, filp, flags);
 
 	addr = PAGE_ALIGN(addr);
 
@@ -45,7 +43,7 @@ static unsigned long get_unshared_area(struct file *filp, unsigned long addr, un
 		/* At this point:  (!vma || addr < vma->vm_end). */
 		if (TASK_SIZE - len < addr)
 			return -ENOMEM;
-		if (check_heap_stack_gap(vma, addr, len, offset))
+		if (!vma || addr + len <= vma->vm_start)
 			return addr;
 		addr = vma->vm_end;
 	}
@@ -69,12 +67,11 @@ static int get_offset(struct address_space *mapping)
 	return offset & 0x3FF000;
 }
 
-static unsigned long get_shared_area(struct file *filp, struct address_space *mapping,
-		unsigned long addr, unsigned long len, unsigned long pgoff, unsigned long flags)
+static unsigned long get_shared_area(struct address_space *mapping,
+		unsigned long addr, unsigned long len, unsigned long pgoff)
 {
 	struct vm_area_struct *vma;
 	int offset = mapping ? get_offset(mapping) : 0;
-	unsigned long rand_offset = gr_rand_threadstack_offset(current->mm, filp, flags);
 
 	offset = (offset + (pgoff << PAGE_SHIFT)) & 0x3FF000;
 
@@ -84,7 +81,7 @@ static unsigned long get_shared_area(struct file *filp, struct address_space *ma
 		/* At this point:  (!vma || addr < vma->vm_end). */
 		if (TASK_SIZE - len < addr)
 			return -ENOMEM;
-		if (check_heap_stack_gap(vma, addr, len, rand_offset))
+		if (!vma || addr + len <= vma->vm_start)
 			return addr;
 		addr = DCACHE_ALIGN(vma->vm_end - offset) + offset;
 		if (addr < vma->vm_end) /* handle wraparound */
@@ -103,14 +100,14 @@ unsigned long arch_get_unmapped_area(struct file *filp, unsigned long addr,
 	if (flags & MAP_FIXED)
 		return addr;
 	if (!addr)
-		addr = current->mm->mmap_base;
+		addr = TASK_UNMAPPED_BASE;
 
 	if (filp) {
-		addr = get_shared_area(filp, filp->f_mapping, addr, len, pgoff, flags);
+		addr = get_shared_area(filp->f_mapping, addr, len, pgoff);
 	} else if(flags & MAP_SHARED) {
-		addr = get_shared_area(filp, NULL, addr, len, pgoff, flags);
+		addr = get_shared_area(NULL, addr, len, pgoff);
 	} else {
-		addr = get_unshared_area(filp, addr, len, flags);
+		addr = get_unshared_area(addr, len);
 	}
 	return addr;
 }

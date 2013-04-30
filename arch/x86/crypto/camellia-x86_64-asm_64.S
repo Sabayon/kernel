@@ -20,8 +20,6 @@
  *
  */
 
-#include <asm/alternative-asm.h>
-
 .file "camellia-x86_64-asm_64.S"
 .text
 
@@ -231,14 +229,12 @@ __enc_done:
 	enc_outunpack(mov, RT1);
 
 	movq RRBP, %rbp;
-	pax_force_retaddr 0, 1
 	ret;
 
 __enc_xor:
 	enc_outunpack(xor, RT1);
 
 	movq RRBP, %rbp;
-	pax_force_retaddr 0, 1
 	ret;
 
 .global camellia_dec_blk;
@@ -279,7 +275,6 @@ __dec_rounds16:
 	dec_outunpack();
 
 	movq RRBP, %rbp;
-	pax_force_retaddr 0, 1
 	ret;
 
 /**********************************************************************
@@ -473,7 +468,6 @@ __enc2_done:
 
 	movq RRBP, %rbp;
 	popq %rbx;
-	pax_force_retaddr 0, 1
 	ret;
 
 __enc2_xor:
@@ -481,7 +475,6 @@ __enc2_xor:
 
 	movq RRBP, %rbp;
 	popq %rbx;
-	pax_force_retaddr 0, 1
 	ret;
 
 .global camellia_dec_blk_2way;
@@ -524,5 +517,4 @@ __dec2_rounds16:
 
 	movq RRBP, %rbp;
 	movq RXOR, %rbx;
-	pax_force_retaddr 0, 1
 	ret;

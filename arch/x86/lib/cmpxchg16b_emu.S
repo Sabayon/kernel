@@ -53,13 +53,11 @@ this_cpu_cmpxchg16b_emu:
 
 	popf
 	mov $1, %al
-	pax_force_retaddr
 	ret
 
  not_same:
 	popf
 	xor %al,%al
-	pax_force_retaddr
 	ret
 
 CFI_ENDPROC

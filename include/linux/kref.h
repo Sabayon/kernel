@@ -64,7 +64,7 @@ static inline void kref_get(struct kref *kref)
 static inline int kref_sub(struct kref *kref, unsigned int count,
 	     void (*release)(struct kref *kref))
 {
-	BUG_ON(release == NULL);
+	WARN_ON(release == NULL);
 
 	if (atomic_sub_and_test((int) count, &kref->refcount)) {
 		release(kref);

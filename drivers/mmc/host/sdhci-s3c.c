@@ -721,11 +721,9 @@ static int sdhci_s3c_probe(struct platform_device *pdev)
 	 * we can use overriding functions instead of default.
 	 */
 	if (host->quirks & SDHCI_QUIRK_NONSTANDARD_CLOCK) {
-		pax_open_kernel();
-		*(void **)&sdhci_s3c_ops.set_clock = sdhci_cmu_set_clock;
-		*(void **)&sdhci_s3c_ops.get_min_clock = sdhci_cmu_get_min_clock;
-		*(void **)&sdhci_s3c_ops.get_max_clock = sdhci_cmu_get_max_clock;
-		pax_close_kernel();
+		sdhci_s3c_ops.set_clock = sdhci_cmu_set_clock;
+		sdhci_s3c_ops.get_min_clock = sdhci_cmu_get_min_clock;
+		sdhci_s3c_ops.get_max_clock = sdhci_cmu_get_max_clock;
 	}
 
 	/* It supports additional host capabilities if needed */

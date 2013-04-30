@@ -20,7 +20,6 @@
 #include <linux/ima.h>
 #include <linux/evm.h>
 #include <linux/fsnotify.h>
-#include <linux/mm.h>
 #include <linux/mman.h>
 #include <linux/mount.h>
 #include <linux/personality.h>
@@ -33,8 +32,8 @@
 static __initdata char chosen_lsm[SECURITY_NAME_MAX + 1] =
 	CONFIG_DEFAULT_SECURITY;
 
-static struct security_operations *security_ops __read_only;
-static struct security_operations default_security_ops __read_only = {
+static struct security_operations *security_ops;
+static struct security_operations default_security_ops = {
 	.name	= "default",
 };
 
@@ -75,9 +74,7 @@ int __init security_init(void)
 
 void reset_security_ops(void)
 {
-	pax_open_kernel();
 	security_ops = &default_security_ops;
-	pax_close_kernel();
 }
 
 /* Save user chosen LSM */

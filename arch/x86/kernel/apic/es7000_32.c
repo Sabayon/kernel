@@ -608,7 +608,8 @@ static int es7000_mps_oem_check_cluster(struct mpc_table *mpc, char *oem,
 	return ret && es7000_apic_is_cluster();
 }
 
-static struct apic apic_es7000_cluster __read_only = {
+/* We've been warned by a false positive warning.Use __refdata to keep calm. */
+static struct apic __refdata apic_es7000_cluster = {
 
 	.name				= "es7000",
 	.probe				= probe_es7000,
@@ -674,7 +675,7 @@ static struct apic apic_es7000_cluster __read_only = {
 	.x86_32_early_logical_apicid	= es7000_early_logical_apicid,
 };
 
-static struct apic __refdata apic_es7000 __read_only = {
+static struct apic __refdata apic_es7000 = {
 
 	.name				= "es7000",
 	.probe				= probe_es7000,

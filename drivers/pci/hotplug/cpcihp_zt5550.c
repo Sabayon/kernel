@@ -59,6 +59,7 @@
 /* local variables */
 static bool debug;
 static bool poll;
+static struct cpci_hp_controller_ops zt5550_hpc_ops;
 static struct cpci_hp_controller zt5550_hpc;
 
 /* Primary cPCI bus bridge device */
@@ -204,10 +205,6 @@ static int zt5550_hc_disable_irq(void)
 	return 0;
 }
 
-static struct cpci_hp_controller_ops zt5550_hpc_ops = {
-	.query_enum = zt5550_hc_query_enum,
-};
-
 static int zt5550_hc_init_one (struct pci_dev *pdev, const struct pci_device_id *ent)
 {
 	int status;
@@ -219,17 +216,16 @@ static int zt5550_hc_init_one (struct pci_dev *pdev, const struct pci_device_id 
 	dbg("returned from zt5550_hc_config");
 
 	memset(&zt5550_hpc, 0, sizeof (struct cpci_hp_controller));
+	zt5550_hpc_ops.query_enum = zt5550_hc_query_enum;
 	zt5550_hpc.ops = &zt5550_hpc_ops;
 	if(!poll) {
 		zt5550_hpc.irq = hc_dev->irq;
 		zt5550_hpc.irq_flags = IRQF_SHARED;
 		zt5550_hpc.dev_id = hc_dev;
 
-		pax_open_kernel();
-		*(void **)&zt5550_hpc_ops.enable_irq = zt5550_hc_enable_irq;
-		*(void **)&zt5550_hpc_ops.disable_irq = zt5550_hc_disable_irq;
-		*(void **)&zt5550_hpc_ops.check_irq = zt5550_hc_check_irq;
-		pax_open_kernel();
+		zt5550_hpc_ops.enable_irq = zt5550_hc_enable_irq;
+		zt5550_hpc_ops.disable_irq = zt5550_hc_disable_irq;
+		zt5550_hpc_ops.check_irq = zt5550_hc_check_irq;
 	} else {
 		info("using ENUM# polling mode");
 	}

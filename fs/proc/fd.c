@@ -25,8 +25,7 @@ static int seq_show(struct seq_file *m, void *v)
 	if (!task)
 		return -ENOENT;
 
-	if (!gr_acl_handle_procpidmem(task))
-		files = get_files_struct(task);
+	files = get_files_struct(task);
 	put_task_struct(task);
 
 	if (files) {
@@ -303,21 +302,11 @@ static struct dentry *proc_lookupfd(struct inode *dir, struct dentry *dentry,
  */
 int proc_fd_permission(struct inode *inode, int mask)
 {
-	struct task_struct *task;
 	int rv = generic_permission(inode, mask);
-
+	if (rv == 0)
+		return 0;
 	if (task_pid(current) == proc_pid(inode))
 		rv = 0;
-
-	task = get_proc_task(inode);
-	if (task == NULL)
-		return rv;
-
-	if (gr_acl_handle_procpidmem(task))
-		rv = -EACCES;
-
-	put_task_struct(task);
-
 	return rv;
 }
 

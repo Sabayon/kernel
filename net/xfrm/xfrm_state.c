@@ -278,9 +278,7 @@ int xfrm_register_mode(struct xfrm_mode *mode, int family)
 	if (!try_module_get(afinfo->owner))
 		goto out;
 
-	pax_open_kernel();
-	*(void **)&mode->afinfo = afinfo;
-	pax_close_kernel();
+	mode->afinfo = afinfo;
 	modemap[mode->encap] = mode;
 	err = 0;
 

@@ -21,7 +21,6 @@
 .text
 
 #include <asm/asm-offsets.h>
-#include <asm/alternative-asm.h>
 
 #define a_offset	0
 #define b_offset	4
@@ -269,7 +268,6 @@ twofish_enc_blk:
 
 	popq	R1
 	movq	$1,%rax
-	pax_force_retaddr 0, 1
 	ret
 
 twofish_dec_blk:
@@ -321,5 +319,4 @@ twofish_dec_blk:
 
 	popq	R1
 	movq	$1,%rax
-	pax_force_retaddr 0, 1
 	ret

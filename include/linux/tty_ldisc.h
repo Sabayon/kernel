@@ -149,7 +149,7 @@ struct tty_ldisc_ops {
 
 	struct  module *owner;
 	
-	atomic_t refcount;
+	int refcount;
 };
 
 struct tty_ldisc {

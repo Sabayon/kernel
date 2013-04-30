@@ -84,64 +84,10 @@ static inline void pgd_list_del(pgd_t *pgd)
 	list_del(&page->lru);
 }
 
-#if defined(CONFIG_X86_64) && defined(CONFIG_PAX_MEMORY_UDEREF)
-pgdval_t clone_pgd_mask __read_only = ~_PAGE_PRESENT;
+#define UNSHARED_PTRS_PER_PGD				\
+	(SHARED_KERNEL_PMD ? KERNEL_PGD_BOUNDARY : PTRS_PER_PGD)
 
-void __shadow_user_pgds(pgd_t *dst, const pgd_t *src)
-{
-	unsigned int count = USER_PGD_PTRS;
 
-	while (count--)
-		*dst++ = __pgd((pgd_val(*src++) | (_PAGE_NX & __supported_pte_mask)) & ~_PAGE_USER);
-}
-#endif
-
-#ifdef CONFIG_PAX_PER_CPU_PGD
-void __clone_user_pgds(pgd_t *dst, const pgd_t *src)
-{
-	unsigned int count = USER_PGD_PTRS;
-
-	while (count--) {
-		pgd_t pgd;
-
-#ifdef CONFIG_X86_64
-		pgd = __pgd(pgd_val(*src++) | _PAGE_USER);
-#else
-		pgd = *src++;
-#endif
-
-#if defined(CONFIG_X86_64) && defined(CONFIG_PAX_MEMORY_UDEREF)
-		pgd = __pgd(pgd_val(pgd) & clone_pgd_mask);
-#endif
-
-		*dst++ = pgd;
-	}
-
-}
-#endif
-
-#ifdef CONFIG_X86_64
-#define pxd_t				pud_t
-#define pyd_t				pgd_t
-#define paravirt_release_pxd(pfn)	paravirt_release_pud(pfn)
-#define pxd_free(mm, pud)		pud_free((mm), (pud))
-#define pyd_populate(mm, pgd, pud)	pgd_populate((mm), (pgd), (pud))
-#define pyd_offset(mm, address)		pgd_offset((mm), (address))
-#define PYD_SIZE			PGDIR_SIZE
-#else
-#define pxd_t				pmd_t
-#define pyd_t				pud_t
-#define paravirt_release_pxd(pfn)	paravirt_release_pmd(pfn)
-#define pxd_free(mm, pud)		pmd_free((mm), (pud))
-#define pyd_populate(mm, pgd, pud)	pud_populate((mm), (pgd), (pud))
-#define pyd_offset(mm, address)		pud_offset((mm), (address))
-#define PYD_SIZE			PUD_SIZE
-#endif
-
-#ifdef CONFIG_PAX_PER_CPU_PGD
-static inline void pgd_ctor(struct mm_struct *mm, pgd_t *pgd) {}
-static inline void pgd_dtor(pgd_t *pgd) {}
-#else
 static void pgd_set_mm(pgd_t *pgd, struct mm_struct *mm)
 {
 	BUILD_BUG_ON(sizeof(virt_to_page(pgd)->index) < sizeof(mm));
@@ -182,7 +128,6 @@ static void pgd_dtor(pgd_t *pgd)
 	pgd_list_del(pgd);
 	spin_unlock(&pgd_lock);
 }
-#endif
 
 /*
  * List of all pgd's needed for non-PAE so it can invalidate entries
@@ -195,7 +140,7 @@ static void pgd_dtor(pgd_t *pgd)
  * -- nyc
  */
 
-#if defined(CONFIG_X86_32) && defined(CONFIG_X86_PAE)
+#ifdef CONFIG_X86_PAE
 /*
  * In PAE mode, we need to do a cr3 reload (=tlb flush) when
  * updating the top-level pagetable entries to guarantee the
@@ -207,7 +152,7 @@ static void pgd_dtor(pgd_t *pgd)
  * not shared between pagetables (!SHARED_KERNEL_PMDS), we allocate
  * and initialize the kernel pmds here.
  */
-#define PREALLOCATED_PXDS	(SHARED_KERNEL_PMD ? KERNEL_PGD_BOUNDARY : PTRS_PER_PGD)
+#define PREALLOCATED_PMDS	UNSHARED_PTRS_PER_PGD
 
 void pud_populate(struct mm_struct *mm, pud_t *pudp, pmd_t *pmd)
 {
@@ -225,38 +170,36 @@ void pud_populate(struct mm_struct *mm, pud_t *pudp, pmd_t *pmd)
 	 */
 	flush_tlb_mm(mm);
 }
-#elif defined(CONFIG_X86_64) && defined(CONFIG_PAX_PER_CPU_PGD)
-#define PREALLOCATED_PXDS	USER_PGD_PTRS
 #else  /* !CONFIG_X86_PAE */
 
 /* No need to prepopulate any pagetable entries in non-PAE modes. */
-#define PREALLOCATED_PXDS	0
+#define PREALLOCATED_PMDS	0
 
 #endif	/* CONFIG_X86_PAE */
 
-static void free_pxds(pxd_t *pxds[])
+static void free_pmds(pmd_t *pmds[])
 {
 	int i;
 
-	for(i = 0; i < PREALLOCATED_PXDS; i++)
-		if (pxds[i])
-			free_page((unsigned long)pxds[i]);
+	for(i = 0; i < PREALLOCATED_PMDS; i++)
+		if (pmds[i])
+			free_page((unsigned long)pmds[i]);
 }
 
-static int preallocate_pxds(pxd_t *pxds[])
+static int preallocate_pmds(pmd_t *pmds[])
 {
 	int i;
 	bool failed = false;
 
-	for(i = 0; i < PREALLOCATED_PXDS; i++) {
-		pxd_t *pxd = (pxd_t *)__get_free_page(PGALLOC_GFP);
-		if (pxd == NULL)
+	for(i = 0; i < PREALLOCATED_PMDS; i++) {
+		pmd_t *pmd = (pmd_t *)__get_free_page(PGALLOC_GFP);
+		if (pmd == NULL)
 			failed = true;
-		pxds[i] = pxd;
+		pmds[i] = pmd;
 	}
 
 	if (failed) {
-		free_pxds(pxds);
+		free_pmds(pmds);
 		return -ENOMEM;
 	}
 
@@ -269,55 +212,51 @@ static int preallocate_pxds(pxd_t *pxds[])
  * preallocate which never got a corresponding vma will need to be
  * freed manually.
  */
-static void pgd_mop_up_pxds(struct mm_struct *mm, pgd_t *pgdp)
+static void pgd_mop_up_pmds(struct mm_struct *mm, pgd_t *pgdp)
 {
 	int i;
 
-	for(i = 0; i < PREALLOCATED_PXDS; i++) {
+	for(i = 0; i < PREALLOCATED_PMDS; i++) {
 		pgd_t pgd = pgdp[i];
 
 		if (pgd_val(pgd) != 0) {
-			pxd_t *pxd = (pxd_t *)pgd_page_vaddr(pgd);
+			pmd_t *pmd = (pmd_t *)pgd_page_vaddr(pgd);
 
-			set_pgd(pgdp + i, native_make_pgd(0));
+			pgdp[i] = native_make_pgd(0);
 
-			paravirt_release_pxd(pgd_val(pgd) >> PAGE_SHIFT);
-			pxd_free(mm, pxd);
+			paravirt_release_pmd(pgd_val(pgd) >> PAGE_SHIFT);
+			pmd_free(mm, pmd);
 		}
 	}
 }
 
-static void pgd_prepopulate_pxd(struct mm_struct *mm, pgd_t *pgd, pxd_t *pxds[])
+static void pgd_prepopulate_pmd(struct mm_struct *mm, pgd_t *pgd, pmd_t *pmds[])
 {
-	pyd_t *pyd;
+	pud_t *pud;
 	unsigned long addr;
 	int i;
 
-	if (PREALLOCATED_PXDS == 0) /* Work around gcc-3.4.x bug */
+	if (PREALLOCATED_PMDS == 0) /* Work around gcc-3.4.x bug */
 		return;
 
-#ifdef CONFIG_X86_64
-	pyd = pyd_offset(mm, 0L);
-#else
-	pyd = pyd_offset(pgd, 0L);
-#endif
+	pud = pud_offset(pgd, 0);
 
- 	for (addr = i = 0; i < PREALLOCATED_PXDS;
-	     i++, pyd++, addr += PYD_SIZE) {
-		pxd_t *pxd = pxds[i];
+ 	for (addr = i = 0; i < PREALLOCATED_PMDS;
+	     i++, pud++, addr += PUD_SIZE) {
+		pmd_t *pmd = pmds[i];
 
 		if (i >= KERNEL_PGD_BOUNDARY)
-			memcpy(pxd, (pxd_t *)pgd_page_vaddr(swapper_pg_dir[i]),
-			       sizeof(pxd_t) * PTRS_PER_PMD);
+			memcpy(pmd, (pmd_t *)pgd_page_vaddr(swapper_pg_dir[i]),
+			       sizeof(pmd_t) * PTRS_PER_PMD);
 
-		pyd_populate(mm, pyd, pxd);
+		pud_populate(mm, pud, pmd);
 	}
 }
 
 pgd_t *pgd_alloc(struct mm_struct *mm)
 {
 	pgd_t *pgd;
-	pxd_t *pxds[PREALLOCATED_PXDS];
+	pmd_t *pmds[PREALLOCATED_PMDS];
 
 	pgd = (pgd_t *)__get_free_page(PGALLOC_GFP);
 
@@ -326,11 +265,11 @@ pgd_t *pgd_alloc(struct mm_struct *mm)
 
 	mm->pgd = pgd;
 
-	if (preallocate_pxds(pxds) != 0)
+	if (preallocate_pmds(pmds) != 0)
 		goto out_free_pgd;
 
 	if (paravirt_pgd_alloc(mm) != 0)
-		goto out_free_pxds;
+		goto out_free_pmds;
 
 	/*
 	 * Make sure that pre-populating the pmds is atomic with
@@ -340,14 +279,14 @@ pgd_t *pgd_alloc(struct mm_struct *mm)
 	spin_lock(&pgd_lock);
 
 	pgd_ctor(mm, pgd);
-	pgd_prepopulate_pxd(mm, pgd, pxds);
+	pgd_prepopulate_pmd(mm, pgd, pmds);
 
 	spin_unlock(&pgd_lock);
 
 	return pgd;
 
-out_free_pxds:
-	free_pxds(pxds);
+out_free_pmds:
+	free_pmds(pmds);
 out_free_pgd:
 	free_page((unsigned long)pgd);
 out:
@@ -356,7 +295,7 @@ out:
 
 void pgd_free(struct mm_struct *mm, pgd_t *pgd)
 {
-	pgd_mop_up_pxds(mm, pgd);
+	pgd_mop_up_pmds(mm, pgd);
 	pgd_dtor(pgd);
 	paravirt_pgd_free(mm, pgd);
 	free_page((unsigned long)pgd);

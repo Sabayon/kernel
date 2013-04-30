@@ -6,7 +6,7 @@
 #include <linux/seqlock.h>
 
 struct fs_struct {
-	atomic_t users;
+	int users;
 	spinlock_t lock;
 	seqcount_t seq;
 	int umask;

@@ -24,7 +24,6 @@
 #include <linux/slab.h>
 #include <linux/mtd/mtd.h>
 #include <linux/module.h>
-#include <linux/slab.h>
 
 #include "denali.h"
 

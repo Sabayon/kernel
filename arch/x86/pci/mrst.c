@@ -238,9 +238,7 @@ int __init pci_mrst_init(void)
 	printk(KERN_INFO "Intel MID platform detected, using MID PCI ops\n");
 	pci_mmcfg_late_init();
 	pcibios_enable_irq = mrst_pci_irq_enable;
-	pax_open_kernel();
-	memcpy((void *)&pci_root_ops, &pci_mrst_ops, sizeof(pci_mrst_ops));
-	pax_close_kernel();
+	pci_root_ops = pci_mrst_ops;
 	pci_soc_mode = 1;
 	/* Continue with standard init */
 	return 1;

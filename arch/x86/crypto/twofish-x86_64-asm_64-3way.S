@@ -20,8 +20,6 @@
  *
  */
 
-#include <asm/alternative-asm.h>
-
 .file "twofish-x86_64-asm-3way.S"
 .text
 
@@ -262,7 +260,6 @@ __twofish_enc_blk_3way:
 	popq %r13;
 	popq %r14;
 	popq %r15;
-	pax_force_retaddr 0, 1
 	ret;
 
 __enc_xor3:
@@ -274,7 +271,6 @@ __enc_xor3:
 	popq %r13;
 	popq %r14;
 	popq %r15;
-	pax_force_retaddr 0, 1
 	ret;
 
 .global twofish_dec_blk_3way
@@ -316,6 +312,5 @@ twofish_dec_blk_3way:
 	popq %r13;
 	popq %r14;
 	popq %r15;
-	pax_force_retaddr 0, 1
 	ret;
 

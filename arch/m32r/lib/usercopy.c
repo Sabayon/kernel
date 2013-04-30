@@ -14,9 +14,6 @@
 unsigned long
 __generic_copy_to_user(void __user *to, const void *from, unsigned long n)
 {
-	if ((long)n < 0)
-		return n;
-
 	prefetch(from);
 	if (access_ok(VERIFY_WRITE, to, n))
 		__copy_user(to,from,n);
@@ -26,9 +23,6 @@ __generic_copy_to_user(void __user *to, const void *from, unsigned long n)
 unsigned long
 __generic_copy_from_user(void *to, const void __user *from, unsigned long n)
 {
-	if ((long)n < 0)
-		return n;
-
 	prefetchw(to);
 	if (access_ok(VERIFY_READ, from, n))
 		__copy_user_zeroing(to,from,n);

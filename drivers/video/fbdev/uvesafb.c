@@ -1882,6 +1882,10 @@ static int uvesafb_init(void)
 
 	if (fb_get_options("uvesafb", &option))
 		return -ENODEV;
+	if (!option || !*option)
+		/* if vesafb is enabled, this will make possible to fallback to it */
+		return -ENODEV;
+
 	uvesafb_setup(option);
 #endif
 	err = cn_add_callback(&uvesafb_cn_id, "uvesafb", uvesafb_cn_callback);

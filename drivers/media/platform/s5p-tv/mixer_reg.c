@@ -115,7 +115,7 @@ void mxr_reg_reset(struct mxr_device *mdev)
 	/* setting graphical layers */
 
 	val  = MXR_GRP_CFG_COLOR_KEY_DISABLE; /* no blank key */
-	val |= MXR_GRP_CFG_BLEND_PRE_MUL; /* premul mode */
+//	val |= MXR_GRP_CFG_BLEND_PRE_MUL; /* premul mode */
 	val |= MXR_GRP_CFG_ALPHA_VAL(0xff); /* non-transparent alpha */
 
 	/* the same configuration for both layers */

@@ -367,11 +367,6 @@
 #define HDMI_I2S_IRQ_MASK		HDMI_I2S_BASE(0x05c)
 #define HDMI_I2S_IRQ_STATUS		HDMI_I2S_BASE(0x060)
 
-#define HDMI_I2S_CH2_EN			(3 << 4)
-#define HDMI_I2S_CH1_EN			(3 << 2)
-#define HDMI_I2S_CH0_EN			(3)
-
-
 #define HDMI_I2S_CH0_L_0		HDMI_I2S_BASE(0x0064)
 #define HDMI_I2S_CH0_L_1		HDMI_I2S_BASE(0x0068)
 #define HDMI_I2S_CH0_L_2		HDMI_I2S_BASE(0x006C)
@@ -523,7 +518,6 @@
 #define HDMI_ENC_OPTION				(1 << 4)
 #define HDMI_ASP_ENABLE				(1 << 2)
 #define HDMI_ASP_DISABLE			(0 << 2)
-#define HDMI_ASP_MASK				(1 << 2)
 #define HDMI_PWDN_ENB_NORMAL			(1 << 1)
 #define HDMI_PWDN_ENB_PD			(0 << 1)
 #define HDMI_EN					(1 << 0)

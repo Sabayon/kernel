@@ -20,7 +20,7 @@
 #include "mali_l2_cache.h"
 #include "mali_scheduler.h"
 #if defined(CONFIG_MALI400_UMP)
-#include <ump/ump_kernel_interface.h>
+#include "../../ump/include/ump_kernel_interface.h"
 #endif
 
 /* kernel side OS functions and user-kernel interface */

@@ -157,7 +157,7 @@ static mali_physical_memory_allocation_result mali_dma_buf_commit(void* ctx, mal
 
 	for_each_sg(mem->sgt->sgl, sg, mem->sgt->nents, i)
 	{
-		u32 size = sg_dma_len(sg);
+		u32 size = sg->length;
 		dma_addr_t phys = sg_dma_address(sg);
 
 		/* sg must be page aligned. */

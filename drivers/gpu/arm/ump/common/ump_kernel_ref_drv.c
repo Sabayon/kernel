@@ -13,7 +13,7 @@
 #include "ump_osk.h"
 #include "ump_uk_types.h"
 
-#include <ump/ump_kernel_interface_ref_drv.h>
+#include "ump_kernel_interface_ref_drv.h"
 #include "ump_kernel_common.h"
 #include "ump_kernel_descriptor_mapping.h"
 
@@ -157,6 +157,12 @@ _mali_osk_errcode_t _ump_ukk_allocate( _ump_uk_allocate_s *user_interaction )
 	if ( 0==(UMP_REF_DRV_UK_CONSTRAINT_USE_CACHE & user_interaction->constraints) )
 		 new_allocation->is_cached = 0;
 	else new_allocation->is_cached = 1;
+
+	if (user_interaction->constraints & UMP_REF_DRV_UK_CONSTRAINT_PHYSICALLY_LINEAR)
+		new_allocation->is_contiguous = 1;
+	else
+		new_allocation->is_contiguous = 0;
+	DBG_MSG(2, ("Alloc contiguously: %d\n", new_allocation->is_contiguous));
 
 	/* special case a size of 0, we should try to emulate what malloc does in this case, which is to return a valid pointer that must be freed, but can't be dereferences */
 	if (0 == user_interaction->size)

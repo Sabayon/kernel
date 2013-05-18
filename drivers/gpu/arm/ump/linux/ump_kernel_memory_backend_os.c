@@ -97,6 +97,9 @@ static void os_memory_backend_destroy(ump_memory_backend * backend)
 }
 
 
+static int num_pages(int size) {
+	return (size + PAGE_SIZE - 1) >> PAGE_SHIFT;
+}
 
 /*
  * Allocate UMP memory
@@ -107,6 +110,7 @@ static int os_allocate(void* ctx, ump_dd_mem * descriptor)
 	os_allocator * info;
 	int pages_allocated = 0;
 	int is_cached;
+	int is_contiguous;
 
 	BUG_ON(!descriptor);
 	BUG_ON(!ctx);
@@ -114,6 +118,7 @@ static int os_allocate(void* ctx, ump_dd_mem * descriptor)
 	info = (os_allocator*)ctx;
 	left = descriptor->size_bytes;
 	is_cached = descriptor->is_cached;
+	is_contiguous = descriptor->is_contiguous;
 
 	if (down_interruptible(&info->mutex))
 	{
@@ -122,7 +127,10 @@ static int os_allocate(void* ctx, ump_dd_mem * descriptor)
 	}
 
 	descriptor->backend_info = NULL;
-	descriptor->nr_blocks = ((left + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1)) >> PAGE_SHIFT;
+	if (is_contiguous)
+		descriptor->nr_blocks = 1;
+	else
+		descriptor->nr_blocks = num_pages(left);
 
 	DBG_MSG(5, ("Allocating page array. Size: %lu\n", descriptor->nr_blocks * sizeof(ump_dd_physical_block)));
 
@@ -134,45 +142,71 @@ static int os_allocate(void* ctx, ump_dd_mem * descriptor)
 		return 0; /* failure */
 	}
 
-	while (left > 0 && ((info->num_pages_allocated + pages_allocated) < info->num_pages_max))
-	{
-		struct page * new_page;
+	if (is_contiguous) {
+		dma_addr_t dma_addr;
 
-		if (is_cached)
-		{
-			new_page = alloc_page(GFP_HIGHUSER | __GFP_ZERO | __GFP_REPEAT | __GFP_NOWARN);
-		} else
-		{
-			new_page = alloc_page(GFP_HIGHUSER | __GFP_ZERO | __GFP_REPEAT | __GFP_NOWARN | __GFP_COLD);
-		}
-		if (NULL == new_page)
-		{
-			break;
+		if (is_cached) {
+			printk(KERN_ERR "UMP: Contiguous cached areas not supported\n");
+			up(&info->mutex);
+			vfree(descriptor->block_array);
+			return 0;
 		}
 
-		/* Ensure page caches are flushed. */
-		if ( is_cached )
-		{
-			descriptor->block_array[pages_allocated].addr = page_to_phys(new_page);
-			descriptor->block_array[pages_allocated].size = PAGE_SIZE;
-		} else
-		{
-			descriptor->block_array[pages_allocated].addr = dma_map_page(NULL, new_page, 0, PAGE_SIZE, DMA_BIDIRECTIONAL );
-			descriptor->block_array[pages_allocated].size = PAGE_SIZE;
+		descriptor->contiguous_cpu_addr =
+			dma_zalloc_coherent(NULL, left, &dma_addr, GFP_KERNEL);
+		if (descriptor->contiguous_cpu_addr == NULL) {
+			printk(KERN_ERR "Coherent dma allocation failed, size: %d\n", left);
+			up(&info->mutex);
+			vfree(descriptor->block_array);
+			return 0;
 		}
-
-		DBG_MSG(5, ("Allocated page 0x%08lx cached: %d\n", descriptor->block_array[pages_allocated].addr, is_cached));
-
-		if (left < PAGE_SIZE)
+		descriptor->block_array[0].addr = dma_addr;
+		descriptor->block_array[0].size = left;
+		DBG_MSG(4, ("Allocated %d bytes contiguously\n", left));
+		pages_allocated = num_pages(left);
+		left = 0;
+	} else {
+		while (left > 0 &&
+		       ((info->num_pages_allocated + pages_allocated) < info->num_pages_max))
 		{
-			left = 0;
-		}
-		else
-		{
-			left -= PAGE_SIZE;
-		}
+			struct page * new_page;
 
-		pages_allocated++;
+			if (is_cached)
+			{
+				new_page = alloc_page(GFP_HIGHUSER | __GFP_ZERO | __GFP_REPEAT | __GFP_NOWARN);
+			} else
+			{
+				new_page = alloc_page(GFP_HIGHUSER | __GFP_ZERO | __GFP_REPEAT | __GFP_NOWARN | __GFP_COLD);
+			}
+			if (NULL == new_page)
+			{
+				break;
+			}
+
+			/* Ensure page caches are flushed. */
+			if ( is_cached )
+			{
+				descriptor->block_array[pages_allocated].addr = page_to_phys(new_page);
+				descriptor->block_array[pages_allocated].size = PAGE_SIZE;
+			} else
+			{
+				descriptor->block_array[pages_allocated].addr = dma_map_page(NULL, new_page, 0, PAGE_SIZE, DMA_BIDIRECTIONAL );
+				descriptor->block_array[pages_allocated].size = PAGE_SIZE;
+			}
+
+			DBG_MSG(5, ("Allocated page 0x%08lx cached: %d\n", descriptor->block_array[pages_allocated].addr, is_cached));
+
+			if (left < PAGE_SIZE)
+			{
+				left = 0;
+			}
+			else
+			{
+				left -= PAGE_SIZE;
+			}
+
+			pages_allocated++;
+		}
 	}
 
 	DBG_MSG(5, ("Alloce for ID:%2d got %d pages, cached: %d\n", descriptor->secure_id,  pages_allocated));
@@ -229,19 +263,27 @@ static void os_free(void* ctx, ump_dd_mem * descriptor)
 
 	DBG_MSG(5, ("Releasing %lu OS pages\n", descriptor->nr_blocks));
 
-	info->num_pages_allocated -= descriptor->nr_blocks;
+	if (!descriptor->is_contiguous)
+		info->num_pages_allocated -= descriptor->nr_blocks;
+	else
+		info->num_pages_allocated -= num_pages(descriptor->block_array[0].size);
 
 	up(&info->mutex);
 
-	for ( i = 0; i < descriptor->nr_blocks; i++)
-	{
-		DBG_MSG(6, ("Freeing physical page. Address: 0x%08lx\n", descriptor->block_array[i].addr));
-		if ( ! descriptor->is_cached)
+	if (descriptor->is_contiguous)
+		dma_free_coherent(NULL, descriptor->block_array[0].size,
+				  descriptor->contiguous_cpu_addr,
+				  descriptor->block_array[0].addr);
+	else
+		for ( i = 0; i < descriptor->nr_blocks; i++)
 		{
-			dma_unmap_page(NULL, descriptor->block_array[i].addr, PAGE_SIZE, DMA_BIDIRECTIONAL);
+			DBG_MSG(6, ("Freeing physical page. Address: 0x%08lx\n", descriptor->block_array[i].addr));
+			if ( ! descriptor->is_cached)
+			{
+				dma_unmap_page(NULL, descriptor->block_array[i].addr, PAGE_SIZE, DMA_BIDIRECTIONAL);
+			}
+			__free_page(pfn_to_page(descriptor->block_array[i].addr>>PAGE_SHIFT) );
 		}
-		__free_page(pfn_to_page(descriptor->block_array[i].addr>>PAGE_SHIFT) );
-	}
 
 	vfree(descriptor->block_array);
 }

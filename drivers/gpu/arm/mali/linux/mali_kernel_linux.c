@@ -34,6 +34,7 @@
 #include "mali_pm.h"
 #include "mali_kernel_license.h"
 #include "mali_dma_buf.h"
+#include "../../ump/common/ump_kernel_common.h"
 #if defined(CONFIG_MALI400_INTERNAL_PROFILING)
 #include "mali_profiling_internal.h"
 #endif
@@ -49,7 +50,7 @@
 extern const char *__malidrv_build_info(void);
 
 /* Module parameter to control log level */
-int mali_debug_level = 1;
+int mali_debug_level = 2;
 module_param(mali_debug_level, int, S_IRUSR | S_IWUSR | S_IWGRP | S_IRGRP | S_IROTH); /* rw-rw-r-- */
 MODULE_PARM_DESC(mali_debug_level, "Higher number, more dmesg output");
 

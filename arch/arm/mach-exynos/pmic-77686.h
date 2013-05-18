@@ -92,7 +92,7 @@ static struct regulator_init_data max77686_buck4_data = {
 		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE |
 				  REGULATOR_CHANGE_STATUS,
 		.state_mem = {
-			.disabled = 1,
+			.enabled = 1,
 		},
 	},
 	.num_consumer_supplies = 1,

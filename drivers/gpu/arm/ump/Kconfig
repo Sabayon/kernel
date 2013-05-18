@@ -1,16 +1,26 @@
 config UMP
-	tristate "UMP support"
-	depends on ARM
+        bool "Enable UMP(Unified Memory Provider)"
+        default n
 	---help---
-	  This enables support for the UMP memory allocation and sharing API.
+		This enables UMP memory provider
 
-	  To compile this driver as a module, choose M here: the module will be
-	  called ump.
+config UMP_MEM_SIZE
+	int "UMP Memory Size"
+	depends on UMP
+	default "64"
+	---help---
+		This value decide memory size of UMP (unit is MByte).
 
 config UMP_DEBUG
-	bool "Enable extra debug in UMP"
+	bool "Enables debug messages"
+	depends on UMP
+	default n
+	---help---
+		This enables UMP driver debug messages
+
+config UMP_USING_OS_MEMORY
+	bool "Using OS memory"
 	depends on UMP
 	default y
 	---help---
-	  This enabled extra debug checks and messages in UMP.
-
+		This makes UMP use OS memory.

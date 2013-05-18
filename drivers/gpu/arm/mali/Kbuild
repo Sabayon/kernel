@@ -13,12 +13,12 @@
 # set up defaults if not defined by the user
 TIMESTAMP ?= default
 OS_MEMORY_KERNEL_BUFFER_SIZE_IN_MB ?= 16
-USING_GPU_UTILIZATION ?= 0
+USING_GPU_UTILIZATION ?= 1
 PROFILING_SKIP_PP_JOBS ?= 0
 PROFILING_SKIP_PP_AND_GP_JOBS ?= 0
-MALI_PP_SCHEDULER_FORCE_NO_JOB_OVERLAP ?= 1
-MALI_PP_SCHEDULER_KEEP_SUB_JOB_STARTS_ALIGNED ?= 1
-MALI_PP_SCHEDULER_FORCE_NO_JOB_OVERLAP_BETWEEN_APPS ?= 1
+MALI_PP_SCHEDULER_FORCE_NO_JOB_OVERLAP ?= 0
+MALI_PP_SCHEDULER_KEEP_SUB_JOB_STARTS_ALIGNED ?= 0
+MALI_PP_SCHEDULER_FORCE_NO_JOB_OVERLAP_BETWEEN_APPS ?= 0
 MALI_UPPER_HALF_SCHEDULING ?= 1
 
 # For customer releases the Linux Device Drivers will be provided as ARM proprietary and GPL releases:
@@ -96,8 +96,14 @@ mali-y += \
 	common/mali_l2_cache.o \
 	linux/mali_osk_pm.o \
 	linux/mali_pmu_power_up_down.o \
-	platform/arm/arm.o \
 	__malidrv_build_info.o
+
+ifneq ($(MALI_PLATFORM_FILES),)
+	mali-y += $(MALI_PLATFORM_FILES:.c=.o)
+endif
+
+mali-$(CONFIG_MALI_DVFS) += platform/pegasus-m400/mali_platform_dvfs.o
+mali-$(CONFIG_MALI_DVFS) += platform/pegasus-m400/mali_platform.o
 
 mali-$(CONFIG_MALI400_PROFILING) += linux/mali_ukk_profiling.o
 mali-$(CONFIG_MALI400_PROFILING) += linux/mali_osk_profiling.o
@@ -111,42 +117,24 @@ mali-$(CONFIG_SYNC) += linux/mali_sync.o linux/mali_sync_user.o
 # Tell the Linux build system from which .o file to create the kernel module
 obj-$(CONFIG_MALI400) := mali.o
 
-#ifdef CONFIG_PM
-#ifdef CONFIG_PM_RUNTIME
-#	KERNEL_RUNTIME_PM_ENABLED = 1
-#endif
-#endif
-#export EXTRA_DEFINES += -DMALI_PMM_RUNTIME_JOB_CONTROL_ON=$(KERNEL_RUNTIME_PM_ENABLED)
-
-export EXTRA_DEFINES += -DMALI_FAKE_PLATFORM_DEVICE=1
-export EXTRA_DEFINES += -DCONFIG_MALI400_UMP=1
-export EXTRA_DEFINES += -DMALI_PMM_RUNTIME_JOB_CONTROL_ON=0
-export EXTRA_DEFINES += -D_MALI_OSK_SPECIFIC_INDIRECT_MMAP
-export EXTRA_DEFINES += -DMALI_DVFS_ENABLED=0
-export EXTRA_DEFINES += -DMALI_VOLTAGE_LOCK=0
-export EXTRA_DEFINES += -DMALI_TIMELINE_PROFILING_ENABLED=0
-export EXTRA_DEFINES += -DMALI_POWER_MGMT_TEST_SUITE=0
-export EXTRA_DEFINES += -DUSING_MALI_PMM=0
-export EXTRA_DEFINES += -DDEBUG=1
 ccflags-y += $(EXTRA_DEFINES)
 
 # Set up our defines, which will be passed to gcc
 ccflags-y += -DPROFILING_SKIP_PP_JOBS=$(PROFILING_SKIP_PP_JOBS)
 ccflags-y += -DPROFILING_SKIP_PP_AND_GP_JOBS=$(PROFILING_SKIP_PP_AND_GP_JOBS)
-ccflags-y += -DUSING_MALI400=1
-ccflags-y += -DMALI_PP_SCHEDULER_FORCE_NO_JOB_OVERLAP=1
-ccflags-y += -DMALI_PP_SCHEDULER_KEEP_SUB_JOB_STARTS_ALIGNED=1
-ccflags-y += -DMALI_PP_SCHEDULER_FORCE_NO_JOB_OVERLAP_BETWEEN_APPS=1
-ccflags-y += -DMALI_STATE_TRACKING=0
-ccflags-y += -DMALI_OS_MEMORY_KERNEL_BUFFER_SIZE_IN_MB=256
-ccflags-y += -DUSING_GPU_UTILIZATION=0
-ccflags-y += -DMALI_LICENSE_IS_GPL=1
+
+ccflags-y += -DMALI_PP_SCHEDULER_FORCE_NO_JOB_OVERLAP=$(MALI_PP_SCHEDULER_FORCE_NO_JOB_OVERLAP)
+ccflags-y += -DMALI_PP_SCHEDULER_KEEP_SUB_JOB_STARTS_ALIGNED=$(MALI_PP_SCHEDULER_KEEP_SUB_JOB_STARTS_ALIGNED)
+ccflags-y += -DMALI_PP_SCHEDULER_FORCE_NO_JOB_OVERLAP_BETWEEN_APPS=$(MALI_PP_SCHEDULER_FORCE_NO_JOB_OVERLAP_BETWEEN_APPS)
+ccflags-y += -DMALI_STATE_TRACKING=1
+ccflags-y += -DMALI_OS_MEMORY_KERNEL_BUFFER_SIZE_IN_MB=$(OS_MEMORY_KERNEL_BUFFER_SIZE_IN_MB)
+ccflags-y += -DUSING_GPU_UTILIZATION=$(USING_GPU_UTILIZATION)
 
 ifeq ($(MALI_UPPER_HALF_SCHEDULING),1)
 	ccflags-y += -DMALI_UPPER_HALF_SCHEDULING
 endif
 
-ccflags-$(CONFIG_MALI400_UMP) += -I$(src)/../../ump_r3p2/include/ump
+ccflags-$(CONFIG_MALI400_UMP) += -I$(src)/../../ump/include/ump -I$(src)/../../ump/include
 ccflags-$(CONFIG_MALI400_DEBUG) += -DDEBUG
 
 # Use our defines when compiling

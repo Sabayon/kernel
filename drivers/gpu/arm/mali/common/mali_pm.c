@@ -8,6 +8,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include <linux/version.h>
+#ifdef CONFIG_PM_RUNTIME
+#include <linux/pm_runtime.h>
+#endif
+#include <linux/platform_device.h>
 #include "mali_pm.h"
 #include "mali_kernel_common.h"
 #include "mali_osk.h"
@@ -17,16 +22,28 @@
 #include "mali_kernel_utilization.h"
 #include "mali_group.h"
 
+extern struct platform_device *mali_platform_device;
+
 static mali_bool mali_power_on = MALI_FALSE;
 
 _mali_osk_errcode_t mali_pm_initialize(void)
 {
+#ifdef CONFIG_PM_RUNTIME
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,37))
+	pm_runtime_set_autosuspend_delay(&(mali_platform_device->dev), 1000);
+	pm_runtime_use_autosuspend(&(mali_platform_device->dev));
+#endif
+	pm_runtime_enable(&(mali_platform_device->dev));
+#endif
 	_mali_osk_pm_dev_enable();
 	return _MALI_OSK_ERR_OK;
 }
 
 void mali_pm_terminate(void)
 {
+#ifdef CONFIG_PM_RUNTIME
+	pm_runtime_disable(&(mali_platform_device->dev));
+#endif
 	_mali_osk_pm_dev_disable();
 }
 

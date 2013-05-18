@@ -11,7 +11,7 @@
 #ifndef __UMP_KERNEL_TYPES_H__
 #define __UMP_KERNEL_TYPES_H__
 
-#include <ump/ump_kernel_interface.h>
+#include "../include/ump_kernel_interface.h"
 #include "mali_osk.h"
 
 
@@ -46,6 +46,8 @@ typedef struct ump_dd_mem
 	int is_cached;
 	ump_hw_usage hw_device;
 	ump_lock_usage lock_usage;
+	int is_contiguous;
+	void *contiguous_cpu_addr;
 } ump_dd_mem;
 
 

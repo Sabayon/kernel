@@ -9,7 +9,7 @@
 #
 
 USE_UMPV2=0
-USING_PROFILING ?= 0
+USING_PROFILING ?= 1
 USING_INTERNAL_PROFILING ?= 0
 
 # The Makefile sets up "arch" based on the CONFIG, creates the version info
@@ -45,10 +45,14 @@ endif
 
 # Include the mapping between TARGET_PLATFORM and KDIR + MALI_PLATFORM
 -include MALI_CONFIGURATION
-#export KDIR ?= $(KDIR-$(TARGET_PLATFORM))
-#export MALI_PLATFORM ?= $(MALI_PLATFORM-$(TARGET_PLATFORM))
+export KDIR ?= $(KDIR-$(TARGET_PLATFORM))
+export MALI_PLATFORM ?= $(MALI_PLATFORM-$(TARGET_PLATFORM))
 
-
+ifneq ($(TARGET_PLATFORM),)
+ifeq ($(MALI_PLATFORM),)
+$(error "Invalid TARGET_PLATFORM: $(TARGET_PLATFORM)")
+endif
+endif
 
 # validate lookup result
 ifeq ($(KDIR),)
@@ -62,7 +66,7 @@ export EXTRA_DEFINES += -DCONFIG_MALI400_UMP=1
 ifeq ($(USE_UMPV2),1)
 UMP_SYMVERS_FILE ?= ../umpv2/Module.symvers
 else
-UMP_SYMVERS_FILE ?= ../ump_r3p2/Module.symvers
+UMP_SYMVERS_FILE ?= ../ump/Module.symvers
 endif
 KBUILD_EXTRA_SYMBOLS = $(realpath $(UMP_SYMVERS_FILE))
 $(warning $(KBUILD_EXTRA_SYMBOLS))
@@ -73,9 +77,25 @@ KDIR-$(shell uname -m):=/lib/modules/$(shell uname -r)/build
 
 include $(KDIR)/.config
 
+ifeq ($(ARCH), arm)
+# when compiling for ARM we're cross compiling
+export CROSS_COMPILE ?= $(call check_cc2, arm-linux-gnueabi-gcc, arm-linux-gnueabi-, arm-none-linux-gnueabi-)
+endif
+
+# report detected/selected settings
+ifdef ARM_INTERNAL_BUILD
+$(warning TARGET_PLATFORM $(TARGET_PLATFORM))
+$(warning KDIR $(KDIR))
+$(warning MALI_PLATFORM $(MALI_PLATFORM))
+endif
+
 # Set up build config
+export CONFIG_MALI400=m
+
+ifneq ($(MALI_PLATFORM),)
 export EXTRA_DEFINES += -DMALI_FAKE_PLATFORM_DEVICE=1
-export MALI_PLATFORM_FILES = $(wildcard platform/arm/*.c)
+export MALI_PLATFORM_FILES = $(wildcard platform/$(MALI_PLATFORM)/*.c)
+endif
 
 ifeq ($(USING_PROFILING),1)
 ifeq ($(CONFIG_TRACEPOINTS),)

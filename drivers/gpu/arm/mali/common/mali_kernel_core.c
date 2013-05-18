@@ -36,7 +36,7 @@
 #if defined(CONFIG_MALI400_INTERNAL_PROFILING)
 #include "mali_profiling_internal.h"
 #endif
-
+#include <mach/mali_utgard.h>
 
 /* Mali GPU memory. Real values come from module parameter or from device specific data */
 int mali_dedicated_mem_start = 0;
@@ -809,6 +809,8 @@ _mali_osk_errcode_t mali_initialize_subsystems(void)
 	/* Allowing the system to be turned off */
 	_mali_osk_pm_dev_ref_dec();
 
+	mali_platform_init();
+
 	MALI_SUCCESS; /* all ok */
 
 	/* Error handling */
@@ -860,6 +862,7 @@ void mali_terminate_subsystems(void)
 	MALI_DEBUG_PRINT(2, ("terminate_subsystems() called\n"));
 
 	/* shut down subsystems in reverse order from startup */
+	mali_platform_deinit();
 
 	/* We need the GPU to be powered up for the terminate sequence */
 	_mali_osk_pm_dev_ref_add();

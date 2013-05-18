@@ -26,14 +26,14 @@
 #include <linux/shrinker.h>
 #endif
 
+#ifndef VM_RESERVED
+#define VM_RESERVED (VM_DONTEXPAND | VM_DONTDUMP)
+#endif
+
 #include "mali_osk.h"
 #include "mali_ukk.h" /* required to hook in _mali_ukk_mem_mmap handling */
 #include "mali_kernel_common.h"
 #include "mali_kernel_linux.h"
-
-#ifndef VM_RESERVED
-#define VM_RESERVED (VM_DONTEXPAND | VM_DONTDUMP)
-#endif
 
 static void mali_kernel_memory_vma_open(struct vm_area_struct * vma);
 static void mali_kernel_memory_vma_close(struct vm_area_struct * vma);

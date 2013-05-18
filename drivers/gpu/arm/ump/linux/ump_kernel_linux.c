@@ -18,16 +18,16 @@
 #include <linux/device.h>
 #include <linux/debugfs.h>
 
-#include "arch/config.h"             /* Configuration for current platform. The symlinc for arch is set by Makefile */
+#include <mach/ump/config.h>             /* Configuration for current platform. The symlinc for arch is set by Makefile */
 #include "ump_ioctl.h"
 #include "ump_kernel_common.h"
-#include <ump/ump_kernel_interface.h>
-#include <ump/ump_kernel_interface_ref_drv.h>
+#include "ump_kernel_interface.h"
+#include "ump_kernel_interface_ref_drv.h"
 #include "ump_kernel_descriptor_mapping.h"
 #include "ump_kernel_memory_backend.h"
 #include "ump_kernel_memory_backend_os.h"
 #include "ump_kernel_memory_backend_dedicated.h"
-#include "ump_kernel_license.h"
+#include "license/gpl/ump_kernel_license.h"
 
 #include "ump_osk.h"
 #include "ump_ukk.h"
@@ -42,7 +42,7 @@ module_param(ump_debug_level, int, S_IRUSR | S_IWUSR | S_IWGRP | S_IRGRP | S_IRO
 MODULE_PARM_DESC(ump_debug_level, "Higher number, more dmesg output");
 
 /* By default the module uses any available major, but it's possible to set it at load time to a specific number */
-int ump_major = 0;
+int ump_major = 243;
 module_param(ump_major, int, S_IRUGO); /* r--r--r-- */
 MODULE_PARM_DESC(ump_major, "Device major number");
 
@@ -376,8 +376,8 @@ static int ump_file_ioctl(struct inode *inode, struct file *filp, unsigned int c
 
 	return err;
 }
-
-/*int map_errcode( _mali_osk_errcode_t err )
+#ifndef CONFIG_MALI400
+int map_errcode( _mali_osk_errcode_t err )
 {
     switch(err)
     {
@@ -391,7 +391,8 @@ static int ump_file_ioctl(struct inode *inode, struct file *filp, unsigned int c
         case _MALI_OSK_ERR_ITEM_NOT_FOUND: return -ENOENT;
         default: return -EFAULT;
     }
-}*/
+}
+#endif
 
 /*
  * Handle from OS to map specified virtual memory to specified UMP memory.

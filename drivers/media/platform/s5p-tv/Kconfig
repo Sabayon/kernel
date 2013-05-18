@@ -84,4 +84,11 @@ config VIDEO_SAMSUNG_S5P_MIXER_DEBUG
 	help
 	  Enables debugging for Mixer driver.
 
+config ODROID_X_X2_BYPASS_HDMI_JUMPER
+	bool "Ignores the HDMI Jumper on ODROID-X/X2 and set the res based on boot args"
+	depends on ODROID_X || ODROID_X2
+	default n
+	help
+		only set this if you are sure what you are doing
+
 endif # VIDEO_SAMSUNG_S5P_TV

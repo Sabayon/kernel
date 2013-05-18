@@ -28,6 +28,11 @@
 static int debug = 1;
 module_param(debug, int, 0644);
 
+#include <ump/ump_kernel_interface_ref_drv.h>
+
+#define GET_UMP_SECURE_ID_BUF1   _IOWR('m', 311, unsigned int)
+#define GET_UMP_SECURE_ID_BUF2   _IOWR('m', 312, unsigned int)
+
 #define dprintk(level, fmt, arg...)					\
 	do {								\
 		if (debug >= level)					\
@@ -52,6 +57,7 @@ struct vb2_fb_data {
 	struct inode fake_inode;
 
 	struct mutex fb_lock;
+        ump_dd_handle ump_handle[2];        
 };
 
 static int vb2_fb_stop(struct fb_info *info);
@@ -95,6 +101,44 @@ static struct fmt_desc fmt_conv_table[] = {
 	},
 	/* TODO: add more format descriptors */
 };
+
+static void create_ump_ids(struct vb2_fb_data *data, unsigned int smem, int size)
+{
+        ump_dd_physical_block block;
+        block.addr = smem;
+        block.size = size;
+        data->ump_handle[0] = ump_dd_handle_create_from_phys_blocks(&block, 1);
+        data->ump_handle[1] = ump_dd_handle_create_from_phys_blocks(&block, 1);
+}
+
+static int do_hkdk_ioctl(struct fb_info *info, unsigned int cmd, unsigned long arg) {
+
+        struct vb2_fb_data *data = info->par;
+        int ret = 0;
+
+        switch (cmd) {
+
+        case GET_UMP_SECURE_ID_BUF1: {
+		pr_emerg("videobuf2-fb: GET_UMP_SECURE_ID_BUF1 called\n");
+		u32 __user *secureid = (u32 __user *) arg;
+                ret = put_user(ump_dd_secure_id_get(data->ump_handle[0]), secureid);
+                break;
+        }
+
+        case GET_UMP_SECURE_ID_BUF2: {
+		pr_emerg("videobuf2-fb: GET_UMP_SECURE_ID_BUF2 called\n");
+                u32 __user *secureid = (u32 __user *) arg;
+                ret = put_user(ump_dd_secure_id_get(data->ump_handle[1]), secureid);
+                break;
+        }
+
+        default:
+                printk(KERN_ERR "videobuf2-fb: unknown ioctl command: %x\n", cmd);
+                ret =  -EINVAL;
+                break;
+        }
+        return ret;
+}
 
 /**
  * vb2_drv_lock() - a shortcut to call driver specific lock()
@@ -238,6 +282,8 @@ static int vb2_fb_activate(struct fb_info *info)
 	info->screen_size = size;
 	info->fix.line_length = bpl;
 	info->fix.smem_len = info->fix.mmio_len = size;
+
+	create_ump_ids(data, info->fix.smem_start, info->fix.smem_len);
 
 	var = &info->var;
 	var->xres = var->xres_virtual = var->width = width;
@@ -488,6 +534,7 @@ static struct fb_ops vb2_fb_ops = {
 	.fb_fillrect	= cfb_fillrect,
 	.fb_copyarea	= cfb_copyarea,
 	.fb_imageblit	= cfb_imageblit,
+	.fb_ioctl	= do_hkdk_ioctl,
 };
 
 /**

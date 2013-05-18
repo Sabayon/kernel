@@ -25,6 +25,7 @@
 #include <mach/regs-pmu.h>
 #include <plat/devs.h>
 
+extern struct platform_device mali_gpu_device;
 /*
  * Exynos specific wrapper around the generic power domain
  */
@@ -279,6 +280,9 @@ static __init int exynos4_pm_init_power_domain(void)
 #ifdef CONFIG_S5P_DEV_JPEG
 	exynos_pm_add_dev_to_genpd(&s5p_device_jpeg, &exynos4_pd_cam);
 #endif
+#ifdef CONFIG_MALI400
+	exynos_pm_add_dev_to_genpd(&mali_gpu_device, &exynos4_pd_g3d);
+#endif	        
 	return 0;
 }
 arch_initcall(exynos4_pm_init_power_domain);

@@ -1,0 +1,29 @@
+--- drivers/media/platform/s5p-tv/hdmi_v14_drv.c
++++ drivers/media/platform/s5p-tv/hdmi_v14_drv.c
+@@ -230,13 +231,17 @@
+ 	/* enable HPD interrupts */
+ 	hdmi_write_mask(hdev, HDMI_INTC_CON_0, ~0, HDMI_INTC_EN_GLOBAL |
+ 		HDMI_INTC_EN_HPD_PLUG | HDMI_INTC_EN_HPD_UNPLUG);
++
+ 	/* choose DVI mode */
+ 	hdmi_write_mask(hdev, HDMI_MODE_SEL,
+-		HDMI_MODE_DVI_EN, HDMI_MODE_MASK);
++		HDMI_MODE_HDMI_EN, HDMI_MODE_MASK);
+ 	hdmi_write_mask(hdev, HDMI_CON_2, ~0,
+ 		HDMI_VID_PREAMBLE_DIS | HDMI_GUARD_BAND_DIS);
+ 	/* disable bluescreen */
+ 	hdmi_write_mask(hdev, HDMI_CON_0, 0, HDMI_BLUE_SCR_EN);
++
++	hdmi_writeb(hdev, HDMI_AVI_CON, 0x02);
++	hdmi_writeb(hdev, HDMI_AVI_BYTE(1), 2 << 5);
+ }
+ 
+ static void hdmi_timing_apply(struct hdmi_device *hdev,
+@@ -565,6 +753,7 @@
+ 	mdelay(10);
+ 
+ 	hdmi_reg_init(hdmi_dev);
++	hdmi_audio_init(hdmi_dev);
+ 
+ 	/* setting core registers */
+ 	hdmi_timing_apply(hdmi_dev, conf);

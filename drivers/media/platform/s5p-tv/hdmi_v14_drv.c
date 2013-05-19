@@ -1138,6 +1138,7 @@ static void hdmi_resources_cleanup(struct hdmi_device *hdev)
 unsigned char hdmiargs[5];
 static void __init hkdk_hdmi_res_get(char *line) {
 	sprintf(hdmiargs, "%s", line);
+	pr_emerg("s5p-tv: HDMI_PHY_RES=%s\n", hdmiargs);
 }
 __setup("hdmi_phy_res=", hkdk_hdmi_res_get);
 
@@ -1158,10 +1159,13 @@ static int hdmi_g_default_preset(struct hdmi_device *hdev)
 	return  gpio_get_value(EXYNOS4_GPX0(3)) ? V4L2_DV_1080P60 : V4L2_DV_720P60;
 #elif defined(CONFIG_ODROID_U2) || defined(CONFIG_ODROID_X_X2_BYPASS_HDMI_JUMPER)
 	pr_emerg("s5p-tv: ODROID-U2 or X/X2 ByPass Jumper Mode\n");
-	if(strncmp("1080", hdmiargs, 4))
+	if(!strncmp("1080", hdmiargs, 4)) {
+		pr_emerg("s5p-tv: Selected V4L2_DV_1080P60 via software\n");	
 		return V4L2_DV_1080P60;
-	else
+	} else {
+		pr_emerg("s5p-tv: Selected V4L2_DV_720P60 via software\n");
 		return V4L2_DV_720P60;
+	}
 #endif
 #else
 	return  HDMI_DEFAULT_PRESET;

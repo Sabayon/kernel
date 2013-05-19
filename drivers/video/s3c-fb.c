@@ -29,6 +29,12 @@
 #include <mach/map.h>
 #include <plat/fb.h>
 
+#include <ump/ump_kernel_interface_ref_drv.h>
+
+#define GET_UMP_SECURE_ID_BUF1   _IOWR('m', 311, unsigned int)
+#define GET_UMP_SECURE_ID_BUF2   _IOWR('m', 312, unsigned int)
+
+
 /* This driver will export a number of framebuffer interfaces depending
  * on the configuration passed in via the platform data. Each fb instance
  * maps to a hardware window. Currently there is no support for runtime
@@ -221,6 +227,37 @@ struct s3c_fb {
 	unsigned long		 irq_flags;
 	struct s3c_fb_vsync	 vsync_info;
 };
+
+
+static int show_ump_secure_id(struct fb_info *info, unsigned long arg, int buf)
+{
+        int buf_len = info->fix.smem_len;
+
+        if (info->var.yres * 2 == info->var.yres_virtual)
+                buf_len = buf_len >> 1; 
+        else
+                pr_warn("HardkernelUMP: Double buffer disabled!\n");
+        
+        u32 __user *psecureid = (u32 __user *) arg;
+        ump_secure_id secure_id;
+        ump_dd_physical_block ump_memory_description;
+        ump_dd_handle ump_wrapped_buffer;
+
+        ump_memory_description.addr = info->fix.smem_start + (buf_len * buf);
+        ump_memory_description.size = info->fix.smem_len;
+                      
+        if(buf > 0) {  
+                ump_memory_description.addr += (buf_len * (buf - 1));
+                ump_memory_description.size = buf_len;
+        }
+        
+        ump_wrapped_buffer = ump_dd_handle_create_from_phys_blocks(&ump_memory_description, 1);
+
+        secure_id = ump_dd_secure_id_get(ump_wrapped_buffer);
+        
+        return put_user((unsigned int)secure_id, psecureid);
+}
+
 
 /**
  * s3c_fb_validate_win_bpp - validate the bits-per-pixel for this mode.
@@ -1032,6 +1069,19 @@ static int s3c_fb_ioctl(struct fb_info *info, unsigned int cmd,
 
 		ret = s3c_fb_wait_for_vsync(sfb, crtc);
 		break;
+        case GET_UMP_SECURE_ID_BUF1: {
+                pr_emerg("s3c-fb: GET_UMP_SECURE_ID_BUF1 called\n");
+                ret = show_ump_secure_id(info, arg, 0);
+                break;
+        }
+        case GET_UMP_SECURE_ID_BUF2: {
+                pr_emerg("s3c-fb: GET_UMP_SECURE_ID_BUF2 called\n");
+                ret = show_ump_secure_id(info, arg, 1);
+                break;
+        }
+
+                
+        
 	default:
 		ret = -ENOTTY;
 	}

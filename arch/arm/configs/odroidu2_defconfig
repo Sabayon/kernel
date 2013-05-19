@@ -1,6 +1,6 @@
 #
 # Automatically generated file; DO NOT EDIT.
-# Linux/arm 3.8.8 Kernel Configuration
+# Linux/arm 3.8.13 Kernel Configuration
 #
 CONFIG_ARM=y
 CONFIG_SYS_SUPPORTS_APM_EMULATION=y
@@ -2612,7 +2612,7 @@ CONFIG_USB_TMC=m
 # also be needed; see USB_STORAGE Help for more info
 #
 CONFIG_USB_STORAGE=m
-CONFIG_USB_STORAGE_DEBUG=y
+# CONFIG_USB_STORAGE_DEBUG is not set
 CONFIG_USB_STORAGE_REALTEK=m
 CONFIG_REALTEK_AUTOPM=y
 CONFIG_USB_STORAGE_DATAFAB=m

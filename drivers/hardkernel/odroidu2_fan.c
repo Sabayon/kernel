@@ -116,8 +116,6 @@ static	ssize_t set_pwm_duty	(struct device *dev, struct device_attribute *attr, 
 		return count;
 	}
 
-	printk("PWM_0 : %s [%d] \n",__FUNCTION__,val);
-
 	mutex_lock(&fan->mutex);
 	fan->duty = val;
 

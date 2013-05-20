@@ -153,7 +153,8 @@ static int os_allocate(void* ctx, ump_dd_mem * descriptor)
 		}
 
 		descriptor->contiguous_cpu_addr =
-			dma_zalloc_coherent(NULL, left, &dma_addr, GFP_KERNEL);
+		        dma_alloc_coherent(NULL, left, &dma_addr,
+		                GFP_HIGHUSER | __GFP_ZERO | __GFP_REPEAT | __GFP_NOWARN | __GFP_COLD);
 		if (descriptor->contiguous_cpu_addr == NULL) {
 			printk(KERN_ERR "Coherent dma allocation failed, size: %d\n", left);
 			up(&info->mutex);

@@ -444,17 +444,24 @@ config MACH_HKDK4412
 	help
 	  Machine support for ODROIDs based on Samsung EXYNOS4412 (X/X2/U2)
 
-config ODROID_X
-	bool "Enable Support for ODROID-X"
+choice 
 	depends on MACH_HKDK4412
+	prompt "Select your ODROID Product"
+	default ODROID_U2
 
-config ODROID_X2
-	bool "Enable support for ODROID-X2"
-	depends on MACH_HKDK4412
+	config ODROID_X
+		bool "Enable Support for ODROID-X"
+		depends on MACH_HKDK4412
 
-config ODROID_U2
-	bool "Enable support for ODROID-U2"
-	depends on MACH_HKDK4412
+	config ODROID_X2
+		bool "Enable support for ODROID-X2"
+		depends on MACH_HKDK4412
+
+	config ODROID_U2
+		bool "Enable support for ODROID-U2"
+		depends on MACH_HKDK4412
+
+endchoice
 
 endif
 

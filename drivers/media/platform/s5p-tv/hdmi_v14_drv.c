@@ -1038,9 +1038,15 @@ __setup("hdmi_phy_res=", hkdk_hdmi_res_get);
 
 static int hdmi_g_default_preset(struct hdmi_device *hdev)
 {
-#if defined(CONFIG_MACH_HKDK4412)
+ #if defined(CONFIG_MACH_HKDK4412)
 	pr_emerg("s5p-tv: Board is ODROID-X/X2/U2\n");
-#if defined(CONFIG_ODROID_X) || defined(CONFIG_ODROID_X2) && !defined(CONFIG_ODROID_X_X2_BYPASS_HDMI_JUMPER)
+  #if defined(CONFIG_ODORID_HDMI_SW_CONFIG)
+	// hdmi sw config mode
+	pr_emerg("s5p-tv: ODROID HDMI Software Configuration Mode via App\n");
+	int v4l2_value = atoi(hdmiargs);
+	pr_emerg("s5p-tv: ODROID HDMI SW CONF Value: %d\n", v4l2_value);
+	return v4l2_value;	
+  #elif defined(CONFIG_ODROID_X) || defined(CONFIG_ODROID_X2) && !defined(CONFIG_ODROID_X_X2_BYPASS_HDMI_JUMPER)
 	pr_emerg("s5p-tv: ODROID-X/X2 Jumper Config Mode\n");
 	if (gpio_request(EXYNOS4_GPX0(3), "EXYNOS4_GPX0(3)")) {
 		return  V4L2_DV_720P60;
@@ -1051,7 +1057,7 @@ static int hdmi_g_default_preset(struct hdmi_device *hdev)
 	}
 	dev_dbg(hdev->dev, "%s : Default HDMI preset is %s.\n" , __FUNCTION__ , gpio_get_value(EXYNOS4_GPX0(3)) ? "1920x1080" : "1280x720");
 	return  gpio_get_value(EXYNOS4_GPX0(3)) ? V4L2_DV_1080P60 : V4L2_DV_720P60;
-#elif defined(CONFIG_ODROID_U2) || defined(CONFIG_ODROID_X_X2_BYPASS_HDMI_JUMPER)
+  #elif defined(CONFIG_ODROID_U2) || defined(CONFIG_ODROID_X_X2_BYPASS_HDMI_JUMPER)
 	pr_emerg("s5p-tv: ODROID-U2 or X/X2 ByPass Jumper Mode\n");
 	if(!strncmp("1080", hdmiargs, 4)) {
 		pr_emerg("s5p-tv: Selected V4L2_DV_1080P60 via software\n");	
@@ -1060,10 +1066,10 @@ static int hdmi_g_default_preset(struct hdmi_device *hdev)
 		pr_emerg("s5p-tv: Selected V4L2_DV_720P60 via software\n");
 		return V4L2_DV_720P60;
 	}
-#endif
-#else
+  #endif
+ #else
 	return  HDMI_DEFAULT_PRESET;
-#endif
+ #endif
 }
 
 static int hdmi_resources_init(struct hdmi_device *hdev)

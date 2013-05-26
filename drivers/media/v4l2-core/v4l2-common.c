@@ -584,6 +584,7 @@ int v4l_fill_dv_preset_info(u32 preset, struct v4l2_dv_enum_preset *info)
 		{ 1920, 1080, "1080p@30" },	/* V4L2_DV_1080P30 */
 		{ 1920, 1080, "1080p@50" },	/* V4L2_DV_1080P50 */
 		{ 1920, 1080, "1080p@60" },	/* V4L2_DV_1080P60 */
+		{ 720,  480, "480p@60" },       /* V4L2_DV_480P60 */                
 	};
 
 	if (info == NULL || preset >= ARRAY_SIZE(dv_presets))

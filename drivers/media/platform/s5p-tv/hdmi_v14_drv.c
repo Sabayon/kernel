@@ -743,134 +743,28 @@ void hdmi_dumpregs(struct hdmi_device *hdev, char *prefix)
 //#undef DUMPREG
 }
 
-static const struct hdmi_preset_conf hdmi_conf_720p60 = {
-	.core = {
-		.h_blank = {0x72, 0x01},
-		.v2_blank = {0xee, 0x02},
-		.v1_blank = {0x1e, 0x00},
-		.v_line = {0xee, 0x02},
-		.h_line = {0x72, 0x06},
-		.hsync_pol = {0x00},
-		.vsync_pol = {0x00},
-		.int_pro_mode = {0x00},
-		.v_blank_f0 = {0xff, 0xff},
-		.v_blank_f1 = {0xff, 0xff},
-		.h_sync_start = {0x6c, 0x00},
-		.h_sync_end = {0x94, 0x00},
-		.v_sync_line_bef_2 = {0x0a, 0x00},
-		.v_sync_line_bef_1 = {0x05, 0x00},
-		.v_sync_line_aft_2 = {0xff, 0xff},
-		.v_sync_line_aft_1 = {0xff, 0xff},
-		.v_sync_line_aft_pxl_2 = {0xff, 0xff},
-		.v_sync_line_aft_pxl_1 = {0xff, 0xff},
-		.v_blank_f2 = {0xff, 0xff},
-		.v_blank_f3 = {0xff, 0xff},
-		.v_blank_f4 = {0xff, 0xff},
-		.v_blank_f5 = {0xff, 0xff},
-		.v_sync_line_aft_3 = {0xff, 0xff},
-		.v_sync_line_aft_4 = {0xff, 0xff},
-		.v_sync_line_aft_5 = {0xff, 0xff},
-		.v_sync_line_aft_6 = {0xff, 0xff},
-		.v_sync_line_aft_pxl_3 = {0xff, 0xff},
-		.v_sync_line_aft_pxl_4 = {0xff, 0xff},
-		.v_sync_line_aft_pxl_5 = {0xff, 0xff},
-		.v_sync_line_aft_pxl_6 = {0xff, 0xff},
-		.vact_space_1 = {0xff, 0xff},
-		.vact_space_2 = {0xff, 0xff},
-		.vact_space_3 = {0xff, 0xff},
-		.vact_space_4 = {0xff, 0xff},
-		.vact_space_5 = {0xff, 0xff},
-		.vact_space_6 = {0xff, 0xff},
-		/* other don't care */
-	},
-	.tg = {
-		0x00, /* cmd */
-		0x72, 0x06, /* h_fsz */
-		0x72, 0x01, 0x00, 0x05, /* hact */
-		0xee, 0x02, /* v_fsz */
-		0x01, 0x00, 0x33, 0x02, /* vsync */
-		0x1e, 0x00, 0xd0, 0x02, /* vact */
-		0x33, 0x02, /* field_chg */
-		0x48, 0x02, /* vact_st2 */
-		0x00, 0x00, /* vact_st3 */
-		0x00, 0x00, /* vact_st4 */
-		0x01, 0x00, 0x01, 0x00, /* vsync top/bot */
-		0x01, 0x00, 0x33, 0x02, /* field top/bot */
-		0x00, /* 3d FP */
-	},
-	.mbus_fmt = {
-		.width = 1280,
-		.height = 720,
-		.code = V4L2_MBUS_FMT_FIXED, /* means RGB888 */
-		.field = V4L2_FIELD_NONE,
-		.colorspace = V4L2_COLORSPACE_SRGB,
-	},
-};
+#include "hdmi_v14_supported_res.h"
 
-static const struct hdmi_preset_conf hdmi_conf_1080p60 = {
-	.core = {
-		.h_blank = {0x18, 0x01},
-		.v2_blank = {0x65, 0x04},
-		.v1_blank = {0x2d, 0x00},
-		.v_line = {0x65, 0x04},
-		.h_line = {0x98, 0x08},
-		.hsync_pol = {0x00},
-		.vsync_pol = {0x00},
-		.int_pro_mode = {0x00},
-		.v_blank_f0 = {0xff, 0xff},
-		.v_blank_f1 = {0xff, 0xff},
-		.h_sync_start = {0x56, 0x00},
-		.h_sync_end = {0x82, 0x00},
-		.v_sync_line_bef_2 = {0x09, 0x00},
-		.v_sync_line_bef_1 = {0x04, 0x00},
-		.v_sync_line_aft_2 = {0xff, 0xff},
-		.v_sync_line_aft_1 = {0xff, 0xff},
-		.v_sync_line_aft_pxl_2 = {0xff, 0xff},
-		.v_sync_line_aft_pxl_1 = {0xff, 0xff},
-		.v_blank_f2 = {0xff, 0xff},
-		.v_blank_f3 = {0xff, 0xff},
-		.v_blank_f4 = {0xff, 0xff},
-		.v_blank_f5 = {0xff, 0xff},
-		.v_sync_line_aft_3 = {0xff, 0xff},
-		.v_sync_line_aft_4 = {0xff, 0xff},
-		.v_sync_line_aft_5 = {0xff, 0xff},
-		.v_sync_line_aft_6 = {0xff, 0xff},
-		.v_sync_line_aft_pxl_3 = {0xff, 0xff},
-		.v_sync_line_aft_pxl_4 = {0xff, 0xff},
-		.v_sync_line_aft_pxl_5 = {0xff, 0xff},
-		.v_sync_line_aft_pxl_6 = {0xff, 0xff},
-		/* other don't care */
-	},
-	.tg = {
-		0x00, /* cmd */
-		0x98, 0x08, /* h_fsz */
-		0x18, 0x01, 0x80, 0x07, /* hact */
-		0x65, 0x04, /* v_fsz */
-		0x01, 0x00, 0x33, 0x02, /* vsync */
-		0x2d, 0x00, 0x38, 0x04, /* vact */
-		0x33, 0x02, /* field_chg */
-		0x48, 0x02, /* vact_st2 */
-		0x00, 0x00, /* vact_st3 */
-		0x00, 0x00, /* vact_st4 */
-		0x01, 0x00, 0x01, 0x00, /* vsync top/bot */
-		0x01, 0x00, 0x33, 0x02, /* field top/bot */
-		0x00, /* 3d FP */
-	},
-	.mbus_fmt = {
-		.width = 1920,
-		.height = 1080,
-		.code = V4L2_MBUS_FMT_FIXED, /* means RGB888 */
-		.field = V4L2_FIELD_NONE,
-		.colorspace = V4L2_COLORSPACE_SRGB,
-	},
-};
 
 static const struct {
 	u32 preset;
 	const struct hdmi_preset_conf *conf;
 } hdmi_conf[] = {
-	{ V4L2_DV_720P60,  &hdmi_conf_720p60 },
-	{ V4L2_DV_1080P60, &hdmi_conf_1080p60 },
+	// 480p resolutions
+	{ V4L2_DV_480P60,  &hdmi_conf_480p60 }, // 480P 60Hz
+	// 576p resolutions
+	{ V4L2_DV_576P50,  &hdmi_conf_576p50 }, // 576P 50Hz
+	// 720p resolutions
+	{ V4L2_DV_720P60,  &hdmi_conf_720p60 }, // 720P 60Hz
+	{ V4L2_DV_720P50,  &hdmi_conf_720p50 }, // 720P 50hz
+	// 1080p resolutions
+	{ V4L2_DV_1080P60, &hdmi_conf_1080p60 }, // 1080P 60Hz
+	{ V4L2_DV_1080I60, &hdmi_conf_1080i60 }, // 1080I 60Hz
+	{ V4L2_DV_1080I50, &hdmi_conf_1080i50 }, // 1080I 50Hz
+	{ V4L2_DV_1080P50, &hdmi_conf_1080p50 }, // 1080P 50Hz
+	{ V4L2_DV_1080P30, &hdmi_conf_1080p30 }, // 1080P 30Hz
+	{ V4L2_DV_1080P24, &hdmi_conf_1080p24 }, // 1080P 24Hz
+	{ V4L2_DV_1080P25, &hdmi_conf_1080p25 }, // 1080P 25Hz
 };
 
 static const struct hdmi_preset_conf *hdmi_preset2conf(u32 preset)

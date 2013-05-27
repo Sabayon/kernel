@@ -425,7 +425,6 @@ config MACH_SMDK4412
 
 config MACH_HKDK4412
 	bool "HKDK4412"
-	depends on !CPU_IDLE
 	select SOC_EXYNOS4412
 	select MACH_SMDK4212
 	select S3C_DEV_HSMMC

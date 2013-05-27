@@ -179,13 +179,13 @@ static inline struct hdmiphy_ctx *sd_to_ctx(struct v4l2_subdev *sd)
 static unsigned long hdmiphy_preset_to_pixclk(u32 preset)
 {
 	static const unsigned long pixclk[] = {
-		[V4L2_DV_480P59_94] =  27000000,
+		[V4L2_DV_480P60] =  27027000,
 		[V4L2_DV_576P50]    =  27000000,
-		[V4L2_DV_720P59_94] =  74176000,
 		[V4L2_DV_720P50]    =  74250000,
 		[V4L2_DV_720P60]    =  74250000,
 		[V4L2_DV_1080P24]   =  74250000,
-		[V4L2_DV_1080P30]   =  74250000,
+		[V4L2_DV_1080P25]   =  74250000,
+		[V4L2_DV_1080P30]   =  74176000,
 		[V4L2_DV_1080I50]   =  74250000,
 		[V4L2_DV_1080I60]   =  74250000,
 		[V4L2_DV_1080P50]   = 148500000,

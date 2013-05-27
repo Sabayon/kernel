@@ -1045,6 +1045,10 @@ static int hdmi_g_default_preset(struct hdmi_device *hdev)
 	pr_emerg("s5p-tv: ODROID HDMI Software Configuration Mode via App\n");
 	int v4l2_value = atoi(hdmiargs);
 	pr_emerg("s5p-tv: ODROID HDMI SW CONF Value: %d\n", v4l2_value);
+	if(v4l2_value > 20) {
+		pr_emerg("s5p-tv: ODROID HDMI: HDMI Value is wrong!\n");
+		return V4L2_DV_720P60;
+	} 
 	return v4l2_value;	
   #elif defined(CONFIG_ODROID_X) || defined(CONFIG_ODROID_X2) && !defined(CONFIG_ODROID_X_X2_BYPASS_HDMI_JUMPER)
 	pr_emerg("s5p-tv: ODROID-X/X2 Jumper Config Mode\n");

@@ -1030,6 +1030,7 @@ static void hdmi_resources_cleanup(struct hdmi_device *hdev)
 
 // Setting the variable with HDMI screen resolution for ODROID-U2 that doesn't have the HDMI Jumper
 unsigned char hdmiargs[5];
+
 static void __init hkdk_hdmi_res_get(char *line) {
 	sprintf(hdmiargs, "%s", line);
 	pr_emerg("s5p-tv: HDMI_PHY_RES=%s\n", hdmiargs);
@@ -1042,14 +1043,21 @@ static int hdmi_g_default_preset(struct hdmi_device *hdev)
 	pr_emerg("s5p-tv: Board is ODROID-X/X2/U2\n");
   #if defined(CONFIG_ODORID_HDMI_SW_CONFIG)
 	// hdmi sw config mode
+	int v4l2_config;
+	int temp;
 	pr_emerg("s5p-tv: ODROID HDMI Software Configuration Mode via App\n");
-	int v4l2_value = atoi(hdmiargs);
-	pr_emerg("s5p-tv: ODROID HDMI SW CONF Value: %d\n", v4l2_value);
-	if(v4l2_value > 20) {
-		pr_emerg("s5p-tv: ODROID HDMI: HDMI Value is wrong!\n");
+	temp = kstrtoint(strstrip(hdmiargs), 0, &v4l2_config);
+	if(temp < 0) {
+		pr_emerg("s5p-tv: Failed to converted V4L2 ID\n");
 		return V4L2_DV_720P60;
-	} 
-	return v4l2_value;	
+	} else {
+		if(v4l2_config > 20) {
+			pr_emerg("s5p-tv: Wrong value on hdmi_phys_res\n");
+			return V4L2_DV_720P60;
+		}
+		pr_emerg("s5p-tv: ODROID HDMI SW CONF Value: %d\n", v4l2_config);	
+		return v4l2_config;
+	}
   #elif defined(CONFIG_ODROID_X) || defined(CONFIG_ODROID_X2) && !defined(CONFIG_ODROID_X_X2_BYPASS_HDMI_JUMPER)
 	pr_emerg("s5p-tv: ODROID-X/X2 Jumper Config Mode\n");
 	if (gpio_request(EXYNOS4_GPX0(3), "EXYNOS4_GPX0(3)")) {

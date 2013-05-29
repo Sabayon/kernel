@@ -177,6 +177,31 @@ static struct hdmi_device *sd_to_hdmi_dev(struct v4l2_subdev *sd)
 	return container_of(sd, struct hdmi_device, sd);
 }
 
+#if defined(CONFIG_ODORID_HDMI_SW_CONFIG)
+unsigned char hdtv_type[5];
+unsigned char hdtv_format[10];
+
+static void __init hkdk_hdmi_get_hdtv_type(char *bargs_hdtv_type) {
+	sprintf(hdtv_type, "%s", bargs_hdtv_type);
+	pr_emerg("s5p-tv: HDTV TYPE is %s\n", hdtv_type);
+}
+__setup("hdtv_type=", hkdk_hdmi_get_hdtv_type);
+
+static void __init hkdk_hdmi_get_hdtv_format(char *bargs_hdtv_format) {
+	sprintf(hdtv_format, "%s", bargs_hdtv_format);
+	pr_emerg("s5p-tv: HDTV FORMAT is %s\n", hdtv_format);
+}
+__setup("hdtv_format=", hkdk_hdmi_get_hdtv_format);
+#else
+unsigned char hdmiargs[5];
+static void __init hkdk_hdmi_res_get(char *line) {
+	sprintf(hdmiargs, "%s", line);
+	pr_emerg("s5p-tv: HDMI_PHY_RES=%s\n", hdmiargs);
+}
+__setup("hdmi_phy_res=", hkdk_hdmi_res_get);
+#endif
+
+
 static inline
 void hdmi_write(struct hdmi_device *hdev, u32 reg_id, u32 value)
 {
@@ -230,13 +255,26 @@ static void hdmi_reg_init(struct hdmi_device *hdev)
 	/* enable HPD interrupts */
 	hdmi_write_mask(hdev, HDMI_INTC_CON_0, ~0, HDMI_INTC_EN_GLOBAL |
 		HDMI_INTC_EN_HPD_PLUG | HDMI_INTC_EN_HPD_UNPLUG);
-	/* choose HDMI mode */
-	hdmi_write_mask(hdev, HDMI_MODE_SEL,
-		HDMI_MODE_HDMI_EN, HDMI_MODE_MASK);
-	/* disable bluescreen */
-	hdmi_write_mask(hdev, HDMI_CON_0, 0, HDMI_BLUE_SCR_EN);
-	hdmi_writeb(hdev, HDMI_AVI_CON, 0x02);
-	hdmi_writeb(hdev, HDMI_AVI_BYTE(1), 2 << 5);
+	/* choose between HDMI and DVI mode */
+	/* default mode is HDMI if nothing is selected */
+
+	if(strcmp(hdtv_type, "dvi") == 0) {
+		pr_emerg("s5p-tv: Configuring HDMI for DVI Mode\n");
+	/* choose DVI mode */
+		hdmi_write_mask(hdev, HDMI_MODE_SEL, HDMI_MODE_DVI_EN, HDMI_MODE_MASK);
+		hdmi_write_mask(hdev, HDMI_CON_2, ~0, HDMI_VID_PREAMBLE_DIS | HDMI_GUARD_BAND_DIS);
+		/* disable bluescreen */
+		hdmi_write_mask(hdev, HDMI_CON_0, 0, HDMI_BLUE_SCR_EN);
+	} else {
+		pr_emerg("s5p-tv: Configuring HDMI for HDMI Mode\n");
+
+		hdmi_write_mask(hdev, HDMI_MODE_SEL, HDMI_MODE_HDMI_EN, HDMI_MODE_MASK);
+		/* disable bluescreen */
+		hdmi_write_mask(hdev, HDMI_CON_0, 0, HDMI_BLUE_SCR_EN);
+	
+		hdmi_writeb(hdev, HDMI_AVI_CON, 0x02);
+		hdmi_writeb(hdev, HDMI_AVI_BYTE(1), 2 << 5);
+	}
 	
 }
 
@@ -564,13 +602,22 @@ static int hdmi_conf_apply(struct hdmi_device *hdmi_dev)
 	mdelay(10);
 	hdmi_write_mask(hdmi_dev, HDMI_CORE_RSTOUT, ~0, HDMI_CORE_SW_RSTOUT);
 	mdelay(10);
+	
+	// enable or disable audio, if type is DVI no audio is sent, if type is hdmi will send audio over.
+	// default is always HDMI
+	if(strcmp(hdtv_type, "dvi") == 0) {
+		pr_emerg("s5p-tv: HDMI AUDIO, type is DVI so no audio configuration\n");
+		hdmi_reg_init(hdmi_dev);
+		hdmi_timing_apply(hdmi_dev, conf);
+	} else {
+		pr_emerg("s5p-tv: HDMI AUDIO, type is HDMI audio configured\n");
+		hdmi_reg_init(hdmi_dev);
+		hdmi_audio_init(hdmi_dev);
 
-	hdmi_reg_init(hdmi_dev);
-	hdmi_audio_init(hdmi_dev);
-
-	/* setting core registers */
-	hdmi_timing_apply(hdmi_dev, conf);
-	hdmi_audio_control(hdmi_dev, true);
+		/* setting core registers */
+		hdmi_timing_apply(hdmi_dev, conf);
+		hdmi_audio_control(hdmi_dev, true);
+	}
 
 	return 0;
 }
@@ -821,7 +868,9 @@ static int hdmi_streamon(struct hdmi_device *hdev)
 	hdmi_write_mask(hdev, HDMI_CON_0, ~0, HDMI_EN);
 	hdmi_write_mask(hdev, HDMI_TG_CMD, ~0, HDMI_TG_EN);
 
-	hdmi_audio_control(hdev,true);
+	if(strcmp(hdtv_type, "hdmi") == 0)
+		hdmi_audio_control(hdev,true);
+	
 	hdmi_dumpregs(hdev, "streamon");
 	return 0;
 }
@@ -835,7 +884,8 @@ static int hdmi_streamoff(struct hdmi_device *hdev)
 
 	hdmi_write_mask(hdev, HDMI_CON_0, 0, HDMI_EN);
 	hdmi_write_mask(hdev, HDMI_TG_CMD, 0, HDMI_TG_EN);
-	hdmi_audio_control(hdev,false);
+	if(strcmp(hdtv_type, "hdmi") == 0)	
+		hdmi_audio_control(hdev,false);
 
 	/* pixel(vpll) clock is used for HDMI in config mode */
 	clk_disable(res->sclk_hdmi);
@@ -1028,36 +1078,38 @@ static void hdmi_resources_cleanup(struct hdmi_device *hdev)
 	memset(res, 0, sizeof *res);
 }
 
-// Setting the variable with HDMI screen resolution for ODROID-U2 that doesn't have the HDMI Jumper
-unsigned char hdmiargs[5];
-
-static void __init hkdk_hdmi_res_get(char *line) {
-	sprintf(hdmiargs, "%s", line);
-	pr_emerg("s5p-tv: HDMI_PHY_RES=%s\n", hdmiargs);
-}
-__setup("hdmi_phy_res=", hkdk_hdmi_res_get);
 
 static int hdmi_g_default_preset(struct hdmi_device *hdev)
 {
  #if defined(CONFIG_MACH_HKDK4412)
 	pr_emerg("s5p-tv: Board is ODROID-X/X2/U2\n");
   #if defined(CONFIG_ODORID_HDMI_SW_CONFIG)
-	// hdmi sw config mode
-	int v4l2_config;
-	int temp;
-	pr_emerg("s5p-tv: ODROID HDMI Software Configuration Mode via App\n");
-	temp = kstrtoint(strstrip(hdmiargs), 0, &v4l2_config);
-	if(temp < 0) {
-		pr_emerg("s5p-tv: Failed to converted V4L2 ID\n");
+	// new way to handle this
+	if(strcmp(hdtv_format, "480p60hz") == 0)
+		return V4L2_DV_480P60;
+	else if(strcmp(hdtv_format, "576p50hz") == 0)
+		return V4L2_DV_576P50;
+	else if(strcmp(hdtv_format, "720p60hz") == 0)
 		return V4L2_DV_720P60;
-	} else {
-		if(v4l2_config > 20) {
-			pr_emerg("s5p-tv: Wrong value on hdmi_phys_res\n");
-			return V4L2_DV_720P60;
-		}
-		pr_emerg("s5p-tv: ODROID HDMI SW CONF Value: %d\n", v4l2_config);	
-		return v4l2_config;
-	}
+	else if(strcmp(hdtv_format, "720p50hz") == 0)
+		return V4L2_DV_720P50;
+	else if(strcmp(hdtv_format, "1080p60hz") == 0)
+		return V4L2_DV_1080P60;
+	else if(strcmp(hdtv_format, "1080i60hz") == 0)
+		return V4L2_DV_1080I60;
+	else if(strcmp(hdtv_format, "1080i50hz") == 0)
+		return V4L2_DV_1080I50;
+	else if(strcmp(hdtv_format, "1080p50hz") == 0)
+		return V4L2_DV_1080P50;
+	else if(strcmp(hdtv_format, "1080p30hz") == 0)
+		return V4L2_DV_1080P30;
+	else if(strcmp(hdtv_format, "1080p25hz") == 0)
+		return V4L2_DV_1080P25;
+	else if(strcmp(hdtv_format, "1080p24hz") == 0)
+		return V4L2_DV_1080P24;
+	else
+		return V4L2_DV_720P60;
+	
   #elif defined(CONFIG_ODROID_X) || defined(CONFIG_ODROID_X2) && !defined(CONFIG_ODROID_X_X2_BYPASS_HDMI_JUMPER)
 	pr_emerg("s5p-tv: ODROID-X/X2 Jumper Config Mode\n");
 	if (gpio_request(EXYNOS4_GPX0(3), "EXYNOS4_GPX0(3)")) {

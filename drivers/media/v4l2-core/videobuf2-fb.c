@@ -27,6 +27,7 @@
 
 static int debug = 1;
 module_param(debug, int, 0644);
+#include "../platform/s5p-tv/mixer.h"
 
 #include <ump/ump_kernel_interface_ref_drv.h>
 
@@ -111,12 +112,35 @@ static void create_ump_ids(struct vb2_fb_data *data, unsigned int smem, int size
         data->ump_handle[1] = ump_dd_handle_create_from_phys_blocks(&block, 1);
 }
 
+static int vb2_wait_for_vsync(struct fb_info *info, u32 crtc) {
+	struct vb2_fb_data *data = info->par;
+	struct vb2_queue *q = data->q;
+	struct mxr_layer *layer = vb2_get_drv_priv(q);
+	struct mxr_device *mdev = layer->mdev;
+
+	if(crtc != 0)
+		return -ENODEV;
+	
+	if(mxr_reg_wait4vsync(mdev) < 0)
+		return -ETIMEDOUT;
+
+	return 0;
+}
+
 static int do_hkdk_ioctl(struct fb_info *info, unsigned int cmd, unsigned long arg) {
 
         struct vb2_fb_data *data = info->par;
+	u32 crtc;
         int ret = 0;
 
         switch (cmd) {
+	case FBIO_WAITFORVSYNC:
+		pr_emerg("videobuf2-fb: FBIO_WAITFORVSYNC called\n");
+		if(get_user(crtc, (__u32 __user *)arg))
+			ret = -EFAULT;
+		else
+			ret = vb2_wait_for_vsync(info, crtc);
+		break;
 
         case GET_UMP_SECURE_ID_BUF1: {
 		pr_emerg("videobuf2-fb: GET_UMP_SECURE_ID_BUF1 called\n");

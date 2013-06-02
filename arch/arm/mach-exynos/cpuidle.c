@@ -68,24 +68,6 @@ static void exynos4_set_wakeupmask(void)
 
 static unsigned int g_pwr_ctrl, g_diag_reg;
 
-static void save_cpu_arch_register(void)
-{
-	/*read power control register*/
-	asm("mrc p15, 0, %0, c15, c0, 0" : "=r"(g_pwr_ctrl) : : "cc");
-	/*read diagnostic register*/
-	asm("mrc p15, 0, %0, c15, c0, 1" : "=r"(g_diag_reg) : : "cc");
-	return;
-}
-
-static void restore_cpu_arch_register(void)
-{
-	/*write power control register*/
-	asm("mcr p15, 0, %0, c15, c0, 0" : : "r"(g_pwr_ctrl) : "cc");
-	/*write diagnostic register*/
-	asm("mcr p15, 0, %0, c15, c0, 1" : : "r"(g_diag_reg) : "cc");
-	return;
-}
-
 static int idle_finisher(unsigned long flags)
 {
 	cpu_do_idle();
@@ -100,29 +82,25 @@ static int exynos4_enter_core0_aftr(struct cpuidle_device *dev,
 
 	exynos4_set_wakeupmask();
 
-	/* Set value of power down register for aftr mode */
-	exynos_sys_powerdown_conf(SYS_AFTR);
-
 	__raw_writel(virt_to_phys(s3c_cpu_resume), REG_DIRECTGO_ADDR);
 	__raw_writel(S5P_CHECK_AFTR, REG_DIRECTGO_FLAG);
 
-	save_cpu_arch_register();
+	/* Set value of power down register for aftr mode */
+	exynos_sys_powerdown_conf(SYS_AFTR);
 
 	/* Setting Central Sequence Register for power down mode */
 	tmp = __raw_readl(S5P_CENTRAL_SEQ_CONFIGURATION);
 	tmp &= ~S5P_CENTRAL_LOWPWR_CFG;
 	__raw_writel(tmp, S5P_CENTRAL_SEQ_CONFIGURATION);
 
-	cpu_pm_enter();
+	if(cpu_pm_enter())
+		goto abort;
+
 	cpu_suspend(0, idle_finisher);
 
-#ifdef CONFIG_SMP
-	if (!soc_is_exynos5250())
-		scu_enable(S5P_VA_SCU);
-#endif
 	cpu_pm_exit();
 
-	restore_cpu_arch_register();
+abort:
 
 	/*
 	 * If PMU failed while entering sleep mode, WFI will be

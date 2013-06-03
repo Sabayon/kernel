@@ -478,9 +478,8 @@ static int hkdk4412_reboot_notifier(struct notifier_block *this, unsigned long c
         msleep(150);
         gpio_direction_output(EXYNOS4_GPK1(2), 1);
         gpio_free(EXYNOS4_GPK1(2));
-	msleep(1000);
+	msleep(150);
         return NOTIFY_DONE;
-
 }	
 
 

@@ -17,6 +17,7 @@
 #include <linux/mfd/max77686.h>
 #include <linux/mmc/host.h>
 #include <linux/platform_device.h>
+#include <linux/pwm.h>
 #include <linux/pwm_backlight.h>
 #include <linux/regulator/machine.h>
 #include <linux/regulator/fixed.h>
@@ -411,6 +412,7 @@ static struct platform_device *hkdk4412_devices[] __initdata = {
 	&hkdk4412_tmu,
 #endif
 #if defined(CONFIG_ODROID_U2_FAN)
+	&s3c_device_timer[0],
 	&odroid_fan,
 #endif
 };
@@ -527,9 +529,9 @@ static void __init hkdk4412_machine_init(void)
 
 	s5p_fimd0_set_platdata(&hkdk4412_fb_pdata);
 
-	samsung_bl_set(&hkdk4412_bl_gpio_info, &hkdk4412_bl_data);
-
 	platform_add_devices(hkdk4412_devices, ARRAY_SIZE(hkdk4412_devices));
+
+	samsung_bl_set(&hkdk4412_bl_gpio_info, &hkdk4412_bl_data);
 
 	register_reboot_notifier(&hkdk4412_reboot_notifier_nb);
 }

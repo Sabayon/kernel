@@ -34,7 +34,6 @@ struct odroid_fan {
 	struct odroid_fan_platform_data *pdata;
 	struct pwm_device *pwm;
 
-	struct mutex		mutex;
 	unsigned int		pwm_status;
 
 	int period;
@@ -77,19 +76,19 @@ static	ssize_t set_pwm_enable	(struct device *dev, struct device_attribute *attr
     if(!(sscanf(buf, "%u\n", &val)))	return	-EINVAL;
 	printk("PWM_0 : %s [%d] \n",__FUNCTION__,val);
 
-	mutex_lock(&fan->mutex);
+
     if(val) {
     	fan->pwm_status = 1;
-		pwm_disable(fan->pwm);
-		pwm_config(fan->pwm, fan->duty * fan->period / 255, fan->period);
+	pwm_disable(fan->pwm);
+	pwm_config(fan->pwm, fan->duty * fan->period / 255, fan->period);
     	pwm_enable(fan->pwm);
     }
     else {
     	pwm_disable(fan->pwm);
-		pwm_config(fan->pwm, 0, fan->period);
+	pwm_config(fan->pwm, 1, fan->period);
     	fan->pwm_status = 0;
     }
-	mutex_unlock(&fan->mutex);
+
 
 	return count;
 }
@@ -115,20 +114,21 @@ static	ssize_t set_pwm_duty	(struct device *dev, struct device_attribute *attr, 
 		printk("PWM_0 : Invalid param. Duty cycle range is 0 to 255 \n");
 		return count;
 	}
-
-	mutex_lock(&fan->mutex);
+	
+	if(val == 0) val = 1;	
+	
 	fan->duty = val;
 
     if(fan->pwm_status){
-		pwm_disable(fan->pwm);
-		pwm_config(fan->pwm, fan->duty * fan->period / 255, fan->period);
+	pwm_disable(fan->pwm);
+	pwm_config(fan->pwm, fan->duty * fan->period / 255, fan->period);
     	pwm_enable(fan->pwm);
     }
     else {
 		pwm_disable(fan->pwm);
-		pwm_config(fan->pwm, 0, fan->period);
+		pwm_config(fan->pwm, 1, fan->period);
     }
-	mutex_unlock(&fan->mutex);
+
 	
 	return count;
 }
@@ -175,23 +175,25 @@ static	int		odroid_fan_probe		(struct platform_device *pdev)
 		return -ENOMEM;
 	fan->pdata = pdev->dev.platform_data;
 
+
 	//pwm port pin_func init
 	if (gpio_is_valid(fan->pdata->pwm_gpio)) {
-		ret = gpio_request(fan->pdata->pwm_gpio, "pwm_gpio");
-		if (ret)
-			printk(KERN_ERR "failed to get GPIO for PWM0\n");
+		WARN_ON(gpio_request(fan->pdata->pwm_gpio, "pwm_gpio"));
+
+		fan->pwm = pwm_request(fan->pdata->pwm_id, pdev->name);
+		
+		fan->period = fan->pdata->pwm_periode_ns;
+		fan->duty = fan->pdata->pwm_duty;
+		pwm_config(fan->pwm, fan->duty * fan->period / 255, fan->period);
+		pwm_enable(fan->pwm);
+
 		s3c_gpio_cfgpin(fan->pdata->pwm_gpio, fan->pdata->pwm_func);
 		s5p_gpio_set_drvstr(fan->pdata->pwm_gpio, S5P_GPIO_DRVSTR_LV4);
 		gpio_free(fan->pdata->pwm_gpio);
     }
 
-	fan->pwm = pwm_request(fan->pdata->pwm_id, pdev->name);
-	fan->period = fan->pdata->pwm_periode_ns;
-	fan->duty = fan->pdata->pwm_duty;
-	pwm_config(fan->pwm, fan->duty * fan->period / 255, fan->period);
-	pwm_enable(fan->pwm);
+	
 	fan->pwm_status = 1;
-	mutex_init(&fan->mutex);
 	
 	dev_set_drvdata(dev, fan);
 

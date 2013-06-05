@@ -17,6 +17,7 @@
 #include <linux/mfd/max77686.h>
 #include <linux/mmc/host.h>
 #include <linux/platform_device.h>
+#include <linux/pwm.h>
 #include <linux/pwm_backlight.h>
 #include <linux/regulator/machine.h>
 #include <linux/regulator/fixed.h>
@@ -28,6 +29,7 @@
 #include <linux/delay.h>
 #include <linux/lcd.h>
 #include <linux/clk.h>
+#include <linux/reboot.h>
 
 #include <asm/mach/arch.h>
 #include <asm/hardware/gic.h>
@@ -410,6 +412,7 @@ static struct platform_device *hkdk4412_devices[] __initdata = {
 	&hkdk4412_tmu,
 #endif
 #if defined(CONFIG_ODROID_U2_FAN)
+	&s3c_device_timer[0],
 	&odroid_fan,
 #endif
 };
@@ -466,6 +469,26 @@ static void hkdk4412_power_off(void)
 	}
 }
 
+static int hkdk4412_reboot_notifier(struct notifier_block *this, unsigned long code, void *_cmd) {
+	pr_emerg("exynos4-reboot: Notifier called\n");
+
+	__raw_writel(0, S5P_INFORM4);
+
+        // eMMC HW_RST  
+        gpio_request(EXYNOS4_GPK1(2), "GPK1");
+        gpio_direction_output(EXYNOS4_GPK1(2), 0);
+        msleep(150);
+        gpio_direction_output(EXYNOS4_GPK1(2), 1);
+        gpio_free(EXYNOS4_GPK1(2));
+	msleep(150);
+        return NOTIFY_DONE;
+}	
+
+
+static struct notifier_block hkdk4412_reboot_notifier_nb = {
+	.notifier_call = hkdk4412_reboot_notifier,
+};
+
 static void __init hkdk4412_machine_init(void)
 {
 	hkdk4412_gpio_init();
@@ -506,9 +529,11 @@ static void __init hkdk4412_machine_init(void)
 
 	s5p_fimd0_set_platdata(&hkdk4412_fb_pdata);
 
+	platform_add_devices(hkdk4412_devices, ARRAY_SIZE(hkdk4412_devices));
+
 	samsung_bl_set(&hkdk4412_bl_gpio_info, &hkdk4412_bl_data);
 
-	platform_add_devices(hkdk4412_devices, ARRAY_SIZE(hkdk4412_devices));
+	register_reboot_notifier(&hkdk4412_reboot_notifier_nb);
 }
 
 #if defined(CONFIG_ODROID_X)

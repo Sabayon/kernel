@@ -177,6 +177,31 @@ static struct hdmi_device *sd_to_hdmi_dev(struct v4l2_subdev *sd)
 	return container_of(sd, struct hdmi_device, sd);
 }
 
+#if defined(CONFIG_ODORID_HDMI_SW_CONFIG)
+unsigned char hdtv_type[5];
+unsigned char hdtv_format[10];
+
+static void __init hkdk_hdmi_get_hdtv_type(char *bargs_hdtv_type) {
+	sprintf(hdtv_type, "%s", bargs_hdtv_type);
+	pr_emerg("s5p-tv: HDTV TYPE is %s\n", hdtv_type);
+}
+__setup("hdtv_type=", hkdk_hdmi_get_hdtv_type);
+
+static void __init hkdk_hdmi_get_hdtv_format(char *bargs_hdtv_format) {
+	sprintf(hdtv_format, "%s", bargs_hdtv_format);
+	pr_emerg("s5p-tv: HDTV FORMAT is %s\n", hdtv_format);
+}
+__setup("hdtv_format=", hkdk_hdmi_get_hdtv_format);
+#else
+unsigned char hdmiargs[5];
+static void __init hkdk_hdmi_res_get(char *line) {
+	sprintf(hdmiargs, "%s", line);
+	pr_emerg("s5p-tv: HDMI_PHY_RES=%s\n", hdmiargs);
+}
+__setup("hdmi_phy_res=", hkdk_hdmi_res_get);
+#endif
+
+
 static inline
 void hdmi_write(struct hdmi_device *hdev, u32 reg_id, u32 value)
 {
@@ -230,13 +255,26 @@ static void hdmi_reg_init(struct hdmi_device *hdev)
 	/* enable HPD interrupts */
 	hdmi_write_mask(hdev, HDMI_INTC_CON_0, ~0, HDMI_INTC_EN_GLOBAL |
 		HDMI_INTC_EN_HPD_PLUG | HDMI_INTC_EN_HPD_UNPLUG);
-	/* choose HDMI mode */
-	hdmi_write_mask(hdev, HDMI_MODE_SEL,
-		HDMI_MODE_HDMI_EN, HDMI_MODE_MASK);
-	/* disable bluescreen */
-	hdmi_write_mask(hdev, HDMI_CON_0, 0, HDMI_BLUE_SCR_EN);
-	hdmi_writeb(hdev, HDMI_AVI_CON, 0x02);
-	hdmi_writeb(hdev, HDMI_AVI_BYTE(1), 2 << 5);
+	/* choose between HDMI and DVI mode */
+	/* default mode is HDMI if nothing is selected */
+
+	if(strcmp(hdtv_type, "dvi") == 0) {
+		pr_emerg("s5p-tv: Configuring HDMI for DVI Mode\n");
+	/* choose DVI mode */
+		hdmi_write_mask(hdev, HDMI_MODE_SEL, HDMI_MODE_DVI_EN, HDMI_MODE_MASK);
+		hdmi_write_mask(hdev, HDMI_CON_2, ~0, HDMI_VID_PREAMBLE_DIS | HDMI_GUARD_BAND_DIS);
+		/* disable bluescreen */
+		hdmi_write_mask(hdev, HDMI_CON_0, 0, HDMI_BLUE_SCR_EN);
+	} else {
+		pr_emerg("s5p-tv: Configuring HDMI for HDMI Mode\n");
+
+		hdmi_write_mask(hdev, HDMI_MODE_SEL, HDMI_MODE_HDMI_EN, HDMI_MODE_MASK);
+		/* disable bluescreen */
+		hdmi_write_mask(hdev, HDMI_CON_0, 0, HDMI_BLUE_SCR_EN);
+	
+		hdmi_writeb(hdev, HDMI_AVI_CON, 0x02);
+		hdmi_writeb(hdev, HDMI_AVI_BYTE(1), 2 << 5);
+	}
 	
 }
 
@@ -564,13 +602,22 @@ static int hdmi_conf_apply(struct hdmi_device *hdmi_dev)
 	mdelay(10);
 	hdmi_write_mask(hdmi_dev, HDMI_CORE_RSTOUT, ~0, HDMI_CORE_SW_RSTOUT);
 	mdelay(10);
+	
+	// enable or disable audio, if type is DVI no audio is sent, if type is hdmi will send audio over.
+	// default is always HDMI
+	if(strcmp(hdtv_type, "dvi") == 0) {
+		pr_emerg("s5p-tv: HDMI AUDIO, type is DVI so no audio configuration\n");
+		hdmi_reg_init(hdmi_dev);
+		hdmi_timing_apply(hdmi_dev, conf);
+	} else {
+		pr_emerg("s5p-tv: HDMI AUDIO, type is HDMI audio configured\n");
+		hdmi_reg_init(hdmi_dev);
+		hdmi_audio_init(hdmi_dev);
 
-	hdmi_reg_init(hdmi_dev);
-	hdmi_audio_init(hdmi_dev);
-
-	/* setting core registers */
-	hdmi_timing_apply(hdmi_dev, conf);
-	hdmi_audio_control(hdmi_dev, true);
+		/* setting core registers */
+		hdmi_timing_apply(hdmi_dev, conf);
+		hdmi_audio_control(hdmi_dev, true);
+	}
 
 	return 0;
 }
@@ -743,134 +790,28 @@ void hdmi_dumpregs(struct hdmi_device *hdev, char *prefix)
 //#undef DUMPREG
 }
 
-static const struct hdmi_preset_conf hdmi_conf_720p60 = {
-	.core = {
-		.h_blank = {0x72, 0x01},
-		.v2_blank = {0xee, 0x02},
-		.v1_blank = {0x1e, 0x00},
-		.v_line = {0xee, 0x02},
-		.h_line = {0x72, 0x06},
-		.hsync_pol = {0x00},
-		.vsync_pol = {0x00},
-		.int_pro_mode = {0x00},
-		.v_blank_f0 = {0xff, 0xff},
-		.v_blank_f1 = {0xff, 0xff},
-		.h_sync_start = {0x6c, 0x00},
-		.h_sync_end = {0x94, 0x00},
-		.v_sync_line_bef_2 = {0x0a, 0x00},
-		.v_sync_line_bef_1 = {0x05, 0x00},
-		.v_sync_line_aft_2 = {0xff, 0xff},
-		.v_sync_line_aft_1 = {0xff, 0xff},
-		.v_sync_line_aft_pxl_2 = {0xff, 0xff},
-		.v_sync_line_aft_pxl_1 = {0xff, 0xff},
-		.v_blank_f2 = {0xff, 0xff},
-		.v_blank_f3 = {0xff, 0xff},
-		.v_blank_f4 = {0xff, 0xff},
-		.v_blank_f5 = {0xff, 0xff},
-		.v_sync_line_aft_3 = {0xff, 0xff},
-		.v_sync_line_aft_4 = {0xff, 0xff},
-		.v_sync_line_aft_5 = {0xff, 0xff},
-		.v_sync_line_aft_6 = {0xff, 0xff},
-		.v_sync_line_aft_pxl_3 = {0xff, 0xff},
-		.v_sync_line_aft_pxl_4 = {0xff, 0xff},
-		.v_sync_line_aft_pxl_5 = {0xff, 0xff},
-		.v_sync_line_aft_pxl_6 = {0xff, 0xff},
-		.vact_space_1 = {0xff, 0xff},
-		.vact_space_2 = {0xff, 0xff},
-		.vact_space_3 = {0xff, 0xff},
-		.vact_space_4 = {0xff, 0xff},
-		.vact_space_5 = {0xff, 0xff},
-		.vact_space_6 = {0xff, 0xff},
-		/* other don't care */
-	},
-	.tg = {
-		0x00, /* cmd */
-		0x72, 0x06, /* h_fsz */
-		0x72, 0x01, 0x00, 0x05, /* hact */
-		0xee, 0x02, /* v_fsz */
-		0x01, 0x00, 0x33, 0x02, /* vsync */
-		0x1e, 0x00, 0xd0, 0x02, /* vact */
-		0x33, 0x02, /* field_chg */
-		0x48, 0x02, /* vact_st2 */
-		0x00, 0x00, /* vact_st3 */
-		0x00, 0x00, /* vact_st4 */
-		0x01, 0x00, 0x01, 0x00, /* vsync top/bot */
-		0x01, 0x00, 0x33, 0x02, /* field top/bot */
-		0x00, /* 3d FP */
-	},
-	.mbus_fmt = {
-		.width = 1280,
-		.height = 720,
-		.code = V4L2_MBUS_FMT_FIXED, /* means RGB888 */
-		.field = V4L2_FIELD_NONE,
-		.colorspace = V4L2_COLORSPACE_SRGB,
-	},
-};
+#include "hdmi_v14_supported_res.h"
 
-static const struct hdmi_preset_conf hdmi_conf_1080p60 = {
-	.core = {
-		.h_blank = {0x18, 0x01},
-		.v2_blank = {0x65, 0x04},
-		.v1_blank = {0x2d, 0x00},
-		.v_line = {0x65, 0x04},
-		.h_line = {0x98, 0x08},
-		.hsync_pol = {0x00},
-		.vsync_pol = {0x00},
-		.int_pro_mode = {0x00},
-		.v_blank_f0 = {0xff, 0xff},
-		.v_blank_f1 = {0xff, 0xff},
-		.h_sync_start = {0x56, 0x00},
-		.h_sync_end = {0x82, 0x00},
-		.v_sync_line_bef_2 = {0x09, 0x00},
-		.v_sync_line_bef_1 = {0x04, 0x00},
-		.v_sync_line_aft_2 = {0xff, 0xff},
-		.v_sync_line_aft_1 = {0xff, 0xff},
-		.v_sync_line_aft_pxl_2 = {0xff, 0xff},
-		.v_sync_line_aft_pxl_1 = {0xff, 0xff},
-		.v_blank_f2 = {0xff, 0xff},
-		.v_blank_f3 = {0xff, 0xff},
-		.v_blank_f4 = {0xff, 0xff},
-		.v_blank_f5 = {0xff, 0xff},
-		.v_sync_line_aft_3 = {0xff, 0xff},
-		.v_sync_line_aft_4 = {0xff, 0xff},
-		.v_sync_line_aft_5 = {0xff, 0xff},
-		.v_sync_line_aft_6 = {0xff, 0xff},
-		.v_sync_line_aft_pxl_3 = {0xff, 0xff},
-		.v_sync_line_aft_pxl_4 = {0xff, 0xff},
-		.v_sync_line_aft_pxl_5 = {0xff, 0xff},
-		.v_sync_line_aft_pxl_6 = {0xff, 0xff},
-		/* other don't care */
-	},
-	.tg = {
-		0x00, /* cmd */
-		0x98, 0x08, /* h_fsz */
-		0x18, 0x01, 0x80, 0x07, /* hact */
-		0x65, 0x04, /* v_fsz */
-		0x01, 0x00, 0x33, 0x02, /* vsync */
-		0x2d, 0x00, 0x38, 0x04, /* vact */
-		0x33, 0x02, /* field_chg */
-		0x48, 0x02, /* vact_st2 */
-		0x00, 0x00, /* vact_st3 */
-		0x00, 0x00, /* vact_st4 */
-		0x01, 0x00, 0x01, 0x00, /* vsync top/bot */
-		0x01, 0x00, 0x33, 0x02, /* field top/bot */
-		0x00, /* 3d FP */
-	},
-	.mbus_fmt = {
-		.width = 1920,
-		.height = 1080,
-		.code = V4L2_MBUS_FMT_FIXED, /* means RGB888 */
-		.field = V4L2_FIELD_NONE,
-		.colorspace = V4L2_COLORSPACE_SRGB,
-	},
-};
 
 static const struct {
 	u32 preset;
 	const struct hdmi_preset_conf *conf;
 } hdmi_conf[] = {
-	{ V4L2_DV_720P60,  &hdmi_conf_720p60 },
-	{ V4L2_DV_1080P60, &hdmi_conf_1080p60 },
+	// 480p resolutions
+	{ V4L2_DV_480P60,  &hdmi_conf_480p60 }, // 480P 60Hz
+	// 576p resolutions
+	{ V4L2_DV_576P50,  &hdmi_conf_576p50 }, // 576P 50Hz
+	// 720p resolutions
+	{ V4L2_DV_720P60,  &hdmi_conf_720p60 }, // 720P 60Hz
+	{ V4L2_DV_720P50,  &hdmi_conf_720p50 }, // 720P 50hz
+	// 1080p resolutions
+	{ V4L2_DV_1080P60, &hdmi_conf_1080p60 }, // 1080P 60Hz
+	{ V4L2_DV_1080I60, &hdmi_conf_1080i60 }, // 1080I 60Hz
+	{ V4L2_DV_1080I50, &hdmi_conf_1080i50 }, // 1080I 50Hz
+	{ V4L2_DV_1080P50, &hdmi_conf_1080p50 }, // 1080P 50Hz
+	{ V4L2_DV_1080P30, &hdmi_conf_1080p30 }, // 1080P 30Hz
+	{ V4L2_DV_1080P24, &hdmi_conf_1080p24 }, // 1080P 24Hz
+	{ V4L2_DV_1080P25, &hdmi_conf_1080p25 }, // 1080P 25Hz
 };
 
 static const struct hdmi_preset_conf *hdmi_preset2conf(u32 preset)
@@ -927,7 +868,9 @@ static int hdmi_streamon(struct hdmi_device *hdev)
 	hdmi_write_mask(hdev, HDMI_CON_0, ~0, HDMI_EN);
 	hdmi_write_mask(hdev, HDMI_TG_CMD, ~0, HDMI_TG_EN);
 
-	hdmi_audio_control(hdev,true);
+	if(strcmp(hdtv_type, "hdmi") == 0)
+		hdmi_audio_control(hdev,true);
+	
 	hdmi_dumpregs(hdev, "streamon");
 	return 0;
 }
@@ -941,7 +884,8 @@ static int hdmi_streamoff(struct hdmi_device *hdev)
 
 	hdmi_write_mask(hdev, HDMI_CON_0, 0, HDMI_EN);
 	hdmi_write_mask(hdev, HDMI_TG_CMD, 0, HDMI_TG_EN);
-	hdmi_audio_control(hdev,false);
+	if(strcmp(hdtv_type, "hdmi") == 0)	
+		hdmi_audio_control(hdev,false);
 
 	/* pixel(vpll) clock is used for HDMI in config mode */
 	clk_disable(res->sclk_hdmi);
@@ -1134,19 +1078,39 @@ static void hdmi_resources_cleanup(struct hdmi_device *hdev)
 	memset(res, 0, sizeof *res);
 }
 
-// Setting the variable with HDMI screen resolution for ODROID-U2 that doesn't have the HDMI Jumper
-unsigned char hdmiargs[5];
-static void __init hkdk_hdmi_res_get(char *line) {
-	sprintf(hdmiargs, "%s", line);
-	pr_emerg("s5p-tv: HDMI_PHY_RES=%s\n", hdmiargs);
-}
-__setup("hdmi_phy_res=", hkdk_hdmi_res_get);
 
 static int hdmi_g_default_preset(struct hdmi_device *hdev)
 {
-#if defined(CONFIG_MACH_HKDK4412)
+ #if defined(CONFIG_MACH_HKDK4412)
 	pr_emerg("s5p-tv: Board is ODROID-X/X2/U2\n");
-#if defined(CONFIG_ODROID_X) || defined(CONFIG_ODROID_X2) && !defined(CONFIG_ODROID_X_X2_BYPASS_HDMI_JUMPER)
+  #if defined(CONFIG_ODORID_HDMI_SW_CONFIG)
+	// new way to handle this
+	if(strcmp(hdtv_format, "480p60hz") == 0)
+		return V4L2_DV_480P60;
+	else if(strcmp(hdtv_format, "576p50hz") == 0)
+		return V4L2_DV_576P50;
+	else if(strcmp(hdtv_format, "720p60hz") == 0)
+		return V4L2_DV_720P60;
+	else if(strcmp(hdtv_format, "720p50hz") == 0)
+		return V4L2_DV_720P50;
+	else if(strcmp(hdtv_format, "1080p60hz") == 0)
+		return V4L2_DV_1080P60;
+	else if(strcmp(hdtv_format, "1080i60hz") == 0)
+		return V4L2_DV_1080I60;
+	else if(strcmp(hdtv_format, "1080i50hz") == 0)
+		return V4L2_DV_1080I50;
+	else if(strcmp(hdtv_format, "1080p50hz") == 0)
+		return V4L2_DV_1080P50;
+	else if(strcmp(hdtv_format, "1080p30hz") == 0)
+		return V4L2_DV_1080P30;
+	else if(strcmp(hdtv_format, "1080p25hz") == 0)
+		return V4L2_DV_1080P25;
+	else if(strcmp(hdtv_format, "1080p24hz") == 0)
+		return V4L2_DV_1080P24;
+	else
+		return V4L2_DV_720P60;
+	
+  #elif defined(CONFIG_ODROID_X) || defined(CONFIG_ODROID_X2) && !defined(CONFIG_ODROID_X_X2_BYPASS_HDMI_JUMPER)
 	pr_emerg("s5p-tv: ODROID-X/X2 Jumper Config Mode\n");
 	if (gpio_request(EXYNOS4_GPX0(3), "EXYNOS4_GPX0(3)")) {
 		return  V4L2_DV_720P60;
@@ -1157,7 +1121,7 @@ static int hdmi_g_default_preset(struct hdmi_device *hdev)
 	}
 	dev_dbg(hdev->dev, "%s : Default HDMI preset is %s.\n" , __FUNCTION__ , gpio_get_value(EXYNOS4_GPX0(3)) ? "1920x1080" : "1280x720");
 	return  gpio_get_value(EXYNOS4_GPX0(3)) ? V4L2_DV_1080P60 : V4L2_DV_720P60;
-#elif defined(CONFIG_ODROID_U2) || defined(CONFIG_ODROID_X_X2_BYPASS_HDMI_JUMPER)
+  #elif defined(CONFIG_ODROID_U2) || defined(CONFIG_ODROID_X_X2_BYPASS_HDMI_JUMPER)
 	pr_emerg("s5p-tv: ODROID-U2 or X/X2 ByPass Jumper Mode\n");
 	if(!strncmp("1080", hdmiargs, 4)) {
 		pr_emerg("s5p-tv: Selected V4L2_DV_1080P60 via software\n");	
@@ -1166,10 +1130,10 @@ static int hdmi_g_default_preset(struct hdmi_device *hdev)
 		pr_emerg("s5p-tv: Selected V4L2_DV_720P60 via software\n");
 		return V4L2_DV_720P60;
 	}
-#endif
-#else
+  #endif
+ #else
 	return  HDMI_DEFAULT_PRESET;
-#endif
+ #endif
 }
 
 static int hdmi_resources_init(struct hdmi_device *hdev)

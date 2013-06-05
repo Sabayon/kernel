@@ -163,10 +163,10 @@ static const struct hdmiphy_conf hdmiphy_conf_exynos4412[] = {
 		0x54, 0xa5, 0x24, 0x01, 0x00, 0x00, 0x01, 0x00,	}
 	},
 	{ .pixclk = 148500000, .data = (u8 [32]) {
-		0x01, 0xd1, 0x1f, 0x10, 0x40, 0x40, 0xf8, 0x08,
+		0x01, 0xd1, 0x1f, 0x00, 0x40, 0x40, 0xf8, 0x08,
 		0x81, 0xa0, 0xba, 0xd8, 0x45, 0xa0, 0xac, 0x80,
 		0x3c, 0x80, 0x11, 0x04, 0x02, 0x22, 0x44, 0x86,
-		0x54, 0xa5, 0x24, 0x01, 0x00, 0x00, 0x01, 0x00,	}
+		0x54, 0x4b, 0x25, 0x03, 0x00, 0x00, 0x01, 0x00,	}
 	},
 	{ /* end marker */ }
 };
@@ -179,13 +179,13 @@ static inline struct hdmiphy_ctx *sd_to_ctx(struct v4l2_subdev *sd)
 static unsigned long hdmiphy_preset_to_pixclk(u32 preset)
 {
 	static const unsigned long pixclk[] = {
-		[V4L2_DV_480P59_94] =  27000000,
+		[V4L2_DV_480P60] =  27027000,
 		[V4L2_DV_576P50]    =  27000000,
-		[V4L2_DV_720P59_94] =  74176000,
 		[V4L2_DV_720P50]    =  74250000,
 		[V4L2_DV_720P60]    =  74250000,
 		[V4L2_DV_1080P24]   =  74250000,
-		[V4L2_DV_1080P30]   =  74250000,
+		[V4L2_DV_1080P25]   =  74250000,
+		[V4L2_DV_1080P30]   =  74176000,
 		[V4L2_DV_1080I50]   =  74250000,
 		[V4L2_DV_1080I60]   =  74250000,
 		[V4L2_DV_1080P50]   = 148500000,

@@ -376,25 +376,25 @@ static unsigned int exynos4x12_apll_pms_table[CPUFREQ_LEVEL_END] = {
 static const unsigned int asv_voltage_4x12[CPUFREQ_LEVEL_END] = {
 #if defined(CONFIG_ODROID_X2) || defined(CONFIG_ODROID_U2)
 	1450000,	// 2000Mhz
-	1425000,	// 1920Mhz
+	1450000,	// 1920Mhz
 #endif
-	1400000,	// 1800Mhz
-	1400000,	// 1704Mhz
-	1350000,	// 1600Mhz
-	1350000, 	// 1500Mhz
-	1287500, 	// 1400Mhz
-	1250000, 	// 1300Mhz
-	1187500, 	// 1200Mhz
-	1137500, 	// 1100Mhz
-	1087500, 	// 1000Mhz
-	1037500,	// 900Mhz
-	1000000,  	// 800Mhz
-	987500,  	// 700Mhz
-	975000,  	// 600Mhz
-	950000,  	// 500Mhz
-	925000,  	// 400Mhz
-	900000,		// 300Mhz
-	900000		// 200Mhz 
+	1450000,	// 1800Mhz
+	1450000,	// 1704Mhz
+	1450000,	// 1600Mhz
+	1387000, 	// 1500Mhz
+	1325000, 	// 1400Mhz
+	1300000, 	// 1300Mhz
+	1225000, 	// 1200Mhz
+	1175000, 	// 1100Mhz
+	1125000, 	// 1000Mhz
+	1075000,	// 900Mhz
+	1037500,  	// 800Mhz
+	1012500,  	// 700Mhz
+	1000000,  	// 600Mhz
+	987500,  	// 500Mhz
+	975000,  	// 400Mhz
+	950000,		// 300Mhz
+	925000		// 200Mhz 
 };
 
 static void exynos4x12_set_clkdiv(unsigned int div_index)

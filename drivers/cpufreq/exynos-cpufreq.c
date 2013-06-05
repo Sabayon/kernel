@@ -238,6 +238,8 @@ static int exynos_cpufreq_cpu_init(struct cpufreq_policy *policy)
 		policy->shared_type = CPUFREQ_SHARED_TYPE_ANY;
 		cpumask_setall(policy->cpus);
 	}
+	
+	cpufreq_frequency_table_cpuinfo(policy, exynos_info->freq_table);
 
 	/* Set startup values for the CPU */
 #if defined(CONFIG_ODROID_X)
@@ -247,7 +249,7 @@ static int exynos_cpufreq_cpu_init(struct cpufreq_policy *policy)
 #endif
 	policy->min = 200000;
 
-	return cpufreq_frequency_table_cpuinfo(policy, exynos_info->freq_table);
+	return 0;
 }
 
 static struct cpufreq_driver exynos_driver = {

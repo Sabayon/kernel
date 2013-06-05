@@ -91,4 +91,9 @@ config ODROID_X_X2_BYPASS_HDMI_JUMPER
 	help
 		only set this if you are sure what you are doing
 
+config ODORID_HDMI_SW_CONFIG
+	bool "Ignores the HDMI Jumper and sets custom resolutions besides 1080 and 720"
+	default y
+	help
+		Under Testing
 endif # VIDEO_SAMSUNG_S5P_TV

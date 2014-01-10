@@ -211,7 +211,9 @@ get_write_lock:
 			/* mmap_region may free vma; grab the info now */
 			vm_flags = vma->vm_flags;
 
+			vma_get_file(vma);
 			addr = mmap_region(file, start, size, vm_flags, pgoff);
+			vma_fput(vma);
 			fput(file);
 			if (IS_ERR_VALUE(addr)) {
 				err = addr;

@@ -21,4 +21,4 @@ done
 echo "Tagging version: $tag"
 git tag "$tag" && git push --quiet origin HEAD && git push --quiet --tags || exit 1
 
-TERM=vt100 ssh -t -t -p "${srv_port}" "${srv_host}" screen -L -m "${kernel_tag_script}" "${tag}"
+TERM=vt100 ssh -q -t -t -p "${srv_port}" "${srv_host}" screen -L -m "${kernel_tag_script}" "${tag}"

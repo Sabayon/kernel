@@ -871,7 +871,7 @@ struct cgroup_subsys bfqio_cgrp_subsys = {
 	.can_attach = bfqio_can_attach,
 	.attach = bfqio_attach,
 	.css_free = bfqio_destroy,
-	.legacy_cftypes = bfqio_files,
+	.base_cftypes = bfqio_files,
 };
 #else
 static inline void bfq_init_entity(struct bfq_entity *entity,

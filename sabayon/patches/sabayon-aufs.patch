@@ -1,4 +1,4 @@
-aufs3.x-rcN kbuild patch
+aufs3.18 kbuild patch
 
 diff --git a/fs/Kconfig b/fs/Kconfig
 index 664991a..1481093 100644
@@ -22,7 +22,7 @@ index da0bbb4..c8bc724 100644
  obj-$(CONFIG_EFIVAR_FS)		+= efivarfs/
 +obj-$(CONFIG_AUFS_FS)           += aufs/
 diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
-index 4c94f31..28af907 100644
+index 8523f9b..11f8f74 100644
 --- a/include/uapi/linux/Kbuild
 +++ b/include/uapi/linux/Kbuild
 @@ -56,6 +56,7 @@ header-y += atmppp.h
@@ -33,10 +33,10 @@ index 4c94f31..28af907 100644
  header-y += auto_fs.h
  header-y += auto_fs4.h
  header-y += auxvec.h
-aufs3.x-rcN base patch
+aufs3.18 base patch
 
 diff --git a/MAINTAINERS b/MAINTAINERS
-index 0ff630d..95be609 100644
+index c721042..83801d0 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
 @@ -1795,6 +1795,20 @@ F:	include/linux/audit.h
@@ -102,19 +102,6 @@ index 26753ba..df21e66 100644
  {
  	if (inode->i_op->update_time)
  		return inode->i_op->update_time(inode, time, flags);
-diff --git a/fs/namei.c b/fs/namei.c
-index db5fe86..63fb946 100644
---- a/fs/namei.c
-+++ b/fs/namei.c
-@@ -250,7 +250,7 @@ void putname(struct filename *name)
- }
- #endif
- 
--static int check_acl(struct inode *inode, int mask)
-+int check_acl(struct inode *inode, int mask)
- {
- #ifdef CONFIG_FS_POSIX_ACL
- 	struct posix_acl *acl;
 diff --git a/fs/splice.c b/fs/splice.c
 index 75c6058..619359a 100644
 --- a/fs/splice.c
@@ -144,18 +131,10 @@ index 75c6058..619359a 100644
  	ssize_t (*splice_read)(struct file *, loff_t *,
  			       struct pipe_inode_info *, size_t, unsigned int);
 diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 9ab779e..2f923fd 100644
+index 9ab779e..aabcbba 100644
 --- a/include/linux/fs.h
 +++ b/include/linux/fs.h
-@@ -2074,6 +2074,7 @@ extern int filp_close(struct file *, fl_owner_t id);
- 
- extern struct filename *getname(const char __user *);
- extern struct filename *getname_kernel(const char *);
-+int check_acl(struct inode *, int);
- 
- enum {
- 	FILE_CREATED = 1,
-@@ -2664,6 +2665,7 @@ extern int inode_change_ok(const struct inode *, struct iattr *);
+@@ -2664,6 +2664,7 @@ extern int inode_change_ok(const struct inode *, struct iattr *);
  extern int inode_newsize_ok(const struct inode *, loff_t offset);
  extern void setattr_copy(struct inode *inode, const struct iattr *attr);
  
@@ -178,7 +157,7 @@ index da2751d..2e0fca6 100644
 +			 struct pipe_inode_info *pipe, size_t len,
 +			 unsigned int flags);
  #endif
-aufs3.x-rcN mmap patch
+aufs3.18 mmap patch
 
 diff --git a/fs/buffer.c b/fs/buffer.c
 index 20805db..363569f 100644
@@ -410,7 +389,7 @@ index 0938b30..0b66856 100644
  	return error;
  }
 diff --git a/mm/memory.c b/mm/memory.c
-index 3e50383..c196605 100644
+index d5f2ae9..0830a96 100644
 --- a/mm/memory.c
 +++ b/mm/memory.c
 @@ -2163,7 +2163,7 @@ reuse:
@@ -423,7 +402,7 @@ index 3e50383..c196605 100644
  		put_page(dirty_page);
  		if (page_mkwrite) {
 diff --git a/mm/mmap.c b/mm/mmap.c
-index 87e82b3..0c5a729 100644
+index ae91989..e3bee5c 100644
 --- a/mm/mmap.c
 +++ b/mm/mmap.c
 @@ -277,7 +277,7 @@ static struct vm_area_struct *remove_vma(struct vm_area_struct *vma)
@@ -435,7 +414,7 @@ index 87e82b3..0c5a729 100644
  	mpol_put(vma_policy(vma));
  	kmem_cache_free(vm_area_cachep, vma);
  	return next;
-@@ -892,7 +892,7 @@ again:			remove_next = 1 + (end > next->vm_end);
+@@ -895,7 +895,7 @@ again:			remove_next = 1 + (end > next->vm_end);
  	if (remove_next) {
  		if (file) {
  			uprobe_munmap(next, next->vm_start, next->vm_end);
@@ -444,7 +423,7 @@ index 87e82b3..0c5a729 100644
  		}
  		if (next->anon_vma)
  			anon_vma_merge(vma, next);
-@@ -1677,8 +1677,8 @@ out:
+@@ -1680,8 +1680,8 @@ out:
  	return addr;
  
  unmap_and_free_vma:
@@ -454,7 +433,7 @@ index 87e82b3..0c5a729 100644
  
  	/* Undo any partial mapping done by a device driver. */
  	unmap_region(mm, vma, prev, vma->vm_start, vma->vm_end);
-@@ -2473,7 +2473,7 @@ static int __split_vma(struct mm_struct *mm, struct vm_area_struct *vma,
+@@ -2477,7 +2477,7 @@ static int __split_vma(struct mm_struct *mm, struct vm_area_struct *vma,
  		goto out_free_mpol;
  
  	if (new->vm_file)
@@ -463,7 +442,7 @@ index 87e82b3..0c5a729 100644
  
  	if (new->vm_ops && new->vm_ops->open)
  		new->vm_ops->open(new);
-@@ -2492,7 +2492,7 @@ static int __split_vma(struct mm_struct *mm, struct vm_area_struct *vma,
+@@ -2496,7 +2496,7 @@ static int __split_vma(struct mm_struct *mm, struct vm_area_struct *vma,
  	if (new->vm_ops && new->vm_ops->close)
  		new->vm_ops->close(new);
  	if (new->vm_file)
@@ -472,7 +451,7 @@ index 87e82b3..0c5a729 100644
  	unlink_anon_vmas(new);
   out_free_mpol:
  	mpol_put(vma_policy(new));
-@@ -2882,7 +2882,7 @@ struct vm_area_struct *copy_vma(struct vm_area_struct **vmap,
+@@ -2886,7 +2886,7 @@ struct vm_area_struct *copy_vma(struct vm_area_struct **vmap,
  			if (anon_vma_clone(new_vma, vma))
  				goto out_free_mempol;
  			if (new_vma->vm_file)
@@ -637,7 +616,7 @@ index 0000000..fc708d2
 +		fput(pr);
 +}
 +#endif /* CONFIG_MMU */
-aufs3.x-rcN standalone patch
+aufs3.18 standalone patch
 
 diff --git a/fs/inode.c b/fs/inode.c
 index df21e66..c8df03d 100644
@@ -659,18 +638,6 @@ index df21e66..c8df03d 100644
  
  /**
   *	touch_atime	-	update the access time
-diff --git a/fs/namei.c b/fs/namei.c
-index 63fb946..551c0c0 100644
---- a/fs/namei.c
-+++ b/fs/namei.c
-@@ -277,6 +277,7 @@ int check_acl(struct inode *inode, int mask)
- 
- 	return -EAGAIN;
- }
-+EXPORT_SYMBOL(check_acl);
- 
- /*
-  * This does the basic permission checking
 diff --git a/fs/namespace.c b/fs/namespace.c
 index 5b66b2b..68ff4e4 100644
 --- a/fs/namespace.c
@@ -936,7 +903,7 @@ index 18b35c6..12c67af 100644
  int security_mmap_addr(unsigned long addr)
  {
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/Documentation/ABI/testing/debugfs-aufs	2014-06-09 21:59:29.454060118 +0100
++++ b/Documentation/ABI/testing/debugfs-aufs	2014-12-26 09:32:47.065264011 +0000
 @@ -0,0 +1,50 @@
 +What:		/debug/aufs/si_<id>/
 +Date:		March 2009
@@ -989,7 +956,7 @@ index 18b35c6..12c67af 100644
 +		When the aufs mount option 'noxino' is specified, it
 +		will be empty. About XINO files, see the aufs manual.
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/Documentation/ABI/testing/sysfs-aufs	2014-06-09 21:59:29.454060118 +0100
++++ b/Documentation/ABI/testing/sysfs-aufs	2014-12-26 09:32:47.065264011 +0000
 @@ -0,0 +1,31 @@
 +What:		/sys/fs/aufs/si_<id>/
 +Date:		March 2009
@@ -1023,7 +990,7 @@ index 18b35c6..12c67af 100644
 +		When the aufs mount option 'noxino' is specified, it
 +		will be empty. About XINO files, see the aufs manual.
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/aufs.h	2014-01-22 11:23:09.706121319 +0000
++++ b/fs/aufs/aufs.h	2014-12-26 09:32:47.069263961 +0000
 @@ -0,0 +1,59 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -1085,7 +1052,7 @@ index 18b35c6..12c67af 100644
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_H__ */
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/branch.c	2014-12-14 09:56:57.256917807 +0000
++++ b/fs/aufs/branch.c	2014-12-26 09:32:47.069263961 +0000
 @@ -0,0 +1,1410 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -2498,7 +2465,7 @@ index 18b35c6..12c67af 100644
 +	return err;
 +}
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/branch.h	2014-12-14 09:56:57.256917807 +0000
++++ b/fs/aufs/branch.h	2014-12-26 09:32:47.069263961 +0000
 @@ -0,0 +1,267 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -2768,7 +2735,7 @@ index 18b35c6..12c67af 100644
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_BRANCH_H__ */
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/conf.mk	2014-12-14 09:56:57.256917807 +0000
++++ b/fs/aufs/conf.mk	2014-12-26 09:32:47.069263961 +0000
 @@ -0,0 +1,38 @@
 +
 +AuConfStr = CONFIG_AUFS_FS=${CONFIG_AUFS_FS}
@@ -2809,7 +2776,7 @@ index 18b35c6..12c67af 100644
 +
 +-include ${srctree}/${src}/conf_priv.mk
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/cpup.c	2014-12-14 09:56:57.256917807 +0000
++++ b/fs/aufs/cpup.c	2014-12-26 09:32:47.070263948 +0000
 @@ -0,0 +1,1307 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -4119,7 +4086,7 @@ index 18b35c6..12c67af 100644
 +	return err;
 +}
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/cpup.h	2014-01-22 11:23:09.708121303 +0000
++++ b/fs/aufs/cpup.h	2014-12-26 09:32:47.071263936 +0000
 @@ -0,0 +1,94 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -4216,7 +4183,7 @@ index 18b35c6..12c67af 100644
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_CPUP_H__ */
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/dbgaufs.c	2014-12-14 09:56:57.256917807 +0000
++++ b/fs/aufs/dbgaufs.c	2014-12-26 09:32:47.071263936 +0000
 @@ -0,0 +1,432 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -4651,7 +4618,7 @@ index 18b35c6..12c67af 100644
 +	return err;
 +}
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/dbgaufs.h	2014-01-22 11:23:09.709121295 +0000
++++ b/fs/aufs/dbgaufs.h	2014-12-26 09:32:47.071263936 +0000
 @@ -0,0 +1,48 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -4702,7 +4669,7 @@ index 18b35c6..12c67af 100644
 +#endif /* __KERNEL__ */
 +#endif /* __DBGAUFS_H__ */
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/dcsub.c	2014-01-22 11:23:09.709121295 +0000
++++ b/fs/aufs/dcsub.c	2014-12-26 09:32:47.071263936 +0000
 @@ -0,0 +1,243 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -4948,7 +4915,7 @@ index 18b35c6..12c67af 100644
 +	return path_is_under(path + 0, path + 1);
 +}
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/dcsub.h	2014-08-17 10:44:19.498864389 +0100
++++ b/fs/aufs/dcsub.h	2014-12-26 09:32:47.071263936 +0000
 @@ -0,0 +1,120 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -5071,7 +5038,7 @@ index 18b35c6..12c67af 100644
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_DCSUB_H__ */
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/debug.c	2014-12-14 09:56:57.257917794 +0000
++++ b/fs/aufs/debug.c	2014-12-26 09:32:47.071263936 +0000
 @@ -0,0 +1,520 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -5594,7 +5561,7 @@ index 18b35c6..12c67af 100644
 +	return 0;
 +}
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/debug.h	2014-12-14 09:56:57.257917794 +0000
++++ b/fs/aufs/debug.h	2014-12-26 09:32:47.071263936 +0000
 @@ -0,0 +1,262 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -5859,7 +5826,7 @@ index 18b35c6..12c67af 100644
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_DEBUG_H__ */
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/dentry.c	2014-12-14 09:56:57.257917794 +0000
++++ b/fs/aufs/dentry.c	2014-12-26 09:32:47.072263923 +0000
 @@ -0,0 +1,1096 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -6958,7 +6925,7 @@ index 18b35c6..12c67af 100644
 +	.d_release		= aufs_d_release
 +};
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/dentry.h	2014-08-17 10:44:19.499864377 +0100
++++ b/fs/aufs/dentry.h	2014-12-26 09:32:47.072263923 +0000
 @@ -0,0 +1,233 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -7194,7 +7161,7 @@ index 18b35c6..12c67af 100644
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_DENTRY_H__ */
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/dinfo.c	2014-06-09 21:59:29.460060041 +0100
++++ b/fs/aufs/dinfo.c	2014-12-26 09:32:47.072263923 +0000
 @@ -0,0 +1,544 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -7741,7 +7708,7 @@ index 18b35c6..12c67af 100644
 +	return -1;
 +}
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/dir.c	2014-08-17 10:44:19.500864364 +0100
++++ b/fs/aufs/dir.c	2014-12-26 09:32:47.072263923 +0000
 @@ -0,0 +1,645 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -8389,7 +8356,7 @@ index 18b35c6..12c67af 100644
 +	.fsync		= aufs_fsync_dir
 +};
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/dir.h	2014-12-14 09:56:57.257917794 +0000
++++ b/fs/aufs/dir.h	2014-12-26 09:32:47.072263923 +0000
 @@ -0,0 +1,130 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -8522,7 +8489,7 @@ index 18b35c6..12c67af 100644
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_DIR_H__ */
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/dynop.c	2014-12-14 09:56:57.257917794 +0000
++++ b/fs/aufs/dynop.c	2014-12-26 09:32:47.073263911 +0000
 @@ -0,0 +1,379 @@
 +/*
 + * Copyright (C) 2010-2014 Junjiro R. Okajima
@@ -8904,7 +8871,7 @@ index 18b35c6..12c67af 100644
 +		WARN_ON(!list_empty(&dynop[i].head));
 +}
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/dynop.h	2014-01-22 11:23:09.711121279 +0000
++++ b/fs/aufs/dynop.h	2014-12-26 09:32:47.073263911 +0000
 @@ -0,0 +1,75 @@
 +/*
 + * Copyright (C) 2010-2014 Junjiro R. Okajima
@@ -8982,7 +8949,7 @@ index 18b35c6..12c67af 100644
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_DYNOP_H__ */
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/export.c	2014-12-14 09:56:57.257917794 +0000
++++ b/fs/aufs/export.c	2014-12-26 09:32:47.073263911 +0000
 @@ -0,0 +1,831 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -9816,7 +9783,7 @@ index 18b35c6..12c67af 100644
 +	atomic_set(&sbinfo->si_xigen_next, u);
 +}
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/fhsm.c	2014-12-14 09:56:57.257917794 +0000
++++ b/fs/aufs/fhsm.c	2014-12-26 09:32:47.073263911 +0000
 @@ -0,0 +1,426 @@
 +/*
 + * Copyright (C) 2011-2014 Junjiro R. Okajima
@@ -10245,7 +10212,7 @@ index 18b35c6..12c67af 100644
 +		seq_printf(seq, ",fhsm_sec=%u", u);
 +}
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/file.c	2014-12-14 09:56:57.257917794 +0000
++++ b/fs/aufs/file.c	2014-12-26 09:32:47.073263911 +0000
 @@ -0,0 +1,833 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -11081,7 +11048,7 @@ index 18b35c6..12c67af 100644
 +#endif /* CONFIG_AUFS_DEBUG */
 +};
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/file.h	2014-12-14 09:56:57.257917794 +0000
++++ b/fs/aufs/file.h	2014-12-26 09:32:47.073263911 +0000
 @@ -0,0 +1,284 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -11368,7 +11335,7 @@ index 18b35c6..12c67af 100644
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_FILE_H__ */
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/finfo.c	2014-01-22 11:23:09.713121263 +0000
++++ b/fs/aufs/finfo.c	2014-12-26 09:32:47.074263898 +0000
 @@ -0,0 +1,156 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -11527,7 +11494,7 @@ index 18b35c6..12c67af 100644
 +	return err;
 +}
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/f_op.c	2014-08-17 10:44:19.500864364 +0100
++++ b/fs/aufs/f_op.c	2014-12-26 09:32:47.073263911 +0000
 @@ -0,0 +1,813 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -12343,7 +12310,7 @@ index 18b35c6..12c67af 100644
 +	.fallocate	= aufs_fallocate
 +};
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/fstype.h	2014-01-22 11:23:09.713121263 +0000
++++ b/fs/aufs/fstype.h	2014-12-26 09:32:47.074263898 +0000
 @@ -0,0 +1,469 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -12815,7 +12782,7 @@ index 18b35c6..12c67af 100644
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_FSTYPE_H__ */
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/hfsnotify.c	2014-12-14 09:56:57.257917794 +0000
++++ b/fs/aufs/hfsnotify.c	2014-12-26 09:32:47.074263898 +0000
 @@ -0,0 +1,288 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -13106,7 +13073,7 @@ index 18b35c6..12c67af 100644
 +	.init_br	= au_hfsn_init_br
 +};
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/hfsplus.c	2014-01-22 11:23:09.713121263 +0000
++++ b/fs/aufs/hfsplus.c	2014-12-26 09:32:47.074263898 +0000
 @@ -0,0 +1,56 @@
 +/*
 + * Copyright (C) 2010-2014 Junjiro R. Okajima
@@ -13165,7 +13132,7 @@ index 18b35c6..12c67af 100644
 +	}
 +}
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/hnotify.c	2014-12-14 09:56:57.257917794 +0000
++++ b/fs/aufs/hnotify.c	2014-12-26 09:32:47.074263898 +0000
 @@ -0,0 +1,714 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -13882,7 +13849,7 @@ index 18b35c6..12c67af 100644
 +		au_hn_destroy_cache();
 +}
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/iinfo.c	2014-06-09 21:59:29.464059989 +0100
++++ b/fs/aufs/iinfo.c	2014-12-26 09:32:47.076263873 +0000
 @@ -0,0 +1,277 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -14162,7 +14129,7 @@ index 18b35c6..12c67af 100644
 +	AuRwDestroy(&iinfo->ii_rwsem);
 +}
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/inode.c	2014-12-14 09:56:57.258917782 +0000
++++ b/fs/aufs/inode.c	2014-12-26 09:32:47.076263873 +0000
 @@ -0,0 +1,496 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -14661,8 +14628,8 @@ index 18b35c6..12c67af 100644
 +	return au_test_h_perm(h_inode, mask);
 +}
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/inode.h	2014-12-14 09:56:57.258917782 +0000
-@@ -0,0 +1,634 @@
++++ b/fs/aufs/inode.h	2014-12-26 09:32:47.076263873 +0000
+@@ -0,0 +1,667 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
 + *
@@ -14969,10 +14936,43 @@ index 18b35c6..12c67af 100644
 +
 +/* void au_xattr_init(struct super_block *sb); */
 +#else
-+AuStubInt0(au_cpup_xattr, h_dst, h_src, ignore_flags)
++AuStubInt0(au_cpup_xattr, struct dentry *h_dst, struct dentry *h_src,
++	   int ignore_flags);
 +/* AuStubVoid(au_xattr_init, struct super_block *sb); */
 +#endif
 +
++#ifdef CONFIG_FS_POSIX_ACL
++struct posix_acl *aufs_get_acl(struct inode *inode, int type);
++int aufs_set_acl(struct inode *inode, struct posix_acl *acl, int type);
++#endif
++
++#if IS_ENABLED(CONFIG_AUFS_XATTR) || IS_ENABLED(CONFIG_FS_POSIX_ACL)
++enum {
++	AU_XATTR_SET,
++	AU_XATTR_REMOVE,
++	AU_ACL_SET
++};
++
++struct au_srxattr {
++	int type;
++	union {
++		struct {
++			const char	*name;
++			const void	*value;
++			size_t		size;
++			int		flags;
++		} set;
++		struct {
++			const char	*name;
++		} remove;
++		struct {
++			struct posix_acl *acl;
++			int		type;
++		} acl_set;
++	} u;
++};
++ssize_t au_srxattr(struct dentry *dentry, struct au_srxattr *arg);
++#endif
 +
 +/* ---------------------------------------------------------------------- */
 +
@@ -15298,7 +15298,7 @@ index 18b35c6..12c67af 100644
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_INODE_H__ */
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/ioctl.c	2014-12-14 09:56:57.258917782 +0000
++++ b/fs/aufs/ioctl.c	2014-12-26 09:32:47.076263873 +0000
 @@ -0,0 +1,219 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -15520,7 +15520,7 @@ index 18b35c6..12c67af 100644
 +}
 +#endif
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/i_op_add.c	2014-12-14 09:56:57.258917782 +0000
++++ b/fs/aufs/i_op_add.c	2014-12-26 09:32:47.075263886 +0000
 @@ -0,0 +1,891 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -16414,8 +16414,8 @@ index 18b35c6..12c67af 100644
 +	return err;
 +}
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/i_op.c	2014-12-14 09:56:57.258917782 +0000
-@@ -0,0 +1,1285 @@
++++ b/fs/aufs/i_op.c	2014-12-26 09:32:47.075263886 +0000
+@@ -0,0 +1,1306 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
 + *
@@ -16569,81 +16569,6 @@ index 18b35c6..12c67af 100644
 +	si_read_unlock(sb);
 +	return err;
 +}
-+
-+#ifdef CONFIG_FS_POSIX_ACL
-+static struct posix_acl *aufs_get_acl(struct inode *inode, int mask)
-+{
-+	struct posix_acl *acl;
-+	int err;
-+	aufs_bindex_t bindex, bend;
-+	const unsigned char isdir = !!S_ISDIR(inode->i_mode),
-+		write_mask = !!(mask & (MAY_WRITE | MAY_APPEND));
-+	struct inode *h_inode;
-+	struct super_block *sb;
-+
-+	WARN_ON(mask & MAY_NOT_BLOCK);
-+
-+	err = 0;
-+	sb = inode->i_sb;
-+	si_read_lock(sb, AuLock_FLUSH);
-+	ii_read_lock_child(inode);
-+	if (!(sb->s_flags & MS_POSIXACL))
-+		goto out_ii;
-+
-+	err = au_busy_or_stale();
-+	bindex = au_ibstart(inode);
-+	h_inode = au_h_iptr(inode, bindex);
-+	if (unlikely(!h_inode
-+		     || (h_inode->i_mode & S_IFMT) != (inode->i_mode & S_IFMT)))
-+		goto out_ii;
-+
-+	/* cf: fs/namei.c:acl_permission_check() */
-+	err = -EAGAIN;
-+	if (!IS_POSIXACL(h_inode))
-+		goto out_ii;
-+
-+	if (!isdir
-+	    || write_mask
-+	    || au_opt_test(au_mntflags(sb), DIRPERM1)) {
-+		err = check_acl(h_inode, mask);
-+		if (unlikely(err && err != -EAGAIN))
-+			goto out_ii;
-+
-+		if (write_mask
-+		    && !special_file(h_inode->i_mode)) {
-+			/* test whether the upper writable branch exists */
-+			err = -EROFS;
-+			for (; bindex >= 0; bindex--)
-+				if (!au_br_rdonly(au_sbr(sb, bindex))) {
-+					err = 0;
-+					break;
-+				}
-+		}
-+		goto out_ii;
-+	}
-+
-+	/* non-write to dir */
-+	err = 0;
-+	bend = au_ibend(inode);
-+	for (; (!err || err == -EAGAIN) && bindex <= bend; bindex++) {
-+		h_inode = au_h_iptr(inode, bindex);
-+		if (h_inode) {
-+			err = au_busy_or_stale();
-+			if (unlikely(!S_ISDIR(h_inode->i_mode)))
-+				break;
-+
-+			err = check_acl(h_inode, mask);
-+		}
-+	}
-+
-+out_ii:
-+	ii_read_unlock(inode);
-+	si_read_unlock(sb);
-+	acl = ERR_PTR(err);
-+
-+	return acl;
-+}
-+#endif
 +
 +/* ---------------------------------------------------------------------- */
 +
@@ -17355,6 +17280,99 @@ index 18b35c6..12c67af 100644
 +	return err;
 +}
 +
++#if IS_ENABLED(CONFIG_AUFS_XATTR) || IS_ENABLED(CONFIG_FS_POSIX_ACL)
++static int au_h_path_to_set_attr(struct dentry *dentry,
++				 struct au_icpup_args *a, struct path *h_path)
++{
++	int err;
++	struct super_block *sb;
++
++	sb = dentry->d_sb;
++	a->udba = au_opt_udba(sb);
++	/* no d_unlinked(), to set UDBA_NONE for root */
++	if (d_unhashed(dentry))
++		a->udba = AuOpt_UDBA_NONE;
++	if (a->udba != AuOpt_UDBA_NONE) {
++		AuDebugOn(IS_ROOT(dentry));
++		err = au_reval_for_attr(dentry, au_sigen(sb));
++		if (unlikely(err))
++			goto out;
++	}
++	err = au_pin_and_icpup(dentry, /*ia*/NULL, a);
++	if (unlikely(err < 0))
++		goto out;
++
++	h_path->dentry = a->h_path.dentry;
++	h_path->mnt = au_sbr_mnt(sb, a->btgt);
++
++out:
++	return err;
++}
++
++ssize_t au_srxattr(struct dentry *dentry, struct au_srxattr *arg)
++{
++	int err;
++	struct path h_path;
++	struct super_block *sb;
++	struct au_icpup_args *a;
++	struct inode *inode, *h_inode;
++
++	inode = dentry->d_inode;
++	IMustLock(inode);
++
++	err = -ENOMEM;
++	a = kzalloc(sizeof(*a), GFP_NOFS);
++	if (unlikely(!a))
++		goto out;
++
++	sb = dentry->d_sb;
++	err = si_read_lock(sb, AuLock_FLUSH | AuLock_NOPLM);
++	if (unlikely(err))
++		goto out_kfree;
++
++	h_path.dentry = NULL;	/* silence gcc */
++	di_write_lock_child(dentry);
++	err = au_h_path_to_set_attr(dentry, a, &h_path);
++	if (unlikely(err))
++		goto out_di;
++
++	mutex_unlock(&a->h_inode->i_mutex);
++	switch (arg->type) {
++	case AU_XATTR_SET:
++		err = vfsub_setxattr(h_path.dentry,
++				     arg->u.set.name, arg->u.set.value,
++				     arg->u.set.size, arg->u.set.flags);
++		break;
++	case AU_XATTR_REMOVE:
++		err = vfsub_removexattr(h_path.dentry, arg->u.remove.name);
++		break;
++	case AU_ACL_SET:
++		err = -EOPNOTSUPP;
++		h_inode = h_path.dentry->d_inode;
++		if (h_inode->i_op->set_acl)
++			err = h_inode->i_op->set_acl(h_inode,
++						     arg->u.acl_set.acl,
++						     arg->u.acl_set.type);
++		break;
++	}
++	if (!err)
++		au_cpup_attr_timesizes(inode);
++
++	au_unpin(&a->pin);
++	if (unlikely(err))
++		au_update_dbstart(dentry);
++
++out_di:
++	di_write_unlock(dentry);
++	si_read_unlock(sb);
++out_kfree:
++	kfree(a);
++out:
++	AuTraceErr(err);
++	return err;
++}
++#endif
++
 +static void au_refresh_iattr(struct inode *inode, struct kstat *st,
 +			     unsigned int nlink)
 +{
@@ -17632,6 +17650,7 @@ index 18b35c6..12c67af 100644
 +	.permission	= aufs_permission,
 +#ifdef CONFIG_FS_POSIX_ACL
 +	.get_acl	= aufs_get_acl,
++	.set_acl	= aufs_set_acl, /* unsupport for symlink? */
 +#endif
 +
 +	.setattr	= aufs_setattr,
@@ -17665,6 +17684,7 @@ index 18b35c6..12c67af 100644
 +	.permission	= aufs_permission,
 +#ifdef CONFIG_FS_POSIX_ACL
 +	.get_acl	= aufs_get_acl,
++	.set_acl	= aufs_set_acl,
 +#endif
 +
 +	.setattr	= aufs_setattr,
@@ -17687,6 +17707,7 @@ index 18b35c6..12c67af 100644
 +	.permission	= aufs_permission,
 +#ifdef CONFIG_FS_POSIX_ACL
 +	.get_acl	= aufs_get_acl,
++	.set_acl	= aufs_set_acl,
 +#endif
 +
 +	.setattr	= aufs_setattr,
@@ -17702,7 +17723,7 @@ index 18b35c6..12c67af 100644
 +	.update_time	= aufs_update_time
 +};
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/i_op_del.c	2014-08-17 10:44:19.502864339 +0100
++++ b/fs/aufs/i_op_del.c	2014-12-26 09:32:47.075263886 +0000
 @@ -0,0 +1,507 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -18212,7 +18233,7 @@ index 18b35c6..12c67af 100644
 +	return err;
 +}
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/i_op_ren.c	2014-08-17 10:44:19.502864339 +0100
++++ b/fs/aufs/i_op_ren.c	2014-12-26 09:32:47.075263886 +0000
 @@ -0,0 +1,1034 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -19249,7 +19270,7 @@ index 18b35c6..12c67af 100644
 +	return err;
 +}
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/Kconfig	2014-12-14 09:56:57.256917807 +0000
++++ b/fs/aufs/Kconfig	2014-12-26 09:32:47.069263961 +0000
 @@ -0,0 +1,185 @@
 +config AUFS_FS
 +	tristate "Aufs (Advanced multi layered unification filesystem) support"
@@ -19437,7 +19458,7 @@ index 18b35c6..12c67af 100644
 +	When aufs supports Magic SysRq, enabled automatically.
 +endif
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/loop.c	2014-01-22 11:23:09.717121231 +0000
++++ b/fs/aufs/loop.c	2014-12-26 09:32:47.076263873 +0000
 @@ -0,0 +1,145 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -19585,7 +19606,7 @@ index 18b35c6..12c67af 100644
 +	kfree(au_warn_loopback_array);
 +}
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/loop.h	2014-01-22 11:23:09.717121231 +0000
++++ b/fs/aufs/loop.h	2014-12-26 09:32:47.076263873 +0000
 @@ -0,0 +1,52 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -19640,7 +19661,7 @@ index 18b35c6..12c67af 100644
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_LOOP_H__ */
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/magic.mk	2013-07-03 11:17:47.814555336 +0100
++++ b/fs/aufs/magic.mk	2014-12-26 09:32:47.077263861 +0000
 @@ -0,0 +1,54 @@
 +
 +# defined in ${srctree}/fs/fuse/inode.c
@@ -19697,8 +19718,8 @@ index 18b35c6..12c67af 100644
 +ccflags-y += -DHFSPLUS_SUPER_MAGIC=0x482b
 +endif
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/Makefile	2014-12-14 09:56:57.256917807 +0000
-@@ -0,0 +1,43 @@
++++ b/fs/aufs/Makefile	2014-12-26 09:32:47.069263961 +0000
+@@ -0,0 +1,44 @@
 +
 +include ${src}/magic.mk
 +ifeq (${CONFIG_AUFS_FS},m)
@@ -19736,6 +19757,7 @@ index 18b35c6..12c67af 100644
 +aufs-$(CONFIG_AUFS_HFSNOTIFY) += hfsnotify.o
 +aufs-$(CONFIG_AUFS_EXPORT) += export.o
 +aufs-$(CONFIG_AUFS_XATTR) += xattr.o
++aufs-$(CONFIG_FS_POSIX_ACL) += posix_acl.o
 +aufs-$(CONFIG_AUFS_FHSM) += fhsm.o
 +aufs-$(CONFIG_AUFS_POLL) += poll.o
 +aufs-$(CONFIG_AUFS_RDU) += rdu.o
@@ -19743,7 +19765,7 @@ index 18b35c6..12c67af 100644
 +aufs-$(CONFIG_AUFS_DEBUG) += debug.o
 +aufs-$(CONFIG_AUFS_MAGIC_SYSRQ) += sysrq.o
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/module.c	2014-08-17 10:44:19.503864327 +0100
++++ b/fs/aufs/module.c	2014-12-26 09:32:47.077263861 +0000
 @@ -0,0 +1,210 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -19956,7 +19978,7 @@ index 18b35c6..12c67af 100644
 +module_init(aufs_init);
 +module_exit(aufs_exit);
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/module.h	2014-01-22 11:23:09.717121231 +0000
++++ b/fs/aufs/module.h	2014-12-26 09:32:47.077263861 +0000
 @@ -0,0 +1,104 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -20063,7 +20085,7 @@ index 18b35c6..12c67af 100644
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_MODULE_H__ */
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/mvdown.c	2014-12-14 09:56:57.258917782 +0000
++++ b/fs/aufs/mvdown.c	2014-12-26 09:32:47.077263861 +0000
 @@ -0,0 +1,694 @@
 +/*
 + * Copyright (C) 2011-2014 Junjiro R. Okajima
@@ -20760,7 +20782,7 @@ index 18b35c6..12c67af 100644
 +	return err;
 +}
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/opts.c	2014-12-14 09:56:57.258917782 +0000
++++ b/fs/aufs/opts.c	2014-12-26 09:32:47.078263848 +0000
 @@ -0,0 +1,1850 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -22613,7 +22635,7 @@ index 18b35c6..12c67af 100644
 +	return au_mntflags(sb) & AuOptMask_UDBA;
 +}
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/opts.h	2014-08-17 10:44:19.504864314 +0100
++++ b/fs/aufs/opts.h	2014-12-26 09:32:47.078263848 +0000
 @@ -0,0 +1,213 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -22829,7 +22851,7 @@ index 18b35c6..12c67af 100644
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_OPTS_H__ */
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/plink.c	2014-01-22 11:23:09.719121215 +0000
++++ b/fs/aufs/plink.c	2014-12-26 09:32:47.078263848 +0000
 @@ -0,0 +1,532 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -23364,7 +23386,7 @@ index 18b35c6..12c67af 100644
 +	}
 +}
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/poll.c	2014-01-22 11:23:09.719121215 +0000
++++ b/fs/aufs/poll.c	2014-12-26 09:32:47.078263848 +0000
 @@ -0,0 +1,55 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -23422,7 +23444,109 @@ index 18b35c6..12c67af 100644
 +	return mask;
 +}
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/procfs.c	2014-01-22 11:23:09.719121215 +0000
++++ b/fs/aufs/posix_acl.c	2014-12-26 09:32:47.079263836 +0000
+@@ -0,0 +1,99 @@
++/*
++ * Copyright (C) 2014 Junjiro R. Okajima
++ *
++ * This program, aufs is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
++ */
++
++/*
++ * posix acl operations
++ */
++
++#include <linux/fs.h>
++#include <linux/posix_acl.h>
++#include "aufs.h"
++
++struct posix_acl *aufs_get_acl(struct inode *inode, int type)
++{
++	struct posix_acl *acl;
++	int err;
++	aufs_bindex_t bindex;
++	struct inode *h_inode;
++	struct super_block *sb;
++
++	acl = NULL;
++	sb = inode->i_sb;
++	si_read_lock(sb, AuLock_FLUSH);
++	ii_read_lock_child(inode);
++	if (!(sb->s_flags & MS_POSIXACL))
++		goto out;
++
++	bindex = au_ibstart(inode);
++	h_inode = au_h_iptr(inode, bindex);
++	if (unlikely(!h_inode
++		     || ((h_inode->i_mode & S_IFMT)
++			 != (inode->i_mode & S_IFMT)))) {
++		err = au_busy_or_stale();
++		acl = ERR_PTR(err);
++		goto out;
++	}
++
++	/* always topmost only */
++	acl = get_acl(h_inode, type);
++
++out:
++	ii_read_unlock(inode);
++	si_read_unlock(sb);
++
++	AuTraceErrPtr(acl);
++	return acl;
++}
++
++int aufs_set_acl(struct inode *inode, struct posix_acl *acl, int type)
++{
++	int err;
++	ssize_t ssz;
++	struct dentry *dentry;
++	struct au_srxattr arg = {
++		.type = AU_ACL_SET,
++		.u.acl_set = {
++			.acl	= acl,
++			.type	= type
++		},
++	};
++
++	mutex_lock(&inode->i_mutex);
++	if (inode->i_ino == AUFS_ROOT_INO)
++		dentry = dget(inode->i_sb->s_root);
++	else {
++		dentry = d_find_alias(inode);
++		if (!dentry)
++			dentry = d_find_any_alias(inode);
++		if (!dentry) {
++			pr_warn("cannot handle this inode, "
++				"please report to aufs-users ML\n");
++			err = -ENOENT;
++			goto out;
++		}
++	}
++
++	ssz = au_srxattr(dentry, &arg);
++	dput(dentry);
++	err = ssz;
++	if (ssz >= 0)
++		err = 0;
++
++out:
++	mutex_unlock(&inode->i_mutex);
++	return err;
++}
+--- /dev/null	2014-12-07 09:06:24.836868758 +0000
++++ b/fs/aufs/procfs.c	2014-12-26 09:32:47.079263836 +0000
 @@ -0,0 +1,169 @@
 +/*
 + * Copyright (C) 2010-2014 Junjiro R. Okajima
@@ -23594,7 +23718,7 @@ index 18b35c6..12c67af 100644
 +	return err;
 +}
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/rdu.c	2014-01-22 11:23:09.719121215 +0000
++++ b/fs/aufs/rdu.c	2014-12-26 09:32:47.079263836 +0000
 @@ -0,0 +1,388 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -23985,7 +24109,7 @@ index 18b35c6..12c67af 100644
 +}
 +#endif
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/rwsem.h	2014-08-17 10:44:19.504864314 +0100
++++ b/fs/aufs/rwsem.h	2014-12-26 09:32:47.079263836 +0000
 @@ -0,0 +1,191 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -24179,7 +24303,7 @@ index 18b35c6..12c67af 100644
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_RWSEM_H__ */
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/sbinfo.c	2014-08-17 10:44:19.504864314 +0100
++++ b/fs/aufs/sbinfo.c	2014-12-26 09:32:47.079263836 +0000
 @@ -0,0 +1,353 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -24535,7 +24659,7 @@ index 18b35c6..12c67af 100644
 +	spin_unlock(&sbinfo->au_si_pid.tree_lock);
 +}
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/spl.h	2014-01-22 11:23:09.720121207 +0000
++++ b/fs/aufs/spl.h	2014-12-26 09:32:47.079263836 +0000
 @@ -0,0 +1,111 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -24649,7 +24773,7 @@ index 18b35c6..12c67af 100644
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_SPL_H__ */
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/super.c	2014-12-14 09:56:57.258917782 +0000
++++ b/fs/aufs/super.c	2014-12-26 09:32:47.079263836 +0000
 @@ -0,0 +1,1009 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -25661,7 +25785,7 @@ index 18b35c6..12c67af 100644
 +	.owner		= THIS_MODULE,
 +};
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/super.h	2014-12-14 09:56:57.259917769 +0000
++++ b/fs/aufs/super.h	2014-12-26 09:32:47.080263823 +0000
 @@ -0,0 +1,641 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -26305,7 +26429,7 @@ index 18b35c6..12c67af 100644
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_SUPER_H__ */
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/sysaufs.c	2014-01-22 11:23:09.721121199 +0000
++++ b/fs/aufs/sysaufs.c	2014-12-26 09:32:47.080263823 +0000
 @@ -0,0 +1,104 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -26412,7 +26536,7 @@ index 18b35c6..12c67af 100644
 +	return err;
 +}
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/sysaufs.h	2014-12-14 09:56:57.259917769 +0000
++++ b/fs/aufs/sysaufs.h	2014-12-26 09:32:47.080263823 +0000
 @@ -0,0 +1,101 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -26516,7 +26640,7 @@ index 18b35c6..12c67af 100644
 +#endif /* __KERNEL__ */
 +#endif /* __SYSAUFS_H__ */
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/sysfs.c	2014-08-17 10:44:19.505864302 +0100
++++ b/fs/aufs/sysfs.c	2014-12-26 09:32:47.080263823 +0000
 @@ -0,0 +1,372 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -26891,7 +27015,7 @@ index 18b35c6..12c67af 100644
 +	}
 +}
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/sysrq.c	2014-08-17 10:44:19.505864302 +0100
++++ b/fs/aufs/sysrq.c	2014-12-26 09:32:47.080263823 +0000
 @@ -0,0 +1,157 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -27051,7 +27175,7 @@ index 18b35c6..12c67af 100644
 +		pr_err("err %d (ignored)\n", err);
 +}
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/vdir.c	2014-08-17 10:44:19.506864289 +0100
++++ b/fs/aufs/vdir.c	2014-12-26 09:32:47.080263823 +0000
 @@ -0,0 +1,889 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -27943,7 +28067,7 @@ index 18b35c6..12c67af 100644
 +	return 0;
 +}
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/vfsub.c	2014-12-14 09:56:57.259917769 +0000
++++ b/fs/aufs/vfsub.c	2014-12-26 09:32:47.080263823 +0000
 @@ -0,0 +1,796 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -28742,7 +28866,7 @@ index 18b35c6..12c67af 100644
 +	return err;
 +}
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/vfsub.h	2014-12-14 09:56:57.259917769 +0000
++++ b/fs/aufs/vfsub.h	2014-12-26 09:32:47.080263823 +0000
 @@ -0,0 +1,310 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -29055,7 +29179,7 @@ index 18b35c6..12c67af 100644
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_VFSUB_H__ */
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/wbr_policy.c	2014-08-17 10:44:19.506864289 +0100
++++ b/fs/aufs/wbr_policy.c	2014-12-26 09:32:47.081263811 +0000
 @@ -0,0 +1,765 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -29823,7 +29947,7 @@ index 18b35c6..12c67af 100644
 +	}
 +};
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/whout.c	2014-12-14 09:56:57.259917769 +0000
++++ b/fs/aufs/whout.c	2014-12-26 09:32:47.081263811 +0000
 @@ -0,0 +1,1056 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -30882,7 +31006,7 @@ index 18b35c6..12c67af 100644
 +	}
 +}
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/whout.h	2014-08-17 10:44:19.507864277 +0100
++++ b/fs/aufs/whout.h	2014-12-26 09:32:47.081263811 +0000
 @@ -0,0 +1,85 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -30970,7 +31094,7 @@ index 18b35c6..12c67af 100644
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_WHOUT_H__ */
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/wkq.c	2014-06-09 21:59:29.466059963 +0100
++++ b/fs/aufs/wkq.c	2014-12-26 09:32:47.081263811 +0000
 @@ -0,0 +1,213 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -31186,7 +31310,7 @@ index 18b35c6..12c67af 100644
 +	return err;
 +}
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/wkq.h	2014-01-22 11:23:09.723121183 +0000
++++ b/fs/aufs/wkq.h	2014-12-26 09:32:47.081263811 +0000
 @@ -0,0 +1,91 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -31280,8 +31404,8 @@ index 18b35c6..12c67af 100644
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_WKQ_H__ */
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/xattr.c	2014-12-14 09:56:57.259917769 +0000
-@@ -0,0 +1,437 @@
++++ b/fs/aufs/xattr.c	2014-12-26 09:32:47.081263811 +0000
+@@ -0,0 +1,334 @@
 +/*
 + * Copyright (C) 2014 Junjiro R. Okajima
 + *
@@ -31397,6 +31521,7 @@ index 18b35c6..12c67af 100644
 +	ssz = vfs_listxattr(h_src, NULL, 0);
 +	err = ssz;
 +	if (unlikely(err < 0)) {
++		AuTraceErr(err);
 +		if (err == -ENODATA
 +		    || err == -EOPNOTSUPP)
 +			err = 0;	/* ignore */
@@ -31549,110 +31674,6 @@ index 18b35c6..12c67af 100644
 +	return au_lgxattr(dentry, &arg);
 +}
 +
-+/* cf fs/aufs/i_op.c:aufs_setattr() */
-+static int au_h_path_to_set_attr(struct dentry *dentry,
-+				 struct au_icpup_args *a, struct path *h_path)
-+{
-+	int err;
-+	struct super_block *sb;
-+
-+	sb = dentry->d_sb;
-+	a->udba = au_opt_udba(sb);
-+	/* no d_unlinked(), to set UDBA_NONE for root */
-+	if (d_unhashed(dentry))
-+		a->udba = AuOpt_UDBA_NONE;
-+	if (a->udba != AuOpt_UDBA_NONE) {
-+		AuDebugOn(IS_ROOT(dentry));
-+		err = au_reval_for_attr(dentry, au_sigen(sb));
-+		if (unlikely(err))
-+			goto out;
-+	}
-+	err = au_pin_and_icpup(dentry, /*ia*/NULL, a);
-+	if (unlikely(err < 0))
-+		goto out;
-+
-+	h_path->dentry = a->h_path.dentry;
-+	h_path->mnt = au_sbr_mnt(sb, a->btgt);
-+
-+out:
-+	return err;
-+}
-+
-+enum {
-+	AU_XATTR_SET,
-+	AU_XATTR_REMOVE
-+};
-+
-+struct au_srxattr {
-+	int type;
-+	union {
-+		struct {
-+			const char	*name;
-+			const void	*value;
-+			size_t		size;
-+			int		flags;
-+		} set;
-+		struct {
-+			const char	*name;
-+		} remove;
-+	} u;
-+};
-+
-+static ssize_t au_srxattr(struct dentry *dentry, struct au_srxattr *arg)
-+{
-+	int err;
-+	struct path h_path;
-+	struct super_block *sb;
-+	struct au_icpup_args *a;
-+	struct inode *inode;
-+
-+	inode = dentry->d_inode;
-+	IMustLock(inode);
-+
-+	err = -ENOMEM;
-+	a = kzalloc(sizeof(*a), GFP_NOFS);
-+	if (unlikely(!a))
-+		goto out;
-+
-+	sb = dentry->d_sb;
-+	err = si_read_lock(sb, AuLock_FLUSH | AuLock_NOPLM);
-+	if (unlikely(err))
-+		goto out_kfree;
-+
-+	h_path.dentry = NULL;	/* silence gcc */
-+	di_write_lock_child(dentry);
-+	err = au_h_path_to_set_attr(dentry, a, &h_path);
-+	if (unlikely(err))
-+		goto out_di;
-+
-+	mutex_unlock(&a->h_inode->i_mutex);
-+	switch (arg->type) {
-+	case AU_XATTR_SET:
-+		err = vfsub_setxattr(h_path.dentry,
-+				     arg->u.set.name, arg->u.set.value,
-+				     arg->u.set.size, arg->u.set.flags);
-+		break;
-+	case AU_XATTR_REMOVE:
-+		err = vfsub_removexattr(h_path.dentry, arg->u.remove.name);
-+		break;
-+	}
-+	if (!err)
-+		au_cpup_attr_timesizes(inode);
-+
-+	au_unpin(&a->pin);
-+	if (unlikely(err))
-+		au_update_dbstart(dentry);
-+
-+out_di:
-+	di_write_unlock(dentry);
-+	si_read_unlock(sb);
-+out_kfree:
-+	kfree(a);
-+out:
-+	AuTraceErr(err);
-+	return err;
-+}
-+
 +int aufs_setxattr(struct dentry *dentry, const char *name, const void *value,
 +		  size_t size, int flags)
 +{
@@ -31720,7 +31741,7 @@ index 18b35c6..12c67af 100644
 +}
 +#endif
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/fs/aufs/xino.c	2014-08-17 10:44:19.507864277 +0100
++++ b/fs/aufs/xino.c	2014-12-26 09:32:47.082263798 +0000
 @@ -0,0 +1,1316 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -33039,7 +33060,7 @@ index 18b35c6..12c67af 100644
 +	return err;
 +}
 --- /dev/null	2014-12-07 09:06:24.836868758 +0000
-+++ b/include/uapi/linux/aufs_type.h	2014-12-14 09:56:57.259917769 +0000
++++ b/include/uapi/linux/aufs_type.h	2014-12-26 09:32:47.082263798 +0000
 @@ -0,0 +1,419 @@
 +/*
 + * Copyright (C) 2005-2014 Junjiro R. Okajima
@@ -33082,7 +33103,7 @@ index 18b35c6..12c67af 100644
 +
 +#include <linux/limits.h>
 +
-+#define AUFS_VERSION	"3.x-rcN-20141208"
++#define AUFS_VERSION	"3.18-20141215"
 +
 +/* todo? move this to linux-2.6.19/include/magic.h */
 +#define AUFS_SUPER_MAGIC	('a' << 24 | 'u' << 16 | 'f' << 8 | 's')

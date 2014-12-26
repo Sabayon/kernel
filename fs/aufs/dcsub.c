@@ -134,7 +134,7 @@ resume:
 	while (next != &this_parent->d_subdirs) {
 		struct list_head *tmp = next;
 		struct dentry *dentry = list_entry(tmp, struct dentry,
-						   d_u.d_child);
+						   d_child);
 
 		next = tmp->next;
 		spin_lock_nested(&dentry->d_lock, DENTRY_D_LOCK_NESTED);

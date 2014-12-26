@@ -170,7 +170,7 @@ resume:
 		this_parent = tmp;
 		spin_lock(&this_parent->d_lock);
 		rcu_read_unlock();
-		next = child->d_u.d_child.next;
+		next = child->d_child.next;
 		goto resume;
 	}
 

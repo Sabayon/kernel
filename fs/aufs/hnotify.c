@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2014 Junjiro R. Okajima
+ * Copyright (C) 2005-2013 Junjiro R. Okajima
  *
  * This program, aufs is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -12,7 +12,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 /*
@@ -211,7 +212,7 @@ static int hn_gen_by_inode(char *name, unsigned int nlen, struct inode *inode,
 		AuDebugOn(!name);
 		au_iigen_dec(inode);
 		spin_lock(&inode->i_lock);
-		hlist_for_each_entry(d, &inode->i_dentry, d_u.d_alias) {
+		hlist_for_each_entry(d, &inode->i_dentry, d_alias) {
 			spin_lock(&d->d_lock);
 			dname = &d->d_name;
 			if (dname->len != nlen
@@ -227,7 +228,7 @@ static int hn_gen_by_inode(char *name, unsigned int nlen, struct inode *inode,
 		spin_unlock(&inode->i_lock);
 	} else {
 		au_fset_si(au_sbi(inode->i_sb), FAILED_REFRESH_DIR);
-		d = d_find_any_alias(inode);
+		d = d_find_alias(inode);
 		if (!d) {
 			au_iigen_dec(inode);
 			goto out;
@@ -317,7 +318,6 @@ struct hn_job_args {
 static int hn_job(struct hn_job_args *a)
 {
 	const unsigned int isdir = au_ftest_hnjob(a->flags, ISDIR);
-	int e;
 
 	/* reset xino */
 	if (au_ftest_hnjob(a->flags, XINO0) && a->inode)
@@ -327,19 +327,18 @@ static int hn_job(struct hn_job_args *a)
 	    && a->inode
 	    && a->h_inode) {
 		mutex_lock_nested(&a->h_inode->i_mutex, AuLsc_I_CHILD);
-		if (!a->h_inode->i_nlink
-		    && !(a->h_inode->i_state & I_LINKABLE))
+		if (!a->h_inode->i_nlink)
 			hn_xino(a->inode, a->h_inode); /* ignore this error */
 		mutex_unlock(&a->h_inode->i_mutex);
 	}
 
 	/* make the generation obsolete */
 	if (au_ftest_hnjob(a->flags, GEN)) {
-		e = -1;
+		int err = -1;
 		if (a->inode)
-			e = hn_gen_by_inode(a->h_name, a->h_nlen, a->inode,
+			err = hn_gen_by_inode(a->h_name, a->h_nlen, a->inode,
 					      isdir);
-		if (e && a->dentry)
+		if (err && a->dentry)
 			hn_gen_by_name(a->dentry, isdir);
 		/* ignore this error */
 	}
@@ -359,7 +358,8 @@ static int hn_job(struct hn_job_args *a)
 	if (au_ftest_hnjob(a->flags, MNTPNT)
 	    && a->dentry
 	    && d_mountpoint(a->dentry))
-		pr_warn("mount-point %pd is removed or renamed\n", a->dentry);
+		pr_warn("mount-point %.*s is removed or renamed\n",
+			AuDLNPair(a->dentry));
 
 	return 0;
 }
@@ -372,14 +372,14 @@ static struct dentry *lookup_wlock_by_name(char *name, unsigned int nlen,
 	struct dentry *dentry, *d, *parent;
 	struct qstr *dname;
 
-	parent = d_find_any_alias(dir);
+	parent = d_find_alias(dir);
 	if (!parent)
 		return NULL;
 
 	dentry = NULL;
 	spin_lock(&parent->d_lock);
-	list_for_each_entry(d, &parent->d_subdirs, d_child) {
-		/* AuDbg("%pd\n", d); */
+	list_for_each_entry(d, &parent->d_subdirs, d_u.d_child) {
+		/* AuDbg("%.*s\n", AuDLNPair(d)); */
 		spin_lock_nested(&d->d_lock, DENTRY_D_LOCK_NESTED);
 		dname = &d->d_name;
 		if (dname->len != nlen || memcmp(dname->name, name, nlen))
@@ -394,7 +394,7 @@ static struct dentry *lookup_wlock_by_name(char *name, unsigned int nlen,
 			break;
 		}
 
-cont_unlock:
+	cont_unlock:
 		spin_unlock(&d->d_lock);
 	}
 	spin_unlock(&parent->d_lock);
@@ -586,7 +586,7 @@ int au_hnotify(struct inode *h_dir, struct au_hnotify *hnotify, u32 mask,
 		au_fset_hnjob(flags[AuHn_CHILD], MNTPNT);
 		/*FALLTHROUGH*/
 	case FS_CREATE:
-		AuDebugOn(!h_child_name);
+		AuDebugOn(!h_child_name || !h_child_inode);
 		break;
 
 	case FS_DELETE:
@@ -631,10 +631,8 @@ int au_hnotify(struct inode *h_dir, struct au_hnotify *hnotify, u32 mask,
 		p[len] = 0;
 	}
 
-	/* NFS fires the event for silly-renamed one from kworker */
 	f = 0;
-	if (!dir->i_nlink
-	    || (au_test_nfs(h_dir->i_sb) && (mask & FS_DELETE)))
+	if (!dir->i_nlink)
 		f = AuWkq_NEST;
 	err = au_wkq_nowait(au_hn_bh, args, dir->i_sb, f);
 	if (unlikely(err)) {

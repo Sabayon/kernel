@@ -2498,7 +2498,7 @@ int v4l2_query_ext_ctrl(struct v4l2_ctrl_handler *hdl, struct v4l2_query_ext_ctr
 			/* We found a control with the given ID, so just get
 			   the next valid one in the list. */
 			list_for_each_entry_continue(ref, &hdl->ctrl_refs, node) {
-				is_compound =
+				is_compound = ref->ctrl->is_array ||
 					ref->ctrl->type >= V4L2_CTRL_COMPOUND_TYPES;
 				if (id < ref->ctrl->id &&
 				    (is_compound & mask) == match)
@@ -2512,7 +2512,7 @@ int v4l2_query_ext_ctrl(struct v4l2_ctrl_handler *hdl, struct v4l2_query_ext_ctr
 			   is one, otherwise the first 'if' above would have
 			   been true. */
 			list_for_each_entry(ref, &hdl->ctrl_refs, node) {
-				is_compound =
+				is_compound = ref->ctrl->is_array ||
 					ref->ctrl->type >= V4L2_CTRL_COMPOUND_TYPES;
 				if (id < ref->ctrl->id &&
 				    (is_compound & mask) == match)
@@ -2884,7 +2884,7 @@ static int get_ctrl(struct v4l2_ctrl *ctrl, struct v4l2_ext_control *c)
 	 * cur_to_user() calls below would need to be modified not to access
 	 * userspace memory when called from get_ctrl().
 	 */
-	if (!ctrl->is_int)
+	if (!ctrl->is_int && ctrl->type != V4L2_CTRL_TYPE_INTEGER64)
 		return -EINVAL;
 
 	if (ctrl->flags & V4L2_CTRL_FLAG_WRITE_ONLY)
@@ -2942,9 +2942,9 @@ s64 v4l2_ctrl_g_ctrl_int64(struct v4l2_ctrl *ctrl)
 
 	/* It's a driver bug if this happens. */
 	WARN_ON(ctrl->is_ptr || ctrl->type != V4L2_CTRL_TYPE_INTEGER64);
-	c.value = 0;
+	c.value64 = 0;
 	get_ctrl(ctrl, &c);
-	return c.value;
+	return c.value64;
 }
 EXPORT_SYMBOL(v4l2_ctrl_g_ctrl_int64);
 
@@ -3043,7 +3043,7 @@ static void update_from_auto_cluster(struct v4l2_ctrl *master)
 {
 	int i;
 
-	for (i = 0; i < master->ncontrols; i++)
+	for (i = 1; i < master->ncontrols; i++)
 		cur_to_new(master->cluster[i]);
 	if (!call_op(master, g_volatile_ctrl))
 		for (i = 1; i < master->ncontrols; i++)

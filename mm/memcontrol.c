@@ -902,14 +902,20 @@ struct mem_cgroup *mem_cgroup_iter(struct mem_cgroup *root,
 		if (prev && reclaim->generation != iter->generation)
 			goto out_unlock;
 
-		do {
+		while (1) {
 			pos = READ_ONCE(iter->position);
+			if (!pos || css_tryget(&pos->css))
+				break;
 			/*
-			 * A racing update may change the position and
-			 * put the last reference, hence css_tryget(),
-			 * or retry to see the updated position.
+			 * css reference reached zero, so iter->position will
+			 * be cleared by ->css_released. However, we should not
+			 * rely on this happening soon, because ->css_released
+			 * is called from a work queue, and by busy-waiting we
+			 * might block it. So we clear iter->position right
+			 * away.
 			 */
-		} while (pos && !css_tryget(&pos->css));
+			(void)cmpxchg(&iter->position, pos, NULL);
+		}
 	}
 
 	if (pos)
@@ -955,17 +961,13 @@ struct mem_cgroup *mem_cgroup_iter(struct mem_cgroup *root,
 	}
 
 	if (reclaim) {
-		if (cmpxchg(&iter->position, pos, memcg) == pos) {
-			if (memcg)
-				css_get(&memcg->css);
-			if (pos)
-				css_put(&pos->css);
-		}
-
 		/*
-		 * pairs with css_tryget when dereferencing iter->position
-		 * above.
+		 * The position could have already been updated by a competing
+		 * thread, so check that the value hasn't changed since we read
+		 * it to avoid reclaiming from the same cgroup twice.
 		 */
+		(void)cmpxchg(&iter->position, pos, memcg);
+
 		if (pos)
 			css_put(&pos->css);
 
@@ -996,6 +998,28 @@ void mem_cgroup_iter_break(struct mem_cgroup *root,
 		root = root_mem_cgroup;
 	if (prev && prev != root)
 		css_put(&prev->css);
+}
+
+static void invalidate_reclaim_iterators(struct mem_cgroup *dead_memcg)
+{
+	struct mem_cgroup *memcg = dead_memcg;
+	struct mem_cgroup_reclaim_iter *iter;
+	struct mem_cgroup_per_zone *mz;
+	int nid, zid;
+	int i;
+
+	while ((memcg = parent_mem_cgroup(memcg))) {
+		for_each_node(nid) {
+			for (zid = 0; zid < MAX_NR_ZONES; zid++) {
+				mz = &memcg->nodeinfo[nid]->zoneinfo[zid];
+				for (i = 0; i <= DEF_PRIORITY; i++) {
+					iter = &mz->iter[i];
+					cmpxchg(&iter->position,
+						dead_memcg, NULL);
+				}
+			}
+		}
+	}
 }
 
 /*
@@ -2836,9 +2860,9 @@ static unsigned long tree_stat(struct mem_cgroup *memcg,
 	return val;
 }
 
-static inline u64 mem_cgroup_usage(struct mem_cgroup *memcg, bool swap)
+static inline unsigned long mem_cgroup_usage(struct mem_cgroup *memcg, bool swap)
 {
-	u64 val;
+	unsigned long val;
 
 	if (mem_cgroup_is_root(memcg)) {
 		val = tree_stat(memcg, MEM_CGROUP_STAT_CACHE);
@@ -2851,7 +2875,7 @@ static inline u64 mem_cgroup_usage(struct mem_cgroup *memcg, bool swap)
 		else
 			val = page_counter_read(&memcg->memsw);
 	}
-	return val << PAGE_SHIFT;
+	return val;
 }
 
 enum {
@@ -2885,9 +2909,9 @@ static u64 mem_cgroup_read_u64(struct cgroup_subsys_state *css,
 	switch (MEMFILE_ATTR(cft->private)) {
 	case RES_USAGE:
 		if (counter == &memcg->memory)
-			return mem_cgroup_usage(memcg, false);
+			return (u64)mem_cgroup_usage(memcg, false) * PAGE_SIZE;
 		if (counter == &memcg->memsw)
-			return mem_cgroup_usage(memcg, true);
+			return (u64)mem_cgroup_usage(memcg, true) * PAGE_SIZE;
 		return (u64)page_counter_read(counter) * PAGE_SIZE;
 	case RES_LIMIT:
 		return (u64)counter->limit * PAGE_SIZE;
@@ -3387,7 +3411,6 @@ static int __mem_cgroup_usage_register_event(struct mem_cgroup *memcg,
 	ret = page_counter_memparse(args, "-1", &threshold);
 	if (ret)
 		return ret;
-	threshold <<= PAGE_SHIFT;
 
 	mutex_lock(&memcg->thresholds_lock);
 
@@ -4361,6 +4384,13 @@ static void mem_cgroup_css_offline(struct cgroup_subsys_state *css)
 	wb_memcg_offline(memcg);
 }
 
+static void mem_cgroup_css_released(struct cgroup_subsys_state *css)
+{
+	struct mem_cgroup *memcg = mem_cgroup_from_css(css);
+
+	invalidate_reclaim_iterators(memcg);
+}
+
 static void mem_cgroup_css_free(struct cgroup_subsys_state *css)
 {
 	struct mem_cgroup *memcg = mem_cgroup_from_css(css);
@@ -5217,6 +5247,7 @@ struct cgroup_subsys memory_cgrp_subsys = {
 	.css_alloc = mem_cgroup_css_alloc,
 	.css_online = mem_cgroup_css_online,
 	.css_offline = mem_cgroup_css_offline,
+	.css_released = mem_cgroup_css_released,
 	.css_free = mem_cgroup_css_free,
 	.css_reset = mem_cgroup_css_reset,
 	.can_attach = mem_cgroup_can_attach,

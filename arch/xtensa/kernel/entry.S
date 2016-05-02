@@ -335,8 +335,10 @@ common_exception:
 	s32i	a2, a1, PT_SYSCALL
 	movi	a2, 0
 	s32i	a3, a1, PT_EXCVADDR
+#if XCHAL_HAVE_LOOPS
 	xsr	a2, lcount
 	s32i	a2, a1, PT_LCOUNT
+#endif
 
 	/* It is now save to restore the EXC_TABLE_FIXUP variable. */
 
@@ -368,11 +370,12 @@ common_exception:
 	s32i	a3, a1, PT_PS		# save ps
 
 	/* Save lbeg, lend */
-
+#if XCHAL_HAVE_LOOPS
 	rsr	a2, lbeg
 	rsr	a3, lend
 	s32i	a2, a1, PT_LBEG
 	s32i	a3, a1, PT_LEND
+#endif
 
 	/* Save SCOMPARE1 */
 
@@ -568,12 +571,13 @@ user_exception_exit:
 	 *	 (if we have restored WSBITS-1 frames).
 	 */
 
+2:
 #if XCHAL_HAVE_THREADPTR
 	l32i	a3, a1, PT_THREADPTR
 	wur	a3, threadptr
 #endif
 
-2:	j	common_exception_exit
+	j	common_exception_exit
 
 	/* This is the kernel exception exit.
 	 * We avoided to do a MOVSP when we entered the exception, but we
@@ -663,13 +667,14 @@ common_exception_exit:
 	wsr	a3, sar
 
 	/* Restore LBEG, LEND, LCOUNT */
-
+#if XCHAL_HAVE_LOOPS
 	l32i	a2, a1, PT_LBEG
 	l32i	a3, a1, PT_LEND
 	wsr	a2, lbeg
 	l32i	a2, a1, PT_LCOUNT
 	wsr	a3, lend
 	wsr	a2, lcount
+#endif
 
 	/* We control single stepping through the ICOUNTLEVEL register. */
 
@@ -1792,7 +1797,7 @@ ENDPROC(system_call)
 	mov	a12, a0
 	.endr
 #endif
-	_entry	a1, 48
+	_entry	a1, 16
 #if XCHAL_NUM_AREGS % 12 == 0
 	mov	a8, a8
 #elif XCHAL_NUM_AREGS % 12 == 4
@@ -1816,7 +1821,7 @@ ENDPROC(system_call)
 
 ENTRY(_switch_to)
 
-	entry	a1, 16
+	entry	a1, 48
 
 	mov	a11, a3			# and 'next' (a3)
 

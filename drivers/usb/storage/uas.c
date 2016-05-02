@@ -30,6 +30,8 @@
 #include "uas-detect.h"
 #include "scsiglue.h"
 
+#define MAX_CMNDS 256
+
 /*
  * The r00-r01c specs define this version of the SENSE IU data structure.
  * It's still in use by several different firmware releases.
@@ -936,7 +938,10 @@ static int uas_eh_bus_reset_handler(struct scsi_cmnd *cmnd)
 
 static int uas_slave_alloc(struct scsi_device *sdev)
 {
-	sdev->hostdata = (void *)sdev->host->hostdata;
+	struct uas_dev_info *devinfo =
+		(struct uas_dev_info *)sdev->host->hostdata;
+
+	sdev->hostdata = devinfo;
 
 	/* USB has unusual DMA-alignment requirements: Although the
 	 * starting address of each scatter-gather element doesn't matter,
@@ -955,6 +960,11 @@ static int uas_slave_alloc(struct scsi_device *sdev)
 	 */
 	blk_queue_update_dma_alignment(sdev->request_queue, (512 - 1));
 
+	if (devinfo->flags & US_FL_MAX_SECTORS_64)
+		blk_queue_max_hw_sectors(sdev->request_queue, 64);
+	else if (devinfo->flags & US_FL_MAX_SECTORS_240)
+		blk_queue_max_hw_sectors(sdev->request_queue, 240);
+
 	return 0;
 }
 
@@ -964,6 +974,10 @@ static int uas_slave_configure(struct scsi_device *sdev)
 
 	if (devinfo->flags & US_FL_NO_REPORT_OPCODES)
 		sdev->no_report_opcodes = 1;
+
+	/* A few buggy USB-ATA bridges don't understand FUA */
+	if (devinfo->flags & US_FL_BROKEN_FUA)
+		sdev->broken_fua = 1;
 
 	scsi_set_tag_type(sdev, MSG_ORDERED_TAG);
 	scsi_activate_tcq(sdev, devinfo->qdepth - 2);
@@ -979,7 +993,7 @@ static struct scsi_host_template uas_host_template = {
 	.eh_abort_handler = uas_eh_abort_handler,
 	.eh_device_reset_handler = uas_eh_device_reset_handler,
 	.eh_bus_reset_handler = uas_eh_bus_reset_handler,
-	.can_queue = 65536,	/* Is there a limit on the _host_ ? */
+	.can_queue = MAX_CMNDS,
 	.this_id = -1,
 	.sg_tablesize = SG_NONE,
 	.cmd_per_lun = 1,	/* until we override it */
@@ -1045,7 +1059,7 @@ static int uas_configure_endpoints(struct uas_dev_info *devinfo)
 		devinfo->use_streams = 0;
 	} else {
 		devinfo->qdepth = usb_alloc_streams(devinfo->intf, eps + 1,
-						    3, 256, GFP_NOIO);
+						    3, MAX_CMNDS, GFP_NOIO);
 		if (devinfo->qdepth < 0)
 			return devinfo->qdepth;
 		devinfo->use_streams = 1;
@@ -1071,8 +1085,9 @@ static int uas_probe(struct usb_interface *intf, const struct usb_device_id *id)
 	struct Scsi_Host *shost = NULL;
 	struct uas_dev_info *devinfo;
 	struct usb_device *udev = interface_to_usbdev(intf);
+	unsigned long dev_flags;
 
-	if (!uas_use_uas_driver(intf, id))
+	if (!uas_use_uas_driver(intf, id, &dev_flags))
 		return -ENODEV;
 
 	if (uas_switch_interface(udev, intf))
@@ -1095,8 +1110,7 @@ static int uas_probe(struct usb_interface *intf, const struct usb_device_id *id)
 	devinfo->resetting = 0;
 	devinfo->running_task = 0;
 	devinfo->shutdown = 0;
-	devinfo->flags = id->driver_info;
-	usb_stor_adjust_quirks(udev, &devinfo->flags);
+	devinfo->flags = dev_flags;
 	init_usb_anchor(&devinfo->cmd_urbs);
 	init_usb_anchor(&devinfo->sense_urbs);
 	init_usb_anchor(&devinfo->data_urbs);

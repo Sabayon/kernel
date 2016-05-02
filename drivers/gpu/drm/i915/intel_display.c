@@ -4183,7 +4183,6 @@ static void ironlake_crtc_disable(struct drm_crtc *crtc)
 		ironlake_fdi_disable(crtc);
 
 		ironlake_disable_pch_transcoder(dev_priv, pipe);
-		intel_set_pch_fifo_underrun_reporting(dev, pipe, true);
 
 		if (HAS_PCH_CPT(dev)) {
 			/* disable TRANS_DP_CTL */
@@ -4250,7 +4249,6 @@ static void haswell_crtc_disable(struct drm_crtc *crtc)
 
 	if (intel_crtc->config.has_pch_encoder) {
 		lpt_disable_pch_transcoder(dev_priv);
-		intel_set_pch_fifo_underrun_reporting(dev, TRANSCODER_A, true);
 		intel_ddi_fdi_disable(crtc);
 	}
 
@@ -8221,20 +8219,17 @@ __intel_framebuffer_create(struct drm_device *dev,
 	int ret;
 
 	intel_fb = kzalloc(sizeof(*intel_fb), GFP_KERNEL);
-	if (!intel_fb) {
-		drm_gem_object_unreference_unlocked(&obj->base);
+	if (!intel_fb)
 		return ERR_PTR(-ENOMEM);
-	}
 
 	ret = intel_framebuffer_init(dev, intel_fb, mode_cmd, obj);
 	if (ret)
 		goto err;
 
 	return &intel_fb->base;
-err:
-	drm_gem_object_unreference_unlocked(&obj->base);
-	kfree(intel_fb);
 
+err:
+	kfree(intel_fb);
 	return ERR_PTR(ret);
 }
 
@@ -8274,6 +8269,7 @@ intel_framebuffer_create_for_mode(struct drm_device *dev,
 				  struct drm_display_mode *mode,
 				  int depth, int bpp)
 {
+	struct drm_framebuffer *fb;
 	struct drm_i915_gem_object *obj;
 	struct drm_mode_fb_cmd2 mode_cmd = { 0 };
 
@@ -8288,7 +8284,11 @@ intel_framebuffer_create_for_mode(struct drm_device *dev,
 								bpp);
 	mode_cmd.pixel_format = drm_mode_legacy_fb_format(bpp, depth);
 
-	return intel_framebuffer_create(dev, &mode_cmd, obj);
+	fb = intel_framebuffer_create(dev, &mode_cmd, obj);
+	if (IS_ERR(fb))
+		drm_gem_object_unreference_unlocked(&obj->base);
+
+	return fb;
 }
 
 static struct drm_framebuffer *
@@ -8925,6 +8925,10 @@ static bool page_flip_finished(struct intel_crtc *crtc)
 	struct drm_device *dev = crtc->base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
+	if (i915_reset_in_progress(&dev_priv->gpu_error) ||
+	    crtc->reset_counter != atomic_read(&dev_priv->gpu_error.reset_counter))
+		return true;
+
 	/*
 	 * The relevant registers doen't exist on pre-ctg.
 	 * As the flip done interrupt doesn't trigger for mmio
@@ -9311,7 +9315,7 @@ static int intel_crtc_page_flip(struct drm_crtc *crtc,
 
 	if (IS_VALLEYVIEW(dev)) {
 		ring = &dev_priv->ring[BCS];
-	} else if (IS_IVYBRIDGE(dev)) {
+	} else if (IS_IVYBRIDGE(dev) || IS_HASWELL(dev)) {
 		ring = &dev_priv->ring[BCS];
 	} else if (INTEL_INFO(dev)->gen >= 7) {
 		ring = obj->ring;
@@ -9451,11 +9455,21 @@ connected_sink_compute_bpp(struct intel_connector *connector,
 		pipe_config->pipe_bpp = connector->base.display_info.bpc*3;
 	}
 
-	/* Clamp bpp to 8 on screens without EDID 1.4 */
-	if (connector->base.display_info.bpc == 0 && bpp > 24) {
-		DRM_DEBUG_KMS("clamping display bpp (was %d) to default limit of 24\n",
-			      bpp);
-		pipe_config->pipe_bpp = 24;
+	/* Clamp bpp to default limit on screens without EDID 1.4 */
+	if (connector->base.display_info.bpc == 0) {
+		int type = connector->base.connector_type;
+		int clamp_bpp = 24;
+
+		/* Fall back to 18 bpp when DP sink capability is unknown. */
+		if (type == DRM_MODE_CONNECTOR_DisplayPort ||
+		    type == DRM_MODE_CONNECTOR_eDP)
+			clamp_bpp = 18;
+
+		if (bpp > clamp_bpp) {
+			DRM_DEBUG_KMS("clamping display bpp (was %d) to default limit of %d\n",
+				      bpp, clamp_bpp);
+			pipe_config->pipe_bpp = clamp_bpp;
+		}
 	}
 }
 
@@ -11283,6 +11297,11 @@ static int intel_user_framebuffer_create_handle(struct drm_framebuffer *fb,
 	struct intel_framebuffer *intel_fb = to_intel_framebuffer(fb);
 	struct drm_i915_gem_object *obj = intel_fb->obj;
 
+	if (obj->userptr.mm) {
+		DRM_DEBUG("attempting to use a userptr for a framebuffer, denied\n");
+		return -EINVAL;
+	}
+
 	return drm_gem_handle_create(file, &obj->base, handle);
 }
 
@@ -11414,6 +11433,7 @@ intel_user_framebuffer_create(struct drm_device *dev,
 			      struct drm_file *filp,
 			      struct drm_mode_fb_cmd2 *mode_cmd)
 {
+	struct drm_framebuffer *fb;
 	struct drm_i915_gem_object *obj;
 
 	obj = to_intel_bo(drm_gem_object_lookup(dev, filp,
@@ -11421,7 +11441,11 @@ intel_user_framebuffer_create(struct drm_device *dev,
 	if (&obj->base == NULL)
 		return ERR_PTR(-ENOENT);
 
-	return intel_framebuffer_create(dev, mode_cmd, obj);
+	fb = intel_framebuffer_create(dev, mode_cmd, obj);
+	if (IS_ERR(fb))
+		drm_gem_object_unreference_unlocked(&obj->base);
+
+	return fb;
 }
 
 #ifndef CONFIG_DRM_I915_FBDEV
@@ -11693,11 +11717,23 @@ static struct intel_quirk intel_quirks[] = {
 	/* Acer C720 Chromebook (Core i3 4005U) */
 	{ 0x0a16, 0x1025, 0x0a11, quirk_backlight_present },
 
+	/* Apple Macbook 2,1 (Core 2 T7400) */
+	{ 0x27a2, 0x8086, 0x7270, quirk_backlight_present },
+
+	/* Apple Macbook 4,1 */
+	{ 0x2a02, 0x106b, 0x00a1, quirk_backlight_present },
+
 	/* Toshiba CB35 Chromebook (Celeron 2955U) */
 	{ 0x0a06, 0x1179, 0x0a88, quirk_backlight_present },
 
 	/* HP Chromebook 14 (Celeron 2955U) */
 	{ 0x0a06, 0x103c, 0x21ed, quirk_backlight_present },
+
+	/* Dell Chromebook 11 */
+	{ 0x0a06, 0x1028, 0x0a35, quirk_backlight_present },
+
+	/* Dell Chromebook 11 (2015 version) */
+	{ 0x0a16, 0x1028, 0x0a35, quirk_backlight_present },
 };
 
 static void intel_init_quirks(struct drm_device *dev)

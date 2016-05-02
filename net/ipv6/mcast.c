@@ -1545,7 +1545,7 @@ static void ip6_mc_hdr(struct sock *sk, struct sk_buff *skb,
 	hdr->daddr = *daddr;
 }
 
-static struct sk_buff *mld_newpack(struct inet6_dev *idev, int size)
+static struct sk_buff *mld_newpack(struct inet6_dev *idev, unsigned int mtu)
 {
 	struct net_device *dev = idev->dev;
 	struct net *net = dev_net(dev);
@@ -1556,13 +1556,13 @@ static struct sk_buff *mld_newpack(struct inet6_dev *idev, int size)
 	const struct in6_addr *saddr;
 	int hlen = LL_RESERVED_SPACE(dev);
 	int tlen = dev->needed_tailroom;
+	unsigned int size = mtu + hlen + tlen;
 	int err;
 	u8 ra[8] = { IPPROTO_ICMPV6, 0,
 		     IPV6_TLV_ROUTERALERT, 2, 0, 0,
 		     IPV6_TLV_PADN, 0 };
 
 	/* we assume size > sizeof(ra) here */
-	size += hlen + tlen;
 	/* limit our allocations to order-0 page */
 	size = min_t(int, size, SKB_MAX_ORDER(0, 0));
 	skb = sock_alloc_send_skb(sk, size, 1, &err);
@@ -1572,6 +1572,7 @@ static struct sk_buff *mld_newpack(struct inet6_dev *idev, int size)
 
 	skb->priority = TC_PRIO_CONTROL;
 	skb_reserve(skb, hlen);
+	skb_tailroom_reserve(skb, mtu, tlen);
 
 	if (__ipv6_get_lladdr(idev, &addr_buf, IFA_F_TENTATIVE)) {
 		/* <draft-ietf-magma-mld-source-05.txt>:
@@ -1645,7 +1646,6 @@ out:
 	if (!err) {
 		ICMP6MSGOUT_INC_STATS(net, idev, ICMPV6_MLD2_REPORT);
 		ICMP6_INC_STATS(net, idev, ICMP6_MIB_OUTMSGS);
-		IP6_UPD_PO_STATS(net, idev, IPSTATS_MIB_OUTMCAST, payload_len);
 	} else {
 		IP6_INC_STATS(net, idev, IPSTATS_MIB_OUTDISCARDS);
 	}
@@ -1685,8 +1685,7 @@ static struct sk_buff *add_grhead(struct sk_buff *skb, struct ifmcaddr6 *pmc,
 	return skb;
 }
 
-#define AVAILABLE(skb) ((skb) ? ((skb)->dev ? (skb)->dev->mtu - (skb)->len : \
-	skb_tailroom(skb)) : 0)
+#define AVAILABLE(skb)	((skb) ? skb_availroom(skb) : 0)
 
 static struct sk_buff *add_grec(struct sk_buff *skb, struct ifmcaddr6 *pmc,
 	int type, int gdeleted, int sdeleted, int crsend)
@@ -2009,7 +2008,6 @@ out:
 	if (!err) {
 		ICMP6MSGOUT_INC_STATS(net, idev, type);
 		ICMP6_INC_STATS(net, idev, ICMP6_MIB_OUTMSGS);
-		IP6_UPD_PO_STATS(net, idev, IPSTATS_MIB_OUTMCAST, full_len);
 	} else
 		IP6_INC_STATS(net, idev, IPSTATS_MIB_OUTDISCARDS);
 

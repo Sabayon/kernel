@@ -103,6 +103,7 @@ extern int radeon_hard_reset;
 extern int radeon_vm_size;
 extern int radeon_vm_block_size;
 extern int radeon_deep_color;
+extern int radeon_bapm;
 
 /*
  * Copy from radeon_drv.h so we don't have to include both and have conflicting
@@ -1102,6 +1103,8 @@ struct radeon_wb {
 #define R600_WB_EVENT_OFFSET     3072
 #define CIK_WB_CP1_WPTR_OFFSET     3328
 #define CIK_WB_CP2_WPTR_OFFSET     3584
+#define R600_WB_DMA_RING_TEST_OFFSET 3588
+#define CAYMAN_WB_DMA1_RING_TEST_OFFSET 3592
 
 /**
  * struct radeon_pm - power management datas
@@ -1509,6 +1512,7 @@ struct radeon_dpm {
 	int			new_active_crtc_count;
 	u32			current_active_crtcs;
 	int			current_active_crtc_count;
+	bool single_display;
 	struct radeon_dpm_dynamic_state dyn_state;
 	struct radeon_dpm_fan fan;
 	u32 tdp_limit;
@@ -1592,6 +1596,7 @@ struct radeon_pm {
 	struct device	        *int_hwmon_dev;
 	/* dpm */
 	bool                    dpm_enabled;
+	bool                    sysfs_initialized;
 	struct radeon_dpm       dpm;
 };
 
@@ -2345,6 +2350,7 @@ struct radeon_device {
 
 	struct dev_pm_domain vga_pm_domain;
 	bool have_disp_power_ref;
+	u32 px_quirk_flags;
 };
 
 bool radeon_is_px(struct drm_device *dev);

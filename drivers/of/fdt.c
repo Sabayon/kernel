@@ -773,15 +773,16 @@ int __init early_init_dt_scan_chosen_serial(void)
 	if (offset < 0)
 		return -ENODEV;
 
-	while (match->compatible) {
-		unsigned long addr;
+	while (match->compatible[0]) {
+		u64 addr;
+
 		if (fdt_node_check_compatible(fdt, offset, match->compatible)) {
 			match++;
 			continue;
 		}
 
 		addr = fdt_translate_address(fdt, offset);
-		if (!addr)
+		if (addr == OF_BAD_ADDR)
 			return -ENXIO;
 
 		of_setup_earlycon(addr, match->data);
@@ -960,8 +961,6 @@ void __init __weak early_init_dt_add_memory_arch(u64 base, u64 size)
 int __init __weak early_init_dt_reserve_memory_arch(phys_addr_t base,
 					phys_addr_t size, bool nomap)
 {
-	if (memblock_is_region_reserved(base, size))
-		return -EBUSY;
 	if (nomap)
 		return memblock_remove(base, size);
 	return memblock_reserve(base, size);

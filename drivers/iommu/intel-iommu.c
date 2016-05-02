@@ -51,6 +51,7 @@
 #define CONTEXT_SIZE		VTD_PAGE_SIZE
 
 #define IS_GFX_DEVICE(pdev) ((pdev->class >> 16) == PCI_BASE_CLASS_DISPLAY)
+#define IS_USB_DEVICE(pdev) ((pdev->class >> 8) == PCI_CLASS_SERIAL_USB)
 #define IS_ISA_DEVICE(pdev) ((pdev->class >> 8) == PCI_CLASS_BRIDGE_ISA)
 #define IS_AZALIA(pdev) ((pdev)->vendor == 0x8086 && (pdev)->device == 0x3a3e)
 
@@ -665,6 +666,11 @@ static void domain_update_iommu_cap(struct dmar_domain *domain)
 	domain_update_iommu_superpage(domain);
 }
 
+static int iommu_dummy(struct device *dev)
+{
+	return dev->archdata.iommu == DUMMY_DEVICE_DOMAIN_INFO;
+}
+
 static struct intel_iommu *device_to_iommu(struct device *dev, u8 *bus, u8 *devfn)
 {
 	struct dmar_drhd_unit *drhd = NULL;
@@ -673,6 +679,9 @@ static struct intel_iommu *device_to_iommu(struct device *dev, u8 *bus, u8 *devf
 	struct pci_dev *ptmp, *pdev = NULL;
 	u16 segment;
 	int i;
+
+	if (iommu_dummy(dev))
+		return NULL;
 
 	if (dev_is_pci(dev)) {
 		pdev = to_pci_dev(dev);
@@ -1966,7 +1975,7 @@ static int __domain_mapping(struct dmar_domain *domain, unsigned long iov_pfn,
 	struct dma_pte *first_pte = NULL, *pte = NULL;
 	phys_addr_t uninitialized_var(pteval);
 	int addr_width = agaw_to_width(domain->agaw) - VTD_PAGE_SHIFT;
-	unsigned long sg_res;
+	unsigned long sg_res = 0;
 	unsigned int largepage_lvl = 0;
 	unsigned long lvl_pages = 0;
 
@@ -1977,10 +1986,8 @@ static int __domain_mapping(struct dmar_domain *domain, unsigned long iov_pfn,
 
 	prot &= DMA_PTE_READ | DMA_PTE_WRITE | DMA_PTE_SNP;
 
-	if (sg)
-		sg_res = 0;
-	else {
-		sg_res = nr_pages + 1;
+	if (!sg) {
+		sg_res = nr_pages;
 		pteval = ((phys_addr_t)phys_pfn << VTD_PAGE_SHIFT) | prot;
 	}
 
@@ -2540,6 +2547,10 @@ static bool device_has_rmrr(struct device *dev)
  * In both cases we assume that PCI USB devices with RMRRs have them largely
  * for historical reasons and that the RMRR space is not actively used post
  * boot.  This exclusion may change if vendors begin to abuse it.
+ *
+ * The same exception is made for graphics devices, with the requirement that
+ * any use of the RMRR regions will be torn down before assigning the device
+ * to a guest.
  */
 static bool device_is_rmrr_locked(struct device *dev)
 {
@@ -2549,7 +2560,7 @@ static bool device_is_rmrr_locked(struct device *dev)
 	if (dev_is_pci(dev)) {
 		struct pci_dev *pdev = to_pci_dev(dev);
 
-		if ((pdev->class >> 8) == PCI_CLASS_SERIAL_USB)
+		if (IS_USB_DEVICE(pdev) || IS_GFX_DEVICE(pdev))
 			return false;
 	}
 
@@ -2960,11 +2971,6 @@ static inline struct dmar_domain *get_valid_domain_for_dev(struct device *dev)
 		return info->domain;
 
 	return __get_valid_domain_for_dev(dev);
-}
-
-static int iommu_dummy(struct device *dev)
-{
-	return dev->archdata.iommu == DUMMY_DEVICE_DOMAIN_INFO;
 }
 
 /* Check if the dev needs to go through non-identity map and unmap process.*/
@@ -3792,14 +3798,17 @@ int dmar_find_matched_atsr_unit(struct pci_dev *dev)
 	dev = pci_physfn(dev);
 	for (bus = dev->bus; bus; bus = bus->parent) {
 		bridge = bus->self;
-		if (!bridge || !pci_is_pcie(bridge) ||
+		/* If it's an integrated device, allow ATS */
+		if (!bridge)
+			return 1;
+		/* Connected via non-PCIe: no ATS */
+		if (!pci_is_pcie(bridge) ||
 		    pci_pcie_type(bridge) == PCI_EXP_TYPE_PCI_BRIDGE)
 			return 0;
+		/* If we found the root port, look it up in the ATSR */
 		if (pci_pcie_type(bridge) == PCI_EXP_TYPE_ROOT_PORT)
 			break;
 	}
-	if (!bridge)
-		return 0;
 
 	rcu_read_lock();
 	list_for_each_entry_rcu(atsru, &dmar_atsr_units, list) {

@@ -541,8 +541,7 @@ int smb3_validate_negotiate(const unsigned int xid, struct cifs_tcon *tcon)
 	}
 
 	/* check validate negotiate info response matches what we got earlier */
-	if (pneg_rsp->Dialect !=
-			cpu_to_le16(tcon->ses->server->vals->protocol_id))
+	if (pneg_rsp->Dialect != cpu_to_le16(tcon->ses->server->dialect))
 		goto vneg_out;
 
 	if (pneg_rsp->SecurityMode != cpu_to_le16(tcon->ses->server->sec_mode))
@@ -596,6 +595,7 @@ SMB2_sess_setup(const unsigned int xid, struct cifs_ses *ses,
 	 */
 	kfree(ses->auth_key.response);
 	ses->auth_key.response = NULL;
+	ses->auth_key.len = 0;
 
 	/*
 	 * If memory allocation is successful, caller of this function
@@ -756,6 +756,7 @@ ssetup_exit:
 			rc = server->ops->generate_signingkey(ses);
 			kfree(ses->auth_key.response);
 			ses->auth_key.response = NULL;
+			ses->auth_key.len = 0;
 			if (rc) {
 				cifs_dbg(FYI,
 					"SMB3 session key generation failed\n");
@@ -780,6 +781,7 @@ keygen_exit:
 	if (!server->sign) {
 		kfree(ses->auth_key.response);
 		ses->auth_key.response = NULL;
+		ses->auth_key.len = 0;
 	}
 	kfree(ses->ntlmssp);
 

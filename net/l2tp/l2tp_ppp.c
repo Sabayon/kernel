@@ -312,7 +312,6 @@ static int pppol2tp_sendmsg(struct kiocb *iocb, struct socket *sock, struct msgh
 	int error;
 	struct l2tp_session *session;
 	struct l2tp_tunnel *tunnel;
-	struct pppol2tp_session *ps;
 	int uhlen;
 
 	error = -ENOTCONN;
@@ -325,10 +324,7 @@ static int pppol2tp_sendmsg(struct kiocb *iocb, struct socket *sock, struct msgh
 	if (session == NULL)
 		goto error;
 
-	ps = l2tp_session_priv(session);
-	tunnel = l2tp_sock_to_tunnel(ps->tunnel_sock);
-	if (tunnel == NULL)
-		goto error_put_sess;
+	tunnel = session->tunnel;
 
 	uhlen = (tunnel->encap == L2TP_ENCAPTYPE_UDP) ? sizeof(struct udphdr) : 0;
 
@@ -339,7 +335,7 @@ static int pppol2tp_sendmsg(struct kiocb *iocb, struct socket *sock, struct msgh
 			   sizeof(ppph) + total_len,
 			   0, GFP_KERNEL);
 	if (!skb)
-		goto error_put_sess_tun;
+		goto error_put_sess;
 
 	/* Reserve space for headers. */
 	skb_reserve(skb, NET_SKB_PAD);
@@ -358,20 +354,17 @@ static int pppol2tp_sendmsg(struct kiocb *iocb, struct socket *sock, struct msgh
 				 total_len);
 	if (error < 0) {
 		kfree_skb(skb);
-		goto error_put_sess_tun;
+		goto error_put_sess;
 	}
 
 	local_bh_disable();
 	l2tp_xmit_skb(session, skb, session->hdr_len);
 	local_bh_enable();
 
-	sock_put(ps->tunnel_sock);
 	sock_put(sk);
 
 	return total_len;
 
-error_put_sess_tun:
-	sock_put(ps->tunnel_sock);
 error_put_sess:
 	sock_put(sk);
 error:
@@ -396,10 +389,8 @@ static int pppol2tp_xmit(struct ppp_channel *chan, struct sk_buff *skb)
 {
 	static const u8 ppph[2] = { 0xff, 0x03 };
 	struct sock *sk = (struct sock *) chan->private;
-	struct sock *sk_tun;
 	struct l2tp_session *session;
 	struct l2tp_tunnel *tunnel;
-	struct pppol2tp_session *ps;
 	int uhlen, headroom;
 
 	if (sock_flag(sk, SOCK_DEAD) || !(sk->sk_state & PPPOX_CONNECTED))
@@ -410,13 +401,7 @@ static int pppol2tp_xmit(struct ppp_channel *chan, struct sk_buff *skb)
 	if (session == NULL)
 		goto abort;
 
-	ps = l2tp_session_priv(session);
-	sk_tun = ps->tunnel_sock;
-	if (sk_tun == NULL)
-		goto abort_put_sess;
-	tunnel = l2tp_sock_to_tunnel(sk_tun);
-	if (tunnel == NULL)
-		goto abort_put_sess;
+	tunnel = session->tunnel;
 
 	uhlen = (tunnel->encap == L2TP_ENCAPTYPE_UDP) ? sizeof(struct udphdr) : 0;
 	headroom = NET_SKB_PAD +
@@ -425,7 +410,7 @@ static int pppol2tp_xmit(struct ppp_channel *chan, struct sk_buff *skb)
 		   session->hdr_len +	/* L2TP header */
 		   sizeof(ppph);	/* PPP header */
 	if (skb_cow_head(skb, headroom))
-		goto abort_put_sess_tun;
+		goto abort_put_sess;
 
 	/* Setup PPP header */
 	__skb_push(skb, sizeof(ppph));
@@ -436,12 +421,10 @@ static int pppol2tp_xmit(struct ppp_channel *chan, struct sk_buff *skb)
 	l2tp_xmit_skb(session, skb, session->hdr_len);
 	local_bh_enable();
 
-	sock_put(sk_tun);
 	sock_put(sk);
+
 	return 1;
 
-abort_put_sess_tun:
-	sock_put(sk_tun);
 abort_put_sess:
 	sock_put(sk);
 abort:
@@ -454,20 +437,28 @@ abort:
  * Session (and tunnel control) socket create/destroy.
  *****************************************************************************/
 
+static void pppol2tp_put_sk(struct rcu_head *head)
+{
+	struct pppol2tp_session *ps;
+
+	ps = container_of(head, typeof(*ps), rcu);
+	sock_put(ps->__sk);
+}
+
 /* Called by l2tp_core when a session socket is being closed.
  */
 static void pppol2tp_session_close(struct l2tp_session *session)
 {
-	struct sock *sk;
+	struct pppol2tp_session *ps;
 
-	BUG_ON(session->magic != L2TP_SESSION_MAGIC);
-
-	sk = pppol2tp_session_get_sock(session);
-	if (sk) {
-		if (sk->sk_socket)
-			inet_shutdown(sk->sk_socket, SEND_SHUTDOWN);
-		sock_put(sk);
-	}
+	ps = l2tp_session_priv(session);
+	mutex_lock(&ps->sk_lock);
+	ps->__sk = rcu_dereference_protected(ps->sk,
+					     lockdep_is_held(&ps->sk_lock));
+	RCU_INIT_POINTER(ps->sk, NULL);
+	if (ps->__sk)
+		call_rcu(&ps->rcu, pppol2tp_put_sk);
+	mutex_unlock(&ps->sk_lock);
 }
 
 /* Really kill the session socket. (Called from sock_put() if
@@ -485,14 +476,6 @@ static void pppol2tp_session_destruct(struct sock *sk)
 		BUG_ON(session->magic != L2TP_SESSION_MAGIC);
 		l2tp_session_dec_refcount(session);
 	}
-}
-
-static void pppol2tp_put_sk(struct rcu_head *head)
-{
-	struct pppol2tp_session *ps;
-
-	ps = container_of(head, typeof(*ps), rcu);
-	sock_put(ps->__sk);
 }
 
 /* Called when the PPPoX socket (session) is closed.
@@ -518,26 +501,17 @@ static int pppol2tp_release(struct socket *sock)
 	sock_orphan(sk);
 	sock->sk = NULL;
 
+	/* If the socket is associated with a session,
+	 * l2tp_session_delete will call pppol2tp_session_close which
+	 * will drop the session's ref on the socket.
+	 */
 	session = pppol2tp_sock_to_session(sk);
-
-	if (session != NULL) {
-		struct pppol2tp_session *ps;
-
+	if (session) {
 		l2tp_session_delete(session);
-
-		ps = l2tp_session_priv(session);
-		mutex_lock(&ps->sk_lock);
-		ps->__sk = rcu_dereference_protected(ps->sk,
-						     lockdep_is_held(&ps->sk_lock));
-		RCU_INIT_POINTER(ps->sk, NULL);
-		mutex_unlock(&ps->sk_lock);
-		call_rcu(&ps->rcu, pppol2tp_put_sk);
-
-		/* Rely on the sock_put() call at the end of the function for
-		 * dropping the reference held by pppol2tp_sock_to_session().
-		 * The last reference will be dropped by pppol2tp_put_sk().
-		 */
+		/* drop the ref obtained by pppol2tp_sock_to_session */
+		sock_put(sk);
 	}
+
 	release_sock(sk);
 
 	/* This will delete the session context via
@@ -842,6 +816,7 @@ static int pppol2tp_connect(struct socket *sock, struct sockaddr *uservaddr,
 
 out_no_ppp:
 	/* This is how we get the session context from the socket. */
+	sock_hold(sk);
 	sk->sk_user_data = session;
 	rcu_assign_pointer(ps->sk, sk);
 	mutex_unlock(&ps->sk_lock);
@@ -938,9 +913,7 @@ static int pppol2tp_getname(struct socket *sock, struct sockaddr *uaddr,
 		goto end;
 
 	pls = l2tp_session_priv(session);
-	tunnel = l2tp_sock_to_tunnel(pls->tunnel_sock);
-	if (tunnel == NULL)
-		goto end_put_sess;
+	tunnel = session->tunnel;
 
 	inet = inet_sk(tunnel->sock);
 	if ((tunnel->version == 2) && (tunnel->sock->sk_family == AF_INET)) {
@@ -1020,8 +993,6 @@ static int pppol2tp_getname(struct socket *sock, struct sockaddr *uaddr,
 	*usockaddr_len = len;
 	error = 0;
 
-	sock_put(pls->tunnel_sock);
-end_put_sess:
 	sock_put(sk);
 end:
 	return error;
@@ -1262,7 +1233,6 @@ static int pppol2tp_ioctl(struct socket *sock, unsigned int cmd,
 	struct sock *sk = sock->sk;
 	struct l2tp_session *session;
 	struct l2tp_tunnel *tunnel;
-	struct pppol2tp_session *ps;
 	int err;
 
 	if (!sk)
@@ -1286,16 +1256,10 @@ static int pppol2tp_ioctl(struct socket *sock, unsigned int cmd,
 	/* Special case: if session's session_id is zero, treat ioctl as a
 	 * tunnel ioctl
 	 */
-	ps = l2tp_session_priv(session);
 	if ((session->session_id == 0) &&
 	    (session->peer_session_id == 0)) {
-		err = -EBADF;
-		tunnel = l2tp_sock_to_tunnel(ps->tunnel_sock);
-		if (tunnel == NULL)
-			goto end_put_sess;
-
+		tunnel = session->tunnel;
 		err = pppol2tp_tunnel_ioctl(tunnel, cmd, arg);
-		sock_put(ps->tunnel_sock);
 		goto end_put_sess;
 	}
 
@@ -1421,7 +1385,6 @@ static int pppol2tp_setsockopt(struct socket *sock, int level, int optname,
 	struct sock *sk = sock->sk;
 	struct l2tp_session *session;
 	struct l2tp_tunnel *tunnel;
-	struct pppol2tp_session *ps;
 	int val;
 	int err;
 
@@ -1446,20 +1409,14 @@ static int pppol2tp_setsockopt(struct socket *sock, int level, int optname,
 
 	/* Special case: if session_id == 0x0000, treat as operation on tunnel
 	 */
-	ps = l2tp_session_priv(session);
 	if ((session->session_id == 0) &&
 	    (session->peer_session_id == 0)) {
-		err = -EBADF;
-		tunnel = l2tp_sock_to_tunnel(ps->tunnel_sock);
-		if (tunnel == NULL)
-			goto end_put_sess;
-
+		tunnel = session->tunnel;
 		err = pppol2tp_tunnel_setsockopt(sk, tunnel, optname, val);
-		sock_put(ps->tunnel_sock);
-	} else
+	} else {
 		err = pppol2tp_session_setsockopt(sk, session, optname, val);
+	}
 
-end_put_sess:
 	sock_put(sk);
 end:
 	return err;
@@ -1547,7 +1504,6 @@ static int pppol2tp_getsockopt(struct socket *sock, int level, int optname,
 	struct l2tp_tunnel *tunnel;
 	int val, len;
 	int err;
-	struct pppol2tp_session *ps;
 
 	if (level != SOL_PPPOL2TP)
 		return -EINVAL;
@@ -1571,16 +1527,10 @@ static int pppol2tp_getsockopt(struct socket *sock, int level, int optname,
 		goto end;
 
 	/* Special case: if session_id == 0x0000, treat as operation on tunnel */
-	ps = l2tp_session_priv(session);
 	if ((session->session_id == 0) &&
 	    (session->peer_session_id == 0)) {
-		err = -EBADF;
-		tunnel = l2tp_sock_to_tunnel(ps->tunnel_sock);
-		if (tunnel == NULL)
-			goto end_put_sess;
-
+		tunnel = session->tunnel;
 		err = pppol2tp_tunnel_getsockopt(sk, tunnel, optname, &val);
-		sock_put(ps->tunnel_sock);
 		if (err)
 			goto end_put_sess;
 	} else {

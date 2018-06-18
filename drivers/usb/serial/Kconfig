@@ -58,10 +58,13 @@ config USB_SERIAL_SIMPLE
 	  handles a wide range of very simple devices, all in one
 	  driver.  Specifically, it supports:
 		- Suunto ANT+ USB device.
+		- Medtronic CareLink USB device
 		- Fundamental Software dongle.
 		- Google USB serial devices
 		- HP4x calculators
 		- a number of Motorola phones
+		- Motorola Tetra devices
+		- Novatel Wireless GPS receivers
 		- Siemens USB/MPI adapter.
 		- ViVOtech ViVOpay USB device.
 		- Infineon Modem Flashloader USB interface

@@ -928,7 +928,8 @@ static int uas_eh_bus_reset_handler(struct scsi_cmnd *cmnd)
 	usb_unlock_device(udev);
 
 	if (err) {
-		shost_printk(KERN_INFO, sdev->host, "%s FAILED\n", __func__);
+		shost_printk(KERN_INFO, sdev->host, "%s FAILED err %d\n",
+			     __func__, err);
 		return FAILED;
 	}
 
@@ -1188,23 +1189,25 @@ static int uas_post_reset(struct usb_interface *intf)
 	struct Scsi_Host *shost = usb_get_intfdata(intf);
 	struct uas_dev_info *devinfo = (struct uas_dev_info *)shost->hostdata;
 	unsigned long flags;
+	int err;
 
 	if (devinfo->shutdown)
 		return 0;
 
-	if (uas_configure_endpoints(devinfo) != 0) {
+	err = uas_configure_endpoints(devinfo);
+	if (err && err != -ENODEV)
 		shost_printk(KERN_ERR, shost,
-			     "%s: alloc streams error after reset", __func__);
-		return 1;
-	}
+			     "%s: alloc streams error %d after reset",
+			     __func__, err);
 
+	/* we must unblock the host in every case lest we deadlock */
 	spin_lock_irqsave(shost->host_lock, flags);
 	scsi_report_bus_reset(shost, 0);
 	spin_unlock_irqrestore(shost->host_lock, flags);
 
 	scsi_unblock_requests(shost);
 
-	return 0;
+	return err ? 1 : 0;
 }
 
 static int uas_suspend(struct usb_interface *intf, pm_message_t message)
@@ -1232,10 +1235,13 @@ static int uas_reset_resume(struct usb_interface *intf)
 	struct Scsi_Host *shost = usb_get_intfdata(intf);
 	struct uas_dev_info *devinfo = (struct uas_dev_info *)shost->hostdata;
 	unsigned long flags;
+	int err;
 
-	if (uas_configure_endpoints(devinfo) != 0) {
+	err = uas_configure_endpoints(devinfo);
+	if (err) {
 		shost_printk(KERN_ERR, shost,
-			     "%s: alloc streams error after reset", __func__);
+			     "%s: alloc streams error %d after reset",
+			     __func__, err);
 		return -EIO;
 	}
 
